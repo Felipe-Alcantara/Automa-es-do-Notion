@@ -30,6 +30,9 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   IA.md reescritos no enquadramento de template, e exemplo end-to-end `sync_from_csv.py`.
 - [2026-06-25] ✅ `NotionClient.buscar()` — varredura do workspace via `/search` com
   paginação (base para inventariar/mapear o que a integração enxerga).
+- [2026-06-25] ✅ `inventory.py` — lógica pura que monta árvore (via `parent`),
+  duplicatas por nome, vazios e órfãos a partir dos itens de `buscar()`. Sem rede,
+  testado em `tests/test_inventory.py`.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 helpers de leitura (extrair valores de páginas), suporte a blocos, mais exemplos
@@ -52,6 +55,9 @@ de "Iniciar/Rodar" por fonte de dados (banco, API, planilha).
 - [2026-06-24] Módulos coesos por responsabilidade: `client` (HTTP), `schema`
   (comparação), `properties` (montagem de payloads), `exceptions`, `logging`,
   `constants`. Evita módulo "faz-tudo".
+- [2026-06-25] `inventory` (lógica pura de mapeamento) acompanha essa fronteira:
+  recebe dados crus e devolve estruturas, sem tocar em rede. Contagem de linhas de
+  database (que exige rede) fica no coletor em `examples/`, não no `inventory`.
 - [2026-06-24] Integração externa (Notion) isolada no `client`; o resto do
   core não depende do formato cru do provedor.
 - [2026-06-24] Pacote importável é `notion_starter` (era `notion_sync`). Exceções

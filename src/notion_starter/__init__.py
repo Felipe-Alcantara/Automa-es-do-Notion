@@ -4,6 +4,7 @@ API pública:
     NotionClient: o cliente HTTP (cria/consulta databases e páginas).
     properties: helpers para montar valores de propriedade do Notion.
     comparar_schema / SchemaComparison: valida um database contra um schema.
+    construir_inventario / Inventario: mapeia o workspace (árvore, duplicatas, órfãos).
     configure_logging: logging opcional em console/arquivo.
     Exceções: NotionSyncError e suas subclasses.
 """
@@ -20,6 +21,13 @@ from .exceptions import (
     NotionInvalidResponseError,
     NotionSchemaError,
     NotionSyncError,
+)
+from .inventory import (
+    Inventario,
+    ItemInventario,
+    NoArvore,
+    construir_inventario,
+    normalizar_item,
 )
 from .logging import configure_logging, get_logger
 from .schema import (
@@ -38,6 +46,11 @@ __all__ = [
     "SchemaComparison",
     "comparar_schema",
     "extrair_tipos_propriedades",
+    "Inventario",
+    "ItemInventario",
+    "NoArvore",
+    "construir_inventario",
+    "normalizar_item",
     "configure_logging",
     "get_logger",
     "NotionSyncError",
