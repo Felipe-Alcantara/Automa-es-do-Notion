@@ -33,6 +33,10 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
 - [2026-06-25] ✅ `inventory.py` — lógica pura que monta árvore (via `parent`),
   duplicatas por nome, vazios e órfãos a partir dos itens de `buscar()`. Sem rede,
   testado em `tests/test_inventory.py`.
+- [2026-06-25] ✅ Mapeamento end-to-end: `examples/coletar_mapa.py` (varre + conta
+  linhas dos databases → `mapa.json`) e `examples/gerar_arvore_html.py`
+  (`mapa.json` → `mapa.html` navegável). `listar_paginas.py` refatorado para usar
+  `buscar()`. Menu (`start_app.py`) ganhou a ação "Mapear workspace".
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 helpers de leitura (extrair valores de páginas), suporte a blocos, mais exemplos

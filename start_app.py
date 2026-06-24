@@ -274,6 +274,51 @@ def acao_rodar(console) -> None:
         )
 
 
+def acao_mapear(console) -> None:
+    """Mapear workspace: coleta o mapa e gera o relatório HTML navegável."""
+
+    console.rule("[bold]Mapear workspace")
+
+    if not _pacote_instalado():
+        console.print(
+            "[yellow]•[/yellow] O pacote notion_starter não está importável. "
+            "Use [bold]Instalar / Setup[/bold] primeiro."
+        )
+        return
+    configurado, origem = _token_configurado()
+    if not configurado:
+        console.print(
+            f"[yellow]•[/yellow] Token {origem}. O mapeamento chama a API do Notion "
+            "e vai falhar sem um token válido — ajuste em [bold]Configurar[/bold]."
+        )
+        return
+
+    ambiente = dict(os.environ)
+    token_arquivo = _ler_token_env_file()
+    if token_arquivo and not ambiente.get(TOKEN_ENV):
+        ambiente[TOKEN_ENV] = token_arquivo
+
+    console.print("Coletando o mapa do workspace (pode levar ~1 min)...")
+    codigo = subprocess.call(
+        [sys.executable, str(EXEMPLOS / "coletar_mapa.py")], cwd=RAIZ, env=ambiente
+    )
+    if codigo != 0:
+        console.print(f"[red]✗[/red] Falha na coleta (código {codigo}).")
+        return
+
+    console.print("Gerando o relatório HTML...")
+    codigo = subprocess.call(
+        [sys.executable, str(EXEMPLOS / "gerar_arvore_html.py")], cwd=RAIZ, env=ambiente
+    )
+    if codigo == 0:
+        console.print(
+            "[green]✓[/green] Pronto: [bold]mapa.json[/bold] e [bold]mapa.html[/bold] "
+            "na raiz do projeto. Abra o HTML no navegador."
+        )
+    else:
+        console.print(f"[red]✗[/red] Falha ao gerar o HTML (código {codigo}).")
+
+
 def acao_status(console) -> None:
     """Status: mostra o estado real do ambiente, sem expor segredo."""
 
@@ -341,6 +386,7 @@ def _menu_loop() -> None:
 
     acoes = {
         "rodar": ("▶  Iniciar / Rodar — executa um exemplo da biblioteca", acao_rodar),
+        "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),
         "instalar": ("⬇  Instalar / Setup — instala deps e cria o .env", acao_instalar),
         "configurar": ("⚙  Configurar — aponta o token do Notion", acao_configurar),
         "status": ("ℹ  Status — mostra o estado real do ambiente", acao_status),
