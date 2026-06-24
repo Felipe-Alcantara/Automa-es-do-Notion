@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from notion_starter import (
+    agrupar_por_assinatura,
     agrupar_por_schema,
+    assinatura_perfil,
     assinatura_schema,
     construir_inventario,
+    extrair_perfil_database,
     normalizar_item,
 )
 from notion_starter.inventory import SEM_TITULO
@@ -175,3 +178,52 @@ def test_agrupar_ordena_do_maior_grupo_para_o_menor():
     }
     grupos = agrupar_por_schema(schemas)
     assert [len(g.databases) for g in grupos] == [3, 2]
+
+
+# -- Perfil rico (colunas + opções) ---------------------------------------
+
+
+def db_com_opcoes(id_, opcoes_status):
+    """Database cru com uma coluna title e uma coluna status com opções."""
+    return {
+        "object": "database",
+        "id": id_,
+        "properties": {
+            "Nome": {"type": "title", "title": {}},
+            "Status": {
+                "type": "status",
+                "status": {"options": [{"name": o} for o in opcoes_status]},
+            },
+        },
+    }
+
+
+def test_extrair_perfil_inclui_opcoes_de_status():
+    perfil = extrair_perfil_database(db_com_opcoes("d1", ["Inbox", "Feito"]))
+    assert perfil["Nome"] == "title"
+    assert perfil["Status"] == "status(Feito,Inbox)"  # ordenado
+
+
+def test_assinatura_perfil_separa_databases_com_opcoes_diferentes():
+    # Mesma estrutura (colunas), mas opções de Status diferentes.
+    p1 = extrair_perfil_database(db_com_opcoes("d1", ["Inbox", "Feito"]))
+    p2 = extrair_perfil_database(db_com_opcoes("d2", ["A fazer", "Concluido"]))
+    # Pela assinatura de schema simples (so colunas) seriam iguais...
+    assert assinatura_schema({"Nome": "title", "Status": "status"}) is not None
+    # ...mas pela assinatura de perfil sao distintos.
+    assert assinatura_perfil(p1) != assinatura_perfil(p2)
+
+
+def test_assinatura_perfil_junta_databases_com_mesmas_opcoes():
+    p1 = extrair_perfil_database(db_com_opcoes("d1", ["Inbox", "Feito"]))
+    p2 = extrair_perfil_database(db_com_opcoes("d2", ["Feito", "Inbox"]))  # ordem difere
+    assert assinatura_perfil(p1) == assinatura_perfil(p2)
+
+
+def test_agrupar_por_assinatura_usa_assinaturas_prontas():
+    grupos = agrupar_por_assinatura(
+        {"d1": "X", "d2": "X", "d3": "Y"},
+        nomes={"d1": "Tarefas", "d2": "Tarefas (1)", "d3": "Outro"},
+    )
+    assert len(grupos) == 1
+    assert set(grupos[0].databases) == {"d1", "d2"}
