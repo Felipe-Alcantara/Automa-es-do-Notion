@@ -1,0 +1,116 @@
+# 🤝 Contribuindo com o notion-starter-boilerplate
+
+Obrigado por querer contribuir! Este é um boilerplate open source — um ponto de
+partida para projetos sobre o Notion — e melhorar junto é exatamente a ideia.
+Issues, correções de documentação, novos helpers de propriedade, novos exemplos
+ou cobertura de mais endpoints do Notion são bem-vindos.
+
+> Contribuições aqui melhoram a **base** que todo mundo clona. Mudanças específicas
+> do seu projeto vivem no seu fork, depois de usar o template.
+
+---
+
+## 📋 Índice
+
+- [Como Contribuir](#-como-contribuir)
+- [Ambiente de Desenvolvimento](#-ambiente-de-desenvolvimento)
+- [Padrões de Qualidade](#-padrões-de-qualidade)
+- [Padrões de Linguagem](#-padrões-de-linguagem-documentação-e-logs)
+- [Fluxo de Pull Request](#-fluxo-de-pull-request)
+- [Código de Conduta](#-código-de-conduta)
+
+---
+
+## 🚀 Como Contribuir
+
+1. **Faça um fork** do repositório.
+2. **Crie uma branch** descritiva (`fix/...`, `feat/...`, `docs/...`).
+3. **Faça suas mudanças** seguindo os padrões abaixo.
+4. **Rode os testes e o lint** antes de abrir o PR.
+5. **Abra um Pull Request** explicando o que mudou e por quê.
+
+Não tem certeza por onde começar? Abra uma issue descrevendo a ideia — a gente
+conversa antes de você investir tempo no código.
+
+---
+
+## 🛠️ Ambiente de Desenvolvimento
+
+```bash
+# Clone e instale com as dependências de desenvolvimento
+git clone https://github.com/flaviavs-commits/notion-starter-boilerplate.git
+cd notion-starter-boilerplate
+pip install -e ".[dev]"
+
+# Rode a suíte de testes (HTTP é mockado — não precisa de token nem rede)
+pytest -q
+
+# Verifique o estilo
+ruff check .
+```
+
+Requer Python 3.10+. Copie `.env.example` para `.env` apenas se for rodar exemplos
+contra um workspace real do Notion — nunca versione o `.env`.
+
+---
+
+## ✅ Padrões de Qualidade
+
+- **Entenda o padrão existente antes de alterar.** O projeto separa
+  responsabilidades por módulo (`client`, `schema`, `properties`, `exceptions`,
+  `logging`, `constants`); mantenha essa fronteira.
+- **Prefira a solução mais simples** que resolva o problema real, sem adicionar
+  dependências ou camadas sem justificativa.
+- **Preserve contratos.** A API pública (`__all__`), os nomes dos métodos e o
+  formato das exceções devem permanecer estáveis; mudança quebradora precisa ser
+  explícita e documentada.
+- **Tipos e validação.** Use tipagem (`TypedDict`/`dataclass`) e valide entradas
+  externas, como o restante do código já faz.
+- **Não exponha segredos.** Nada de tokens, IDs reais ou URLs privadas no código,
+  nos testes ou na documentação.
+- **Teste o comportamento.** Bugs corrigidos viram caso de regressão; HTTP é
+  sempre mockado com `responses`.
+- **Atualize a documentação viva** (`README.md` e `IA.md`) no mesmo passo quando a
+  mudança alterar comportamento, estrutura ou comandos.
+
+---
+
+## ✍️ Padrões de Linguagem (Documentação e Logs)
+
+Como o projeto é open source, documentação e logs são lidos por um público amplo.
+
+- **Escreva para qualquer leitor** — linguagem geral e acessível, sem jargão interno.
+- **Sem valores hardcoded** — use placeholders genéricos em vez de caminhos,
+  tokens ou IDs reais.
+- **Enquadre o trabalho futuro como convite à contribuição** em vez de uma lista
+  de tarefas interna.
+
+| ❌ Evite (tom interno) | ✅ Prefira (tom open source) |
+|------------------------|------------------------------|
+| "Features futuras para implementar" | "Melhorias que o projeto poderia expandir" |
+| "TODO: ainda falta fazer" | "Ideias para quem quiser contribuir" |
+
+---
+
+## 🔄 Fluxo de Pull Request
+
+Um bom PR responde claramente:
+
+- **O que mudou?**
+- **Por que mudou?**
+- **Como foi validado?** (ex.: `pytest -q` e `ruff check .`)
+- **Qual risco sobrou?**
+
+Mantenha o PR focado: evite misturar refatoração ampla com novas funcionalidades.
+Use commits pequenos no formato `tipo: descrição` (`feat`/`fix`/`docs`/`refactor`/`chore`).
+
+---
+
+## 💬 Código de Conduta
+
+Seja respeitoso e acolhedor. Este é um espaço para aprender e construir juntos —
+contribuições de pessoas de todos os níveis de experiência são bem-vindas.
+
+---
+
+⭐ Se este projeto te ajudou, considere deixar uma estrela no GitHub!
