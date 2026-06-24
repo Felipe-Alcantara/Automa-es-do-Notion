@@ -23,9 +23,12 @@ from .exceptions import (
     NotionSyncError,
 )
 from .inventory import (
+    GrupoSchema,
     Inventario,
     ItemInventario,
     NoArvore,
+    agrupar_por_schema,
+    assinatura_schema,
     construir_inventario,
     normalizar_item,
 )
@@ -49,8 +52,11 @@ __all__ = [
     "Inventario",
     "ItemInventario",
     "NoArvore",
+    "GrupoSchema",
     "construir_inventario",
     "normalizar_item",
+    "assinatura_schema",
+    "agrupar_por_schema",
     "configure_logging",
     "get_logger",
     "NotionSyncError",

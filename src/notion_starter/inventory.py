@@ -174,3 +174,81 @@ def construir_inventario(itens_crus: list[dict[str, Any]]) -> Inventario:
         vazios=vazios,
         orfaos=orfaos,
     )
+
+
+@dataclass
+class GrupoSchema:
+    """Databases que compartilham a mesma estrutura de colunas.
+
+    Attributes:
+        assinatura: A impressão digital do schema (colunas normalizadas).
+        databases: IDs dos databases com essa mesma assinatura.
+        nomes: Títulos desses databases (pode haver nomes diferentes).
+    """
+
+    assinatura: str
+    databases: list[str]
+    nomes: list[str]
+
+    @property
+    def mesmos_nomes(self) -> bool:
+        """Se todos os databases do grupo têm o mesmo título."""
+
+        return len(set(self.nomes)) == 1
+
+
+def assinatura_schema(colunas: dict[str, str]) -> str:
+    """Gera uma impressão digital estável de um schema de database.
+
+    Dois databases com as mesmas colunas (nome + tipo) produzem a mesma
+    assinatura, independentemente da ordem em que as colunas aparecem. Serve
+    para identificar databases com estrutura idêntica — possivelmente "o mesmo"
+    database copiado para lugares distintos, mesmo que tenham nomes diferentes.
+
+    Args:
+        colunas: Mapeamento de nome de coluna para tipo Notion, como em
+            :func:`schema.extrair_tipos_propriedades`.
+
+    Returns:
+        Uma string canônica representando o conjunto de colunas.
+    """
+
+    pares = sorted(f"{nome}:{tipo}" for nome, tipo in colunas.items())
+    return "|".join(pares)
+
+
+def agrupar_por_schema(
+    schemas: dict[str, dict[str, str]],
+    nomes: dict[str, str] | None = None,
+) -> list[GrupoSchema]:
+    """Agrupa databases que têm exatamente a mesma estrutura de colunas.
+
+    Args:
+        schemas: Mapeamento de ``database_id`` para suas colunas
+            (``{nome_coluna: tipo}``).
+        nomes: Mapeamento opcional de ``database_id`` para título, usado só
+            para exibição no resultado.
+
+    Returns:
+        Os grupos com mais de um database compartilhando a mesma assinatura,
+        ordenados do maior grupo para o menor.
+    """
+
+    nomes = nomes or {}
+    por_assinatura: dict[str, list[str]] = {}
+    for db_id, colunas in schemas.items():
+        if not colunas:
+            continue  # database sem colunas legíveis não entra na comparação
+        por_assinatura.setdefault(assinatura_schema(colunas), []).append(db_id)
+
+    grupos = [
+        GrupoSchema(
+            assinatura=assinatura,
+            databases=ids,
+            nomes=[nomes.get(i, SEM_TITULO) for i in ids],
+        )
+        for assinatura, ids in por_assinatura.items()
+        if len(ids) > 1
+    ]
+    grupos.sort(key=lambda g: len(g.databases), reverse=True)
+    return grupos

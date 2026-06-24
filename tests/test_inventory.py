@@ -1,6 +1,11 @@
 from __future__ import annotations
 
-from notion_starter import construir_inventario, normalizar_item
+from notion_starter import (
+    agrupar_por_schema,
+    assinatura_schema,
+    construir_inventario,
+    normalizar_item,
+)
 from notion_starter.inventory import SEM_TITULO
 
 
@@ -119,3 +124,54 @@ def test_totais():
     ])
     assert inv.total_paginas == 1
     assert inv.total_databases == 1
+
+
+# -- Agrupamento por schema -----------------------------------------------
+
+
+def test_assinatura_independe_da_ordem_das_colunas():
+    a = assinatura_schema({"Nome": "title", "Email": "email"})
+    b = assinatura_schema({"Email": "email", "Nome": "title"})
+    assert a == b
+
+
+def test_assinatura_diferente_quando_tipo_muda():
+    a = assinatura_schema({"Nome": "title"})
+    b = assinatura_schema({"Nome": "rich_text"})
+    assert a != b
+
+
+def test_agrupar_junta_databases_com_mesma_estrutura():
+    schemas = {
+        "d1": {"Nome": "title", "Email": "email"},
+        "d2": {"Email": "email", "Nome": "title"},  # mesma estrutura, ordem diferente
+        "d3": {"Titulo": "title"},  # estrutura diferente
+    }
+    grupos = agrupar_por_schema(schemas)
+    assert len(grupos) == 1
+    assert set(grupos[0].databases) == {"d1", "d2"}
+
+
+def test_agrupar_detecta_nomes_diferentes_no_grupo():
+    schemas = {"d1": {"N": "title"}, "d2": {"N": "title"}}
+    nomes = {"d1": "Tarefas", "d2": "To-do"}
+    grupo = agrupar_por_schema(schemas, nomes)[0]
+    assert not grupo.mesmos_nomes
+    assert set(grupo.nomes) == {"Tarefas", "To-do"}
+
+
+def test_agrupar_ignora_databases_sem_colunas():
+    schemas = {"d1": {}, "d2": {}}
+    assert agrupar_por_schema(schemas) == []
+
+
+def test_agrupar_ordena_do_maior_grupo_para_o_menor():
+    schemas = {
+        "a1": {"X": "title"},
+        "a2": {"X": "title"},
+        "a3": {"X": "title"},
+        "b1": {"Y": "number"},
+        "b2": {"Y": "number"},
+    }
+    grupos = agrupar_por_schema(schemas)
+    assert [len(g.databases) for g in grupos] == [3, 2]
