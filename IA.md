@@ -28,6 +28,8 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
 - [2026-06-24] ✅ Reposicionamento de "biblioteca notion-sync" para boilerplate/template
   `notion-starter-boilerplate`: pacote renomeado para `notion_starter`, README/CONTRIBUTING/
   IA.md reescritos no enquadramento de template, e exemplo end-to-end `sync_from_csv.py`.
+- [2026-06-25] ✅ `NotionClient.buscar()` — varredura do workspace via `/search` com
+  paginação (base para inventariar/mapear o que a integração enxerga).
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 helpers de leitura (extrair valores de páginas), suporte a blocos, mais exemplos

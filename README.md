@@ -232,6 +232,7 @@ else:
 
 Métodos de `NotionClient`:
 
+- **`buscar(query=None, page_size=100, buscar_todos=False, filtro=None)`** — busca páginas e databases compartilhados com a integração (endpoint `/search`); sem `query`, lista tudo o que é visível.
 - **`get_database(database_id)`** — busca os metadados de um database.
 - **`criar_database(pagina_id, titulo, propriedades)`** — cria um database filho de uma página.
 - **`consultar_database(database_id, page_size=100, buscar_todos=False, filtro=None)`** — consulta com paginação.

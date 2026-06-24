@@ -66,6 +66,15 @@ class DatabaseQueryPayload(TypedDict):
     start_cursor: NotRequired[str]
 
 
+class SearchPayload(TypedDict):
+    """Payload para busca no workspace via ``/search``."""
+
+    page_size: int
+    query: NotRequired[str]
+    filter: NotRequired[dict[str, object]]
+    start_cursor: NotRequired[str]
+
+
 class PageParentPayload(TypedDict):
     """Parent de página vinculada a um database."""
 
@@ -228,6 +237,60 @@ class NotionClient:
             raise NotionInvalidResponseError(
                 "A API do Notion retornou um JSON inválido."
             ) from exc
+
+    # -- Busca -------------------------------------------------------------
+
+    def buscar(
+        self,
+        query: str | None = None,
+        page_size: int = 100,
+        buscar_todos: bool = False,
+        filtro: dict[str, object] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Busca páginas e databases compartilhados com a integração.
+
+        Percorre o endpoint ``/search`` do Notion, que retorna apenas os itens
+        que a integração tem permissão de ver. Sem ``query``, lista tudo o que é
+        visível — útil para inventariar o workspace.
+
+        Args:
+            query: Texto para casar com o título dos itens. ``None`` retorna tudo.
+            page_size: Quantidade de itens por página.
+            buscar_todos: Quando verdadeiro, percorre toda a paginação.
+            filtro: Filtro Notion opcional (ex.: só páginas ou só databases).
+
+        Returns:
+            A lista de itens (páginas e/ou databases) retornados pela API.
+
+        Raises:
+            ValueError: Se ``page_size`` for menor que 1.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        if page_size < 1:
+            raise ValueError("page_size deve ser maior que zero.")
+
+        payload: SearchPayload = {"page_size": page_size}
+        if query:
+            payload["query"] = query
+        if filtro:
+            payload["filter"] = filtro
+
+        resultados: list[dict[str, Any]] = []
+
+        while True:
+            data = self._request_json(method="POST", path="/search", payload=payload)
+            resultados.extend(data.get("results", []))
+
+            if not buscar_todos or not data.get("has_more"):
+                break
+
+            next_cursor = data.get("next_cursor")
+            if not next_cursor:
+                break
+            payload["start_cursor"] = next_cursor
+
+        return resultados
 
     # -- Databases ---------------------------------------------------------
 

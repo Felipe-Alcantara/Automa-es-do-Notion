@@ -149,3 +149,44 @@ def test_consultar_database_rejeita_page_size_invalido():
     client = criar_client()
     with pytest.raises(ValueError):
         client.consultar_database("db123", page_size=0)
+
+
+# -- Busca -----------------------------------------------------------------
+
+
+@responses.activate
+def test_buscar_buscar_todos_percorre_paginas():
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/search",
+        json={"results": [{"id": "a"}], "has_more": True, "next_cursor": "c1"},
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/search",
+        json={"results": [{"id": "b"}], "has_more": False},
+        status=200,
+    )
+    client = criar_client()
+    itens = client.buscar(buscar_todos=True)
+    assert [item["id"] for item in itens] == ["a", "b"]
+
+
+@responses.activate
+def test_buscar_inclui_query_no_payload():
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/search",
+        json={"results": [], "has_more": False},
+        status=200,
+    )
+    client = criar_client()
+    client.buscar(query="Tarefas")
+    assert b'"query": "Tarefas"' in responses.calls[0].request.body
+
+
+def test_buscar_rejeita_page_size_invalido():
+    client = criar_client()
+    with pytest.raises(ValueError):
+        client.buscar(page_size=0)
