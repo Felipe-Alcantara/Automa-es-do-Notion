@@ -231,6 +231,24 @@ for titulo, repetidos in inv.duplicatas.items():
     print("duplicado:", titulo, "->", len(repetidos))
 ```
 
+## ✅ Tasklist de Alto Nível
+
+`TaskList` envolve um database de tarefas: lê, cria e atualiza tarefas com um
+objeto `Tarefa` simples, sem mexer no JSON da API. Os nomes das colunas são
+configuráveis (`CamposTarefa`) porque variam entre workspaces.
+
+```python
+from notion_starter import NotionClient, TaskList
+
+tl = TaskList(NotionClient(), "seu_database_id")
+
+for t in tl.listar(status="00. Inbox"):
+    print(t.nome, "->", t.status)
+
+tl.criar("Revisar PR", status="02. ASAP", prazo="2026-07-01")
+tl.atualizar_status("id_da_tarefa", "06. Feito")
+```
+
 ## 🧩 Helpers de Propriedades
 
 | Helper | Tipo Notion |

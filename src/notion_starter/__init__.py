@@ -42,6 +42,7 @@ from .schema import (
     comparar_schema,
     extrair_tipos_propriedades,
 )
+from .tasks import CamposTarefa, Tarefa, TaskList, tarefa_de_pagina
 
 __version__ = "0.1.0"
 
@@ -63,6 +64,10 @@ __all__ = [
     "extrair_perfil_database",
     "agrupar_por_schema",
     "agrupar_por_assinatura",
+    "TaskList",
+    "Tarefa",
+    "CamposTarefa",
+    "tarefa_de_pagina",
     "configure_logging",
     "get_logger",
     "NotionSyncError",

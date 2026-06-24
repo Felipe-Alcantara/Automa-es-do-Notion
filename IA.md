@@ -37,6 +37,12 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   linhas dos databases → `mapa.json`) e `examples/gerar_arvore_html.py`
   (`mapa.json` → `mapa.html` navegável). `listar_paginas.py` refatorado para usar
   `buscar()`. Menu (`start_app.py`) ganhou a ação "Mapear workspace".
+- [2026-06-25] ✅ `inventory.extrair_perfil_database`/`assinatura_perfil` —
+  assinatura rica (colunas + opções de select/status/multi_select) para distinguir
+  databases "geralzões" de mesma estrutura mas conteúdo diferente.
+- [2026-06-25] ✅ `tasks.py` — camada de alto nível de tasklist (objeto `Tarefa`,
+  classe `TaskList` com listar/criar/atualizar_status/concluir) sobre o
+  `NotionClient`. Colunas configuráveis via `CamposTarefa`. Base para o front + IA.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 helpers de leitura (extrair valores de páginas), suporte a blocos, mais exemplos
