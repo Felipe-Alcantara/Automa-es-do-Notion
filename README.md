@@ -212,6 +212,24 @@ else:
     # resultado.levantar_se_incompativel()  # ou levanta NotionSchemaError
 ```
 
+## 🗺️ Mapeando o Workspace
+
+`construir_inventario` recebe os itens crus de `buscar()` e reconstrói a
+estrutura: árvore de páginas/databases, duplicatas por nome, itens vazios e
+órfãos (cujo parent não está visível). É lógica pura — sem rede.
+
+```python
+from notion_starter import NotionClient, construir_inventario
+
+client = NotionClient()
+itens = client.buscar(buscar_todos=True)
+inv = construir_inventario(itens)
+
+print(inv.total_paginas, inv.total_databases)
+for titulo, repetidos in inv.duplicatas.items():
+    print("duplicado:", titulo, "->", len(repetidos))
+```
+
 ## 🧩 Helpers de Propriedades
 
 | Helper | Tipo Notion |
