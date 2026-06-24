@@ -27,9 +27,12 @@ from .inventory import (
     Inventario,
     ItemInventario,
     NoArvore,
+    agrupar_por_assinatura,
     agrupar_por_schema,
+    assinatura_perfil,
     assinatura_schema,
     construir_inventario,
+    extrair_perfil_database,
     normalizar_item,
 )
 from .logging import configure_logging, get_logger
@@ -56,7 +59,10 @@ __all__ = [
     "construir_inventario",
     "normalizar_item",
     "assinatura_schema",
+    "assinatura_perfil",
+    "extrair_perfil_database",
     "agrupar_por_schema",
+    "agrupar_por_assinatura",
     "configure_logging",
     "get_logger",
     "NotionSyncError",

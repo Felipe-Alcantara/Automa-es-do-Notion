@@ -234,12 +234,36 @@ def agrupar_por_schema(
         ordenados do maior grupo para o menor.
     """
 
+    assinaturas = {
+        db_id: assinatura_schema(colunas)
+        for db_id, colunas in schemas.items()
+        if colunas  # database sem colunas legíveis não entra na comparação
+    }
+    return agrupar_por_assinatura(assinaturas, nomes)
+
+
+def agrupar_por_assinatura(
+    assinaturas: dict[str, str],
+    nomes: dict[str, str] | None = None,
+) -> list[GrupoSchema]:
+    """Agrupa databases que compartilham a mesma assinatura já calculada.
+
+    Útil quando a assinatura inclui mais do que as colunas (ex.: as opções das
+    propriedades, via :func:`assinatura_perfil`). Mantém o agrupamento separado
+    de como a impressão digital foi gerada.
+
+    Args:
+        assinaturas: Mapeamento de ``database_id`` para sua assinatura.
+        nomes: Mapeamento opcional de ``database_id`` para título (exibição).
+
+    Returns:
+        Os grupos com mais de um database por assinatura, do maior ao menor.
+    """
+
     nomes = nomes or {}
     por_assinatura: dict[str, list[str]] = {}
-    for db_id, colunas in schemas.items():
-        if not colunas:
-            continue  # database sem colunas legíveis não entra na comparação
-        por_assinatura.setdefault(assinatura_schema(colunas), []).append(db_id)
+    for db_id, assinatura in assinaturas.items():
+        por_assinatura.setdefault(assinatura, []).append(db_id)
 
     grupos = [
         GrupoSchema(
@@ -252,3 +276,48 @@ def agrupar_por_schema(
     ]
     grupos.sort(key=lambda g: len(g.databases), reverse=True)
     return grupos
+
+
+#: Tipos de propriedade cujas opções entram na assinatura de perfil.
+_TIPOS_COM_OPCOES = ("select", "status", "multi_select")
+
+
+def extrair_perfil_database(database: dict[str, Any]) -> dict[str, str]:
+    """Extrai um perfil rico de um database: colunas + opções das propriedades.
+
+    Diferente de :func:`schema.extrair_tipos_propriedades` (só nome→tipo), aqui
+    cada coluna de ``select``/``status``/``multi_select`` carrega também as suas
+    opções. Em workspaces onde a estrutura "geral" se repete, são as opções (ex.:
+    os Status, as áreas) que de fato distinguem um database do outro.
+
+    Args:
+        database: O JSON retornado por :meth:`NotionClient.get_database`.
+
+    Returns:
+        Mapeamento de nome de coluna para uma descrição (tipo + opções ordenadas).
+    """
+
+    perfil: dict[str, str] = {}
+    for nome, info in database.get("properties", {}).items():
+        tipo = info.get("type", "?")
+        if tipo in _TIPOS_COM_OPCOES:
+            opcoes = sorted(o.get("name", "") for o in info.get(tipo, {}).get("options", []))
+            perfil[nome] = f"{tipo}({','.join(opcoes)})"
+        else:
+            perfil[nome] = tipo
+    return perfil
+
+
+def assinatura_perfil(perfil: dict[str, str]) -> str:
+    """Gera a impressão digital de um perfil de database (colunas + opções).
+
+    Args:
+        perfil: Saída de :func:`extrair_perfil_database`.
+
+    Returns:
+        Uma string canônica; dois databases com as mesmas colunas E as mesmas
+        opções produzem a mesma assinatura.
+    """
+
+    pares = sorted(f"{nome}={descricao}" for nome, descricao in perfil.items())
+    return "||".join(pares)
