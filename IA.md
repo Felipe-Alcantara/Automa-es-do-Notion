@@ -47,6 +47,10 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   `examples/gerenciar_tarefas.py` (lista/cria/conclui), ação no menu
   (`start_app.py` → Iniciar/Rodar) e menção no README. Assim o recurso fica
   alcançável pela porta de entrada e documentado, não só no core + teste.
+- [2026-06-25] ✅ `start_app.py` → Configurar ganhou passo a passo guiado
+  (painel `rich`) para obter o token do Notion: criar a integração, copiar o
+  secret e — o passo que mais derruba iniciante — compartilhar a página com a
+  integração via ••• → Conexões. Antes a orientação só existia no `.env.example`.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 helpers de leitura (extrair valores de páginas), suporte a blocos, mais exemplos
