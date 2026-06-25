@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Boilerplate](https://img.shields.io/badge/tipo-boilerplate-8A2BE2?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-238%20passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-246%20passing-success?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Ponto de partida tipado para construir projetos sobre a API do Notion — clone, adapte e construa em cima.**
@@ -164,6 +164,10 @@ No menu você escolhe:
 - **Instalar / Setup** — instala o pacote com as deps de dev e cria o `.env`.
 - **Configurar** — aponta o token do Notion (gravado no `.env`, fora do git).
 - **Status / Sair** — mostra o estado real (Python, pacote, `.env`, token) e sai.
+
+Cada opção abre um **terminal dedicado**. O menu principal continua disponível
+para iniciar outras ações em paralelo — por exemplo, manter o servidor web e o
+MCP ativos enquanto executa um exemplo ou consulta o status.
 
 Na primeira execução, se as bibliotecas do menu (`questionary`, `rich`) não
 estiverem instaladas, o script se oferece para instalá-las. Funciona em Windows,

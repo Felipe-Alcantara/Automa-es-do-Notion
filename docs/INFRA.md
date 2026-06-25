@@ -71,9 +71,10 @@ Pelo menu (porta de entrada única):
 python start_app.py     # → "🌐 Subir servidor"
 ```
 
-A ação instala os extras de servidor (se faltarem), pergunta `host:porta`
-(`127.0.0.1:8000`), aplica as migrações e sobe o `runserver` com `DJANGO_DEBUG=1` e o
-token do `.env`. `Ctrl+C` volta ao menu.
+A ação abre um terminal dedicado, instala os extras de servidor (se faltarem),
+pergunta `host:porta` (`127.0.0.1:8000`), aplica as migrações e sobe o `runserver`
+com `DJANGO_DEBUG=1` e o token do `.env`. O menu principal permanece disponível;
+`Ctrl+C` encerra somente o servidor no terminal dedicado.
 
 Manualmente:
 

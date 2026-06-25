@@ -51,6 +51,10 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   (painel `rich`) para obter o token do Notion: criar a integração, copiar o
   secret e — o passo que mais derruba iniciante — compartilhar a página com a
   integração via ••• → Conexões. Antes a orientação só existia no `.env.example`.
+- [2026-06-25] ✅ O menu de `start_app.py` passou a abrir cada ação em um terminal
+  dedicado (`--action <nome>` no processo filho). O menu principal não espera o
+  término da ação, permitindo manter servidor web, MCP e outras opções em paralelo.
+  O lançador cobre Windows, macOS e os principais emuladores de terminal Linux.
 - [2026-06-25] ✅ Biblioteca de visão/estratégia em `docs/`: `PLANO.md` (roadmap
   completo + visão final — front próprio + IA sobre o Notion, em 6 fases),
   `MODELOS-DE-USO.md`, `PORTABILIDADE.md`, `SAAS.md`, `ESCALA.md`, `OTIMIZACAO.md`,
@@ -214,8 +218,10 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 - [2026-06-25] ✅ MCP e projetos: **32 testes focados** cobrindo a superfície
   `notion.*`, validação, anotações, transportes, erros sanitizados e atualização
   de página de projeto.
+- [2026-06-25] ✅ `tests/test_start_app.py` (8) — comando filho, seleção de
+  terminal Linux, processo independente, fallback sem emulador e novo console Windows.
 - [2026-06-25] ✅ Suíte completa do working tree compartilhado:
-  **238 testes passando**; `ruff` limpo e `manage.py check` sem problemas.
+  **246 testes passando**; `ruff` limpo e `manage.py check` sem problemas.
 
 ---
 
