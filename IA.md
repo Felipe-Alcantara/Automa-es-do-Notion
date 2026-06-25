@@ -256,3 +256,13 @@ ao starter um fluxo completo para a pessoa adaptar. Trabalho feito em branch
 política de git.
 VALIDAÇÃO: `pytest -q` (22 passados) e `ruff check .` (limpo) após o rename e os novos
 artefatos; `pip install -e ".[dev]"` reinstalado com o pacote `notion_starter`.
+
+[2026-06-25] CONTEXTO: Fechar as Fases 3-4 com fontes externas sem duplicar páginas ou
+tarefas em reprocessamentos.
+ALTERNATIVAS: Escrita direta por fonte; sincronização sempre aditiva; ou contratos
+normalizados com idempotência antes da escrita.
+DECISÃO: Isolar HTTP em `integrations/github.py`, modelar fontes pelo protocolo `Fonte`
+e usar `Origem`/URL/título da tarefa como chaves de reconciliação. Repositórios privados
+só entram quando o token pertence ao usuário consultado.
+VALIDAÇÃO: 52 testes focados verdes, `ruff` limpo, compileall e diff-check; commit
+`d643894`. Guia operacional em `docs/INTEGRACOES.md`.
