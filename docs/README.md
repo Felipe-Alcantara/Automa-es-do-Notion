@@ -16,9 +16,12 @@
 | [🎭 MODELOS-DE-USO.md](MODELOS-DE-USO.md) | Quem usa, em quais cenários, e os modos de operação (lib, CLI, servidor, IA, MCP). |
 | [🔌 PORTABILIDADE.md](PORTABILIDADE.md) | Como adaptar para outro domínio, outro provedor ou outra linguagem. Usar como template. |
 | [💼 SAAS.md](SAAS.md) | O que mudaria para virar um produto multiusuário (auth, multi-tenant, cobrança, segurança). |
+| [🏗️ INFRA.md](INFRA.md) | Como o servidor roda local e é hospedado: estrutura de pastas, config por ambiente, SQLite operacional, deploy. |
 | [📈 ESCALA.md](ESCALA.md) | Como crescer sem quebrar: fila de jobs, workers, cache, rate limit, observabilidade. |
 | [⚡ OTIMIZACAO.md](OTIMIZACAO.md) | Como reduzir latência e custo (chamadas ao Notion e ao OpenRouter, cache, idempotência). |
 | [💡 IDEIAS-EXTRAS.md](IDEIAS-EXTRAS.md) | Brainstorm aberto: funcionalidades e integrações além do roadmap. |
+| [🤖 AGENTES.md](AGENTES.md) | Playbook de orquestração multi-agente: papéis, o que cada agente lê e entrega, ordem e coordenação (para o Felixo-AI-Core). |
+| [🧱 CONTRATOS.md](CONTRATOS.md) | Contrato fixado pelo Agente 0: objetos de domínio, rotas REST, formato de erro e estrutura de pastas do servidor. |
 
 ---
 
@@ -29,6 +32,7 @@
 - **Quero pensar em produto** → [SAAS.md](SAAS.md) → [ESCALA.md](ESCALA.md)
 - **Quero deixar mais rápido/barato** → [OTIMIZACAO.md](OTIMIZACAO.md)
 - **Quero contribuir com algo novo** → [IDEIAS-EXTRAS.md](IDEIAS-EXTRAS.md)
+- **Sou um agente (ou o orquestrador) construindo o projeto** → [AGENTES.md](AGENTES.md)
 
 ---
 
