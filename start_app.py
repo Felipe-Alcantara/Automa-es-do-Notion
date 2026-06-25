@@ -13,11 +13,17 @@ o token continua em variável de ambiente / ``.env`` ignorado pelo git.
 
 from __future__ import annotations
 
+import json
 import os
 import shlex
 import shutil
 import subprocess
 import sys
+import threading
+import time
+import urllib.error
+import urllib.request
+import webbrowser
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent
@@ -29,6 +35,9 @@ MANAGE_PY = SERVIDOR / "manage.py"
 TOKEN_ENV = "NOTION_TOKEN"
 DATABASE_ENV = "NOTION_DATABASE_ID"
 TOKEN_PREFIXO = "ntn_"
+APP_ENDERECO_PADRAO = "127.0.0.1:8000"
+APP_URL = f"http://{APP_ENDERECO_PADRAO}/"
+APP_HEALTH_URL = f"{APP_URL}api/health"
 
 # As deps de TUI são do próprio menu; o passo de Instalar/Setup garante que
 # existem. Antes disso, caímos num fallback em texto puro para nunca quebrar.
@@ -428,6 +437,147 @@ def acao_rodar(console) -> None:
         )
 
 
+def _instalar_extra_servidor(console) -> bool:
+    """Instala o extra Django e confirma que ele ficou importável."""
+
+    console.print("Instalando os componentes do servidor web...")
+    codigo = subprocess.call(
+        [sys.executable, "-m", "pip", "install", "-e", ".[server]"],
+        cwd=RAIZ,
+    )
+    if codigo == 0 and _django_disponivel():
+        console.print("[green]✓[/green] Componentes do servidor instalados.")
+        return True
+
+    console.print(
+        "[red]✗[/red] Não consegui instalar o Django. Instale manualmente:\n"
+        f'  {sys.executable} -m pip install -e ".[server]"'
+    )
+    return False
+
+
+def _ambiente_servidor() -> dict[str, str]:
+    """Monta o ambiente local do Django sem expor o token."""
+
+    ambiente = dict(os.environ)
+    ambiente.setdefault("DJANGO_DEBUG", "1")
+    token_arquivo = _ler_token_env_file()
+    if token_arquivo and not ambiente.get(TOKEN_ENV):
+        ambiente[TOKEN_ENV] = token_arquivo
+    return ambiente
+
+
+def _aplicar_migracoes(console, ambiente: dict[str, str]) -> bool:
+    """Aplica as migrações operacionais antes de iniciar o app."""
+
+    console.print("Aplicando migrações do estado operacional (SQLite)...")
+    codigo = subprocess.call(
+        [sys.executable, str(MANAGE_PY), "migrate", "--noinput"],
+        cwd=SERVIDOR,
+        env=ambiente,
+    )
+    if codigo == 0:
+        return True
+    console.print(f"[red]✗[/red] Falha ao migrar (código {codigo}).")
+    return False
+
+
+def _app_web_ativo(url: str = APP_HEALTH_URL) -> bool:
+    """Confirma que a porta responde como este projeto, não apenas que está ocupada."""
+
+    try:
+        with urllib.request.urlopen(url, timeout=0.5) as resposta:  # noqa: S310 - URL local fixa
+            corpo = json.loads(resposta.read().decode("utf-8"))
+    except (json.JSONDecodeError, OSError, UnicodeError, urllib.error.URLError):
+        return False
+    return (
+        isinstance(corpo, dict)
+        and corpo.get("status") == "ok"
+        and corpo.get("service") == "automacoes-notion"
+    )
+
+
+def _abrir_navegador_quando_pronto(
+    console,
+    *,
+    tentativas: int = 40,
+    intervalo: float = 0.25,
+) -> None:
+    """Espera o health check responder e abre o front no navegador padrão."""
+
+    for _ in range(tentativas):
+        if _app_web_ativo():
+            if webbrowser.open(APP_URL):
+                console.print(f"[green]✓[/green] Navegador aberto em [bold]{APP_URL}[/bold].")
+            else:
+                console.print(
+                    "[yellow]•[/yellow] O navegador não abriu automaticamente. "
+                    f"Acesse [bold]{APP_URL}[/bold]."
+                )
+            return
+        time.sleep(intervalo)
+
+    console.print(
+        "[yellow]•[/yellow] O servidor demorou para responder. "
+        f"Quando estiver pronto, acesse [bold]{APP_URL}[/bold]."
+    )
+
+
+def _agendar_abertura_navegador(console) -> None:
+    """Inicia em background a espera pelo servidor e a abertura do navegador."""
+
+    threading.Thread(
+        target=_abrir_navegador_quando_pronto,
+        args=(console,),
+        daemon=True,
+        name="abrir-navegador-notion",
+    ).start()
+
+
+def acao_iniciar_tudo(console) -> None:
+    """Inicia front + API com defaults locais e abre o navegador."""
+
+    console.rule("[bold]Iniciar tudo")
+
+    if not _django_disponivel() and not _instalar_extra_servidor(console):
+        return
+
+    configurado, origem = _token_configurado()
+    if not configurado:
+        console.print(
+            f"[yellow]•[/yellow] Token {origem}. O app abre normalmente, mas as tarefas "
+            "do Notion só carregam depois de configurar o token."
+        )
+
+    if _app_web_ativo():
+        console.print("[green]✓[/green] O app já está rodando.")
+        if not webbrowser.open(APP_URL):
+            console.print(f"Acesse [bold]{APP_URL}[/bold] no navegador.")
+        return
+
+    ambiente = _ambiente_servidor()
+    if not _aplicar_migracoes(console, ambiente):
+        return
+
+    console.print(
+        f"Subindo front + API em [bold]{APP_URL}[/bold]. O navegador abrirá automaticamente."
+    )
+    _agendar_abertura_navegador(console)
+    try:
+        codigo = subprocess.call(
+            [sys.executable, str(MANAGE_PY), "runserver", APP_ENDERECO_PADRAO],
+            cwd=SERVIDOR,
+            env=ambiente,
+        )
+        if codigo != 0:
+            console.print(
+                f"[red]✗[/red] O servidor terminou com código {codigo}. "
+                f"Verifique se {APP_ENDERECO_PADRAO} já está sendo usado."
+            )
+    except KeyboardInterrupt:
+        console.print("\n[dim]Aplicação encerrada.[/dim]")
+
+
 def acao_servidor(console) -> None:
     """Subir servidor: aplica as migrações e sobe o servidor Django local."""
 
@@ -438,14 +588,7 @@ def acao_servidor(console) -> None:
     if not _django_disponivel():
         console.print("[yellow]•[/yellow] O Django (extra de servidor) não está instalado.")
         if questionary.confirm("Instalar os extras de servidor agora?").ask():
-            codigo = subprocess.call(
-                [sys.executable, "-m", "pip", "install", "-e", ".[server]"], cwd=RAIZ
-            )
-            if codigo != 0 or not _django_disponivel():
-                console.print(
-                    "[red]✗[/red] Não consegui instalar o Django. Instale manualmente:\n"
-                    f'  {sys.executable} -m pip install -e ".[server]"'
-                )
+            if not _instalar_extra_servidor(console):
                 return
         else:
             console.print(
@@ -469,19 +612,8 @@ def acao_servidor(console) -> None:
         return
     endereco = endereco.strip()
 
-    # Ambiente do subprocesso: DEBUG ligado para uso local + token do .env, se houver.
-    ambiente = dict(os.environ)
-    ambiente.setdefault("DJANGO_DEBUG", "1")
-    token_arquivo = _ler_token_env_file()
-    if token_arquivo and not ambiente.get(TOKEN_ENV):
-        ambiente[TOKEN_ENV] = token_arquivo
-
-    console.print("Aplicando migrações do estado operacional (SQLite)...")
-    codigo = subprocess.call(
-        [sys.executable, str(MANAGE_PY), "migrate", "--noinput"], cwd=SERVIDOR, env=ambiente
-    )
-    if codigo != 0:
-        console.print(f"[red]✗[/red] Falha ao migrar (código {codigo}).")
+    ambiente = _ambiente_servidor()
+    if not _aplicar_migracoes(console, ambiente):
         return
 
     console.print(
@@ -670,6 +802,10 @@ def _acoes_menu():
     """Retorna as ações disponíveis e seus rótulos públicos."""
 
     return {
+        "tudo": (
+            "🚀  Iniciar tudo — abre front + API no navegador",
+            acao_iniciar_tudo,
+        ),
         "rodar": ("▶  Iniciar / Rodar — executa um exemplo da biblioteca", acao_rodar),
         "servidor": ("🌐  Subir servidor — sobe a API web (Django) local", acao_servidor),
         "mcp": ("🔗  Subir servidor MCP — ponte para o Felixo-AI-Core", acao_mcp),

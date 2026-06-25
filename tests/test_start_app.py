@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 from pathlib import Path
+
+from rich.console import Console
 
 _START_APP = Path(__file__).resolve().parents[1] / "start_app.py"
 _SPEC = importlib.util.spec_from_file_location("start_app", _START_APP)
@@ -130,6 +133,115 @@ def test_abrir_terminal_trata_falha_do_sistema(monkeypatch):
 
     assert abriu is False
     assert "terminal indisponível" in mensagem
+
+
+def test_menu_oferece_iniciar_tudo_como_primeira_opcao():
+    acoes = start_app._acoes_menu()
+
+    assert next(iter(acoes)) == "tudo"
+    assert acoes["tudo"][1] is start_app.acao_iniciar_tudo
+
+
+def test_instala_extra_servidor_quando_necessario(monkeypatch):
+    chamadas = []
+    monkeypatch.setattr(start_app, "_django_disponivel", lambda: True)
+    monkeypatch.setattr(
+        start_app.subprocess,
+        "call",
+        lambda comando, **kwargs: chamadas.append((comando, kwargs)) or 0,
+    )
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    assert start_app._instalar_extra_servidor(console) is True
+    comando, kwargs = chamadas[0]
+    assert comando[-3:] == ["install", "-e", ".[server]"]
+    assert kwargs["cwd"] == start_app.RAIZ
+
+
+def test_app_web_ativo_valida_health_do_projeto(monkeypatch):
+    class Resposta:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def read(self):
+            return b'{"status": "ok", "service": "automacoes-notion"}'
+
+    monkeypatch.setattr(start_app.urllib.request, "urlopen", lambda *args, **kwargs: Resposta())
+
+    assert start_app._app_web_ativo() is True
+
+
+def test_abre_navegador_assim_que_health_responde(monkeypatch):
+    estados = iter((False, True))
+    aberturas = []
+    monkeypatch.setattr(start_app, "_app_web_ativo", lambda: next(estados))
+    monkeypatch.setattr(start_app.time, "sleep", lambda intervalo: None)
+    monkeypatch.setattr(
+        start_app.webbrowser,
+        "open",
+        lambda url: aberturas.append(url) or True,
+    )
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    start_app._abrir_navegador_quando_pronto(console, tentativas=2, intervalo=0)
+
+    assert aberturas == [start_app.APP_URL]
+
+
+def test_iniciar_tudo_usa_defaults_e_sobe_front_api(monkeypatch):
+    chamadas = []
+    agendamentos = []
+    monkeypatch.setattr(start_app, "_django_disponivel", lambda: True)
+    monkeypatch.setattr(start_app, "_token_configurado", lambda: (True, ".env local"))
+    monkeypatch.setattr(start_app, "_app_web_ativo", lambda: False)
+    monkeypatch.setattr(start_app, "_ambiente_servidor", lambda: {"DJANGO_DEBUG": "1"})
+    monkeypatch.setattr(start_app, "_aplicar_migracoes", lambda console, ambiente: True)
+    monkeypatch.setattr(
+        start_app,
+        "_agendar_abertura_navegador",
+        lambda console: agendamentos.append(True),
+    )
+    monkeypatch.setattr(
+        start_app.subprocess,
+        "call",
+        lambda comando, **kwargs: chamadas.append((comando, kwargs)) or 0,
+    )
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    start_app.acao_iniciar_tudo(console)
+
+    assert agendamentos == [True]
+    comando, kwargs = chamadas[0]
+    assert comando[-2:] == ["runserver", start_app.APP_ENDERECO_PADRAO]
+    assert kwargs["cwd"] == start_app.SERVIDOR
+    assert kwargs["env"] == {"DJANGO_DEBUG": "1"}
+
+
+def test_iniciar_tudo_reabre_app_que_ja_esta_rodando(monkeypatch):
+    aberturas = []
+    monkeypatch.setattr(start_app, "_django_disponivel", lambda: True)
+    monkeypatch.setattr(start_app, "_token_configurado", lambda: (True, ".env local"))
+    monkeypatch.setattr(start_app, "_app_web_ativo", lambda: True)
+    monkeypatch.setattr(
+        start_app.webbrowser,
+        "open",
+        lambda url: aberturas.append(url) or True,
+    )
+    monkeypatch.setattr(
+        start_app.subprocess,
+        "call",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("não deve iniciar outro servidor")
+        ),
+    )
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    start_app.acao_iniciar_tudo(console)
+
+    assert aberturas == [start_app.APP_URL]
 
 
 def test_main_rejeita_acao_desconhecida():

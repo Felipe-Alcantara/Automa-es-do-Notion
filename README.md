@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Boilerplate](https://img.shields.io/badge/tipo-boilerplate-8A2BE2?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-246%20passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-252%20passing-success?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Ponto de partida tipado para construir projetos sobre a API do Notion — clone, adapte e construa em cima.**
@@ -24,7 +24,7 @@ do Notion, validação de schema, exceções claras, testes, CI e um menu de ent
 O core (`notion_starter`) é independente de framework: uma única dependência de
 runtime (`requests`), sem estado global. O projeto também inclui um **servidor
 Django opcional** (`server/`) com API REST para tarefas, pronto para subir com
-`python start_app.py` → "Subir servidor". Você traz a sua própria fonte de dados
+`python start_app.py` → "Iniciar tudo". Você traz a sua própria fonte de dados
 e constrói a lógica do seu projeto em cima da base.
 
 > Este projeto começou como um módulo interno de empresa e foi generalizado para
@@ -156,6 +156,8 @@ python start_app.py
 
 No menu você escolhe:
 
+- **Iniciar tudo** — opção principal de um clique: prepara e sobe front + API em
+  `http://127.0.0.1:8000/` e abre o navegador automaticamente.
 - **Iniciar / Rodar** — executa um exemplo (`export_rows`, `check_schema`, `sync_from_csv`, `gerenciar_tarefas`).
 - **Subir servidor** — instala o Django (se necessário), aplica migrações e sobe a API REST local (`/api/health`, `/api/tarefas`).
 - **Subir servidor MCP** — instala o SDK MCP e inicia a ponte em `stdio` ou
@@ -168,6 +170,9 @@ No menu você escolhe:
 Cada opção abre um **terminal dedicado**. O menu principal continua disponível
 para iniciar outras ações em paralelo — por exemplo, manter o servidor web e o
 MCP ativos enquanto executa um exemplo ou consulta o status.
+
+Para o uso normal, escolha **Iniciar tudo**. O MCP é uma integração avançada e
+continua disponível separadamente para conexão com o Felixo-AI-Core.
 
 Na primeira execução, se as bibliotecas do menu (`questionary`, `rich`) não
 estiverem instaladas, o script se oferece para instalá-las. Funciona em Windows,
