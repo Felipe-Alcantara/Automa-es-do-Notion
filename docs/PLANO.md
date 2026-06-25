@@ -189,7 +189,13 @@ já documentado no guia de integração com API do GitHub do padrão de qualidad
 
 ---
 
-### Fase 2 — Servidor Django + front web (o momento aha)
+### Fase 2 — Servidor Django + front web (o momento aha) *(server-side entregue)*
+
+> **Parcialmente entregue** [2026-06-25]: esqueleto Django (`server/`) com config por
+> ambiente, SQLite operacional e ação "Subir servidor" no menu (Infra — `e68a6db`);
+> casos de uso e rotas REST (`GET/POST /api/tarefas`, `PATCH /api/tarefas/{id}`) com
+> envelope de erro padronizado e 14 testes (Backend — `d60d428`). **Falta: front web**
+> (Agente 4, Onda 3).
 
 **Objetivo**: abrir o navegador e ver/editar as tarefas reais do Notion num front
 próprio.

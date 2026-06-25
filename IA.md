@@ -69,6 +69,24 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   (`GET/POST /api/tarefas`, `PATCH /api/tarefas/{id}`), envelope de erro e a estrutura de
   pastas por camadas. Trabalho coordenado no canvas multi-agente (Infra montou o esqueleto
   Django em `server/` em paralelo).
+- [2026-06-25] ✅ **Agente 1 (Infra)** — Esqueleto do servidor Django em `server/`,
+  100% alinhado a `docs/CONTRATOS.md` §4 (camadas config/core/integrations/services/
+  api/operations). Entregas: `core/config.py` (config por ambiente + leitor de `.env`,
+  guarda de produção p/ `SECRET_KEY`), `integrations/notion.py` (fábrica fina sobre
+  `notion_starter`), app `operations` (modelos Job/Lock + migração SQLite p/ estado
+  operacional), `api/health` (smoke test), extra `[server]` no `pyproject.toml`
+  (`django>=5.0`), exclude de migrações no ruff, `.gitignore` do `*.sqlite3`,
+  ação "Subir servidor" no `start_app.py` (instala extras, pergunta host:porta,
+  aplica migrações e sobe `runserver`) e `docs/INFRA.md`. `manage.py check` limpo.
+  Commits: `e68a6db feat` (esqueleto) e `b2ef639 docs` (índice coordenado).
+- [2026-06-25] ✅ **Agente 2 (Backend)** — Casos de uso e rotas REST conforme
+  `docs/CONTRATOS.md` §1-3. Entregas: `server/services/tarefas.py` (listar/criar/
+  mover_status/concluir_tarefa, `TaskList` injetável), `server/api/views.py` +
+  `urls.py` (`GET/POST /api/tarefas`, `PATCH /api/tarefas/{id}`),
+  `server/api/serializers.py` (`tarefa_para_dict`), envelope de erro padrão
+  (`validacao/nao_encontrado/erro_upstream/erro_interno`). Testes:
+  `test_services_tarefas.py` (5) + `test_api_tarefas.py` (9, Django test client) +
+  `conftest.py`. Commit: `d60d428 feat`.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
@@ -79,8 +97,12 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 ## 🛠️ STACK & DEPENDÊNCIAS
 
 - [2026-06-24] Runtime: Python 3.10+ (matriz de CI: 3.10–3.13).
-- [2026-06-24] Dependência única de runtime: `requests>=2.25`.
+- [2026-06-24] Dependência única de runtime do core: `requests>=2.25`.
 - [2026-06-24] `typing_extensions>=4.0` apenas em Python < 3.11 (para `NotRequired`).
+- [2026-06-25] Servidor (extra opcional `[server]`): `django>=5.0`. Instalar com
+  `pip install -e ".[server]"`. O Django não é dependência do core — só do servidor
+  em `server/`. SQLite apenas para estado operacional (jobs, locks); o conteúdo
+  continua no Notion.
 - [2026-06-24] Dev: `pytest`, `responses` (mock de HTTP), `ruff`.
 - [2026-06-24] Build: `hatchling`. Layout `src/`.
 
@@ -102,6 +124,18 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 - [2026-06-24] Configuração centralizada em `constants.py` (URL base, timeout,
   versão da API, env var e prefixo do token).
 - [2026-06-24] Sem estado global: o token é resolvido por instância de `NotionClient`.
+- [2026-06-25] Servidor em `server/` com separação por camadas: `config/` (projeto
+  Django), `core/` (config por ambiente, sem HTTP), `integrations/` (adaptador sobre
+  o `notion_starter`, sem regra de negócio), `services/` (casos de uso),
+  `api/` (borda HTTP, views finas), `operations/` (estado operacional em SQLite).
+  Fronteira sagrada: `api` não tem regra de negócio, `services` não conhece HTTP.
+- [2026-06-25] Config do servidor centralizada em `core/config.py` (dataclass
+  `Config`, imutável, `__repr__` nunca vaza token/secret). Variáveis lidas do
+  ambiente / `.env` local. Guarda de produção: `SECRET_KEY` de dev recusada
+  quando `DEBUG=0`.
+- [2026-06-25] SQLite para estado operacional (modelos `Job` e `Lock`), não para
+  conteúdo. A fonte da verdade continua o Notion. O caminho do banco é configurável
+  por variável de ambiente (`OPERATIONAL_DB_PATH`).
 
 ---
 
@@ -121,7 +155,14 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   todo o HTTP mockado via `responses` (sem token real nem rede).
 - [2026-06-24] ✅ `tests/test_schema.py` — comparação de schema (ok/faltando/tipo errado).
 - [2026-06-24] ✅ `tests/test_properties.py` — montagem dos helpers de propriedade.
-- [2026-06-24] ✅ Suíte completa: 22 testes passando; `ruff check .` limpo.
+- [2026-06-25] ✅ `tests/test_readers.py` (19) — helpers de leitura de propriedade
+  (`ler_title/ler_select/ler_status/ler_date/…`, `ler_propriedade`, `extrair_valores`).
+- [2026-06-25] ✅ `tests/test_services_tarefas.py` (5) — casos de uso do servidor
+  (`listar_tarefas/criar_tarefa/mover_status/concluir_tarefa`), `TaskList` injetada.
+- [2026-06-25] ✅ `tests/test_api_tarefas.py` (9) — rotas REST ponta a ponta via
+  Django test client (`GET/POST /api/tarefas`, `PATCH /api/tarefas/{id}`), envelope
+  de erro (400/404/502/500).
+- [2026-06-25] ✅ Suíte completa: **86 testes passando**; `ruff check .` limpo.
 
 ---
 
@@ -136,6 +177,10 @@ _Nenhum bug relevante registrado até o momento._
 - [2026-06-24] API do Notion (`https://api.notion.com/v1`). Autenticação por token
   de integração (`NOTION_TOKEN`, prefixo `ntn_`). Header `Notion-Version` fixado
   em `constants.py`. Nenhum segredo versionado — veja `.env.example`.
+- [2026-06-25] O servidor consome o Notion via `server/integrations/notion.py` —
+  fábrica fina que cria `NotionClient`/`TaskList` a partir da config do ambiente
+  (`core/config.py`). `services/` usa a `TaskList` como dependência injetável;
+  em testes, injeta-se um mock sem precisar de token nem de Django.
 
 ---
 
@@ -149,6 +194,10 @@ _Nenhum bug relevante registrado até o momento._
   no wheel — é só a porta de entrada local do repositório.
 - [2026-06-24] É um TEMPLATE: o caminho de uso primário é clonar e adaptar (renomear o
   pacote, definir o schema, trocar a fonte de dados), não `pip install` de PyPI.
+- [2026-06-25] O servidor (`server/`) é opcional — o core (`notion_starter`) continua
+  independente de framework. O `start_app.py` ganhou a ação "Subir servidor" (instala
+  extras, pergunta host:porta, aplica migrações, sobe `runserver`). Detalhes de
+  estrutura, config e deploy em `docs/INFRA.md`.
 
 ---
 

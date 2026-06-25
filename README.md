@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Boilerplate](https://img.shields.io/badge/tipo-boilerplate-8A2BE2?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-22%20passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-86%20passing-success?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Ponto de partida tipado para construir projetos sobre a API do Notion — clone, adapte e construa em cima.**
@@ -21,9 +21,11 @@ que conversa com o **Notion**. Em vez de começar do zero, você clona este repo
 e já tem um cliente HTTP tipado, helpers para montar propriedades sem decorar o JSON
 do Notion, validação de schema, exceções claras, testes, CI e um menu de entrada.
 
-É independente de framework: uma única dependência de runtime (`requests`), sem Django,
-sem estado global. Você traz a sua própria fonte de dados e constrói a lógica do seu
-projeto em cima da base.
+O core (`notion_starter`) é independente de framework: uma única dependência de
+runtime (`requests`), sem estado global. O projeto também inclui um **servidor
+Django opcional** (`server/`) com API REST para tarefas, pronto para subir com
+`python start_app.py` → "Subir servidor". Você traz a sua própria fonte de dados
+e constrói a lógica do seu projeto em cima da base.
 
 > Este projeto começou como um módulo interno de empresa e foi generalizado para
 > servir de ponto de partida aberto: clone, renomeie o pacote para o seu projeto e
@@ -72,13 +74,25 @@ notion-starter-boilerplate/
 ├── 📁 src/notion_starter/        # O core reutilizável (renomeie para o seu projeto)
 │   ├── client.py                 # NotionClient — wrapper HTTP tipado
 │   ├── schema.py                 # comparar_schema / SchemaComparison
-│   ├── properties.py             # Helpers de propriedade (title, email, date...)
+│   ├── properties.py             # Helpers de escrita de propriedade (title, email, date...)
+│   ├── readers.py                # Helpers de leitura de propriedade (ler_title, extrair_valores...)
+│   ├── tasks.py                  # TaskList — camada de alto nível para databases de tarefas
+│   ├── inventory.py              # Mapeamento/inventário do workspace (lógica pura)
 │   ├── exceptions.py             # Hierarquia de exceções (NotionSyncError)
 │   ├── logging.py                # Logging opcional, silencioso por padrão
 │   ├── constants.py              # URL base, timeout, versão da API, env var
 │   └── __init__.py               # API pública
 │
-├── 📁 tests/                     # Testes com HTTP mockado (responses)
+├── 📁 server/                    # Servidor Django (opcional — pip install -e ".[server]")
+│   ├── manage.py                 # CLI do Django
+│   ├── config/                   # Projeto Django: settings, urls, wsgi, asgi
+│   ├── core/                     # Config por ambiente (sem HTTP, sem regra de negócio)
+│   ├── integrations/             # Fábrica fina sobre o notion_starter
+│   ├── services/                 # Casos de uso (regras de negócio)
+│   ├── api/                      # Borda HTTP: rotas REST + health
+│   └── operations/               # Estado operacional em SQLite (jobs, locks)
+│
+├── 📁 tests/                     # Testes (HTTP mockado + Django test client)
 ├── 📁 examples/                  # Scripts de exemplo executáveis (ponto de partida)
 ├── 📁 docs/                      # Visão e estratégia: roadmap, SaaS, escala, otimização
 │
@@ -98,7 +112,15 @@ notion-starter-boilerplate/
 - **Payloads tipados** (`TypedDict`) e exceções explícitas e capturáveis.
 - **Helpers de `properties`** (`title`, `email`, `select`, `date`, …) para montar
   valores de propriedade.
+- **Helpers de `readers`** (`ler_title`, `ler_select`, `extrair_valores`, …) para
+  ler propriedades de páginas sem mexer no JSON cru.
+- **`TaskList`** — camada de alto nível para databases de tarefas (listar, criar,
+  atualizar status, concluir), com colunas configuráveis.
 - **`comparar_schema`** para checar se um database tem as colunas que você espera.
+- **`construir_inventario`** para mapear o workspace (árvore, duplicatas, órfãos).
+- **Servidor Django** (opcional) — API REST de tarefas (`GET/POST /api/tarefas`,
+  `PATCH /api/tarefas/{id}`), com config por ambiente, envelope de erro padronizado
+  e estado operacional em SQLite. Instale com `pip install -e ".[server]"`.
 - **Logging opcional**; silencioso por padrão (`NullHandler`, amigável a bibliotecas).
 - **Exemplos executáveis**, testes com HTTP mockado, CI e um menu de entrada — a base
   para você só adicionar a lógica do seu projeto.
@@ -118,6 +140,7 @@ python start_app.py
 No menu você escolhe:
 
 - **Iniciar / Rodar** — executa um exemplo (`export_rows`, `check_schema`, `sync_from_csv`, `gerenciar_tarefas`).
+- **Subir servidor** — instala o Django (se necessário), aplica migrações e sobe a API REST local (`/api/health`, `/api/tarefas`).
 - **Mapear workspace** — coleta o `mapa.json` e gera o `mapa.html` navegável do seu Notion.
 - **Instalar / Setup** — instala o pacote com as deps de dev e cria o `.env`.
 - **Configurar** — aponta o token do Notion (gravado no `.env`, fora do git).
@@ -328,13 +351,17 @@ Notion — está documentado em [`docs/`](docs/README.md):
 # Instale com as dependências de desenvolvimento
 pip install -e ".[dev]"
 
+# Para trabalhar no servidor (opcional):
+pip install -e ".[server]"
+
 # Rode os testes e o lint
 pytest -q
 ruff check .
 ```
 
-Os testes mockam todo o HTTP com [`responses`](https://github.com/getsentry/responses);
-nenhum token real do Notion ou acesso à rede é necessário.
+Os testes do core mockam todo o HTTP com [`responses`](https://github.com/getsentry/responses);
+nenhum token real do Notion ou acesso à rede é necessário. Os testes do servidor
+usam o Django test client e `TaskList` injetada — também sem rede.
 
 ---
 
