@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Boilerplate](https://img.shields.io/badge/tipo-boilerplate-8A2BE2?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-86%20passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-124%20passing-success?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Ponto de partida tipado para construir projetos sobre a API do Notion — clone, adapte e construa em cima.**
@@ -87,10 +87,12 @@ notion-starter-boilerplate/
 │   ├── manage.py                 # CLI do Django
 │   ├── config/                   # Projeto Django: settings, urls, wsgi, asgi
 │   ├── core/                     # Config por ambiente (sem HTTP, sem regra de negócio)
-│   ├── integrations/             # Fábrica fina sobre o notion_starter
-│   ├── services/                 # Casos de uso (regras de negócio)
+│   ├── integrations/             # Fábrica fina sobre o notion_starter + OpenRouter
+│   ├── services/                 # Casos de uso (tarefas, IA copiloto)
 │   ├── api/                      # Borda HTTP: rotas REST + health
-│   └── operations/               # Estado operacional em SQLite (jobs, locks)
+│   ├── operations/               # Estado operacional em SQLite (jobs, locks)
+│   ├── templates/                # Front web (template Django para tarefas)
+│   └── static/                   # CSS e JS do front (vanilla, sem framework)
 │
 ├── 📁 tests/                     # Testes (HTTP mockado + Django test client)
 ├── 📁 examples/                  # Scripts de exemplo executáveis (ponto de partida)
@@ -121,6 +123,12 @@ notion-starter-boilerplate/
 - **Servidor Django** (opcional) — API REST de tarefas (`GET/POST /api/tarefas`,
   `PATCH /api/tarefas/{id}`), com config por ambiente, envelope de erro padronizado
   e estado operacional em SQLite. Instale com `pip install -e ".[server]"`.
+- **Front web** — interface no navegador para ver e editar tarefas reais, servida
+  pelo Django em `/`. Lista com filtro por status, criação, movimentação e conclusão
+  por mudança de status, com estados de carregando/vazio/erro e feedback acessível.
+  JS vanilla consumindo a API REST, sem framework.
+- **IA copiloto** — camada de IA plugável (OpenRouter) para linguagem natural →
+  operações de tasklist. Sugere ações, pessoa confirma antes de escrever.
 - **Logging opcional**; silencioso por padrão (`NullHandler`, amigável a bibliotecas).
 - **Exemplos executáveis**, testes com HTTP mockado, CI e um menu de entrada — a base
   para você só adicionar a lógica do seu projeto.

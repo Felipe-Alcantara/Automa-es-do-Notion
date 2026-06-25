@@ -87,6 +87,22 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   (`validacao/nao_encontrado/erro_upstream/erro_interno`). Testes:
   `test_services_tarefas.py` (5) + `test_api_tarefas.py` (9, Django test client) +
   `conftest.py`. Commit: `d60d428 feat`.
+- [2026-06-25] ✅ **Agente 3 (IA / OpenRouter)** — Camada de IA plugável (Fase 5).
+  `server/integrations/openrouter.py`: catálogo de modelos (cache 24 h, `Modelo`
+  dataclass, agrupamento por empresa/preço), protocolo `ProvedorIA`,
+  `ProvedorOpenRouter` (chat completions via `requests`). `server/services/ia.py`:
+  `interpretar_comando` (NL → `AcaoSugerida`) + `executar_acao` (delega p/
+  `services.tarefas`), modo copiloto (sugere, pessoa confirma). Testes: 15
+  (openrouter) + 19 (ia) = 34 novos testes mockados. Doc: `docs/IA-CAMADA.md`.
+  Commit: `6ed8256 feat`.
+- [2026-06-25] ✅ **Agente 4 (Front-end)** — Front web para ver e editar tarefas
+  reais (Fase 2 do PLANO). `server/templates/tarefas.html` (template Django),
+  `server/static/css/app.css` (estilos responsivos), `server/static/js/app.js`
+  (JS vanilla consumindo `GET/POST /api/tarefas`, `PATCH /api/tarefas/{id}` via
+  fetch). Rota `/` via `TemplateView` em `config/urls.py`. Features: lista com
+  filtro por status, criação de tarefa, modal de mover/concluir por status, estados
+  de carregando/vazio/erro, feedback acessível (`aria-live`, diálogo semântico e
+  restauração de foco). Testes de integração do front: 4. Zero dependências novas.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
@@ -136,6 +152,13 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 - [2026-06-25] SQLite para estado operacional (modelos `Job` e `Lock`), não para
   conteúdo. A fonte da verdade continua o Notion. O caminho do banco é configurável
   por variável de ambiente (`OPERATIONAL_DB_PATH`).
+- [2026-06-25] Camada de IA plugável em `server/integrations/openrouter.py` e
+  `server/services/ia.py`. Protocolo `ProvedorIA` (Open/Closed — adicionar provedor
+  não mexe no núcleo). Modo copiloto: sugere ação, pessoa confirma antes de escrever.
+- [2026-06-25] Front web servido pelo Django: templates em `server/templates/`,
+  estáticos em `server/static/`. JS vanilla consumindo a API REST, sem framework de
+  front. Rota `/` via `TemplateView`; interações preservam o atributo `hidden` e
+  oferecem feedback semântico para tecnologias assistivas.
 
 ---
 
@@ -162,13 +185,17 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 - [2026-06-25] ✅ `tests/test_api_tarefas.py` (9) — rotas REST ponta a ponta via
   Django test client (`GET/POST /api/tarefas`, `PATCH /api/tarefas/{id}`), envelope
   de erro (400/404/502/500).
-- [2026-06-25] ✅ Suíte completa: **86 testes passando**; `ruff check .` limpo.
+- [2026-06-25] ✅ `tests/test_front.py` (4) — rota `/`, elementos essenciais,
+  assets estáticos e regressão do atributo `hidden`.
+- [2026-06-25] ✅ Suíte completa: **124 testes passando**; `ruff check .` limpo.
 
 ---
 
 ## 🐛 BUGS & FIXES RELEVANTES
 
-_Nenhum bug relevante registrado até o momento._
+- [2026-06-25] BUG: o `display: flex` do overlay podia prevalecer sobre o atributo
+  HTML `hidden` e exibir o modal de status antes da interação. FIX: regra global
+  `[hidden] { display: none !important; }`, coberta por teste de regressão.
 
 ---
 
@@ -181,6 +208,8 @@ _Nenhum bug relevante registrado até o momento._
   fábrica fina que cria `NotionClient`/`TaskList` a partir da config do ambiente
   (`core/config.py`). `services/` usa a `TaskList` como dependência injetável;
   em testes, injeta-se um mock sem precisar de token nem de Django.
+- [2026-06-25] OpenRouter via `server/integrations/openrouter.py` — catálogo de
+  modelos com cache 24 h, chat completions. Chave via `OPENROUTER_API_KEY` (env).
 
 ---
 
