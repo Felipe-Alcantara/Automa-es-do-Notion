@@ -100,6 +100,9 @@ python start_app.py
 # → "Subir servidor MCP"
 ```
 
+O menu abre o MCP em um terminal dedicado; o menu principal permanece livre para
+subir a API web ou iniciar outras ações em paralelo.
+
 ---
 
 ## Configuração no Felixo-AI-Core

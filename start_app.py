@@ -14,6 +14,8 @@ o token continua em variável de ambiente / ``.env`` ignorado pelo git.
 from __future__ import annotations
 
 import os
+import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -34,6 +36,101 @@ _DEPS_TUI = ("questionary", "rich")
 
 
 # --------------------------------------------------------------------------- #
+# Terminais dedicados                                                        #
+# --------------------------------------------------------------------------- #
+def _comando_acao(chave: str) -> list[str]:
+    """Monta o comando que executa uma única ação fora do menu principal."""
+
+    return [sys.executable, str(Path(__file__).resolve()), "--action", chave]
+
+
+def _comando_terminal_linux(
+    comando: list[str],
+    titulo: str,
+) -> list[str] | None:
+    """Escolhe um emulador de terminal Linux disponível."""
+
+    terminal_configurado = os.environ.get("TERMINAL", "").strip()
+    if terminal_configurado:
+        partes = shlex.split(terminal_configurado)
+        executavel = shutil.which(partes[0])
+        if executavel:
+            return [executavel, *partes[1:], "-e", *comando]
+
+    candidatos = (
+        ("konsole", lambda exe: [exe, "--separate", "-p", f"tabtitle={titulo}", "-e", *comando]),
+        ("gnome-terminal", lambda exe: [exe, f"--title={titulo}", "--", *comando]),
+        ("kgx", lambda exe: [exe, "--title", titulo, "--", *comando]),
+        (
+            "xfce4-terminal",
+            lambda exe: [exe, f"--title={titulo}", f"--command={shlex.join(comando)}"],
+        ),
+        ("mate-terminal", lambda exe: [exe, f"--title={titulo}", "--", *comando]),
+        ("kitty", lambda exe: [exe, "--title", titulo, *comando]),
+        ("alacritty", lambda exe: [exe, "--title", titulo, "-e", *comando]),
+        (
+            "wezterm",
+            lambda exe: [
+                exe,
+                "start",
+                "--always-new-process",
+                "--cwd",
+                str(RAIZ),
+                "--",
+                *comando,
+            ],
+        ),
+        ("foot", lambda exe: [exe, f"--title={titulo}", "--", *comando]),
+        ("xterm", lambda exe: [exe, "-T", titulo, "-e", *comando]),
+        ("x-terminal-emulator", lambda exe: [exe, "-T", titulo, "-e", *comando]),
+    )
+    for nome, montar in candidatos:
+        executavel = shutil.which(nome)
+        if executavel:
+            return montar(executavel)
+    return None
+
+
+def _abrir_terminal_dedicado(chave: str, titulo: str) -> tuple[bool, str]:
+    """Abre uma ação em outro terminal, sem bloquear o menu atual."""
+
+    comando = _comando_acao(chave)
+    kwargs: dict[str, object] = {
+        "cwd": RAIZ,
+        "start_new_session": True,
+    }
+
+    try:
+        if sys.platform == "win32":
+            kwargs.pop("start_new_session")
+            kwargs["creationflags"] = getattr(
+                subprocess,
+                "CREATE_NEW_CONSOLE",
+                0x00000010,
+            )
+            subprocess.Popen(comando, **kwargs)
+        elif sys.platform == "darwin":
+            comando_shell = f"cd {shlex.quote(str(RAIZ))} && {shlex.join(comando)}"
+            comando_apple = comando_shell.replace("\\", "\\\\").replace('"', '\\"')
+            script = f'tell application "Terminal" to do script "{comando_apple}"'
+            subprocess.Popen(["osascript", "-e", script], **kwargs)
+        else:
+            comando_terminal = _comando_terminal_linux(comando, titulo)
+            if comando_terminal is None:
+                return (
+                    False,
+                    "Nenhum emulador de terminal compatível foi encontrado. "
+                    "Configure a variável TERMINAL ou instale Konsole, GNOME Terminal, "
+                    "Kitty, Alacritty, XTerm ou equivalente.",
+                )
+            subprocess.Popen(comando_terminal, **kwargs)
+    except OSError as exc:
+        return False, f"Não foi possível abrir o terminal dedicado: {exc}"
+
+    return True, f"Terminal dedicado aberto para: {titulo}"
+
+
+# --------------------------------------------------------------------------- #
 # Bootstrap das dependências de TUI                                           #
 # --------------------------------------------------------------------------- #
 def _tui_disponivel() -> bool:
@@ -51,9 +148,7 @@ def _instalar_deps_tui() -> bool:
     """Tenta instalar as dependências de TUI do menu. Retorna sucesso."""
 
     print(f"Instalando dependências do menu ({', '.join(_DEPS_TUI)})...")
-    codigo = subprocess.call(
-        [sys.executable, "-m", "pip", "install", *_DEPS_TUI]
-    )
+    codigo = subprocess.call([sys.executable, "-m", "pip", "install", *_DEPS_TUI])
     if codigo != 0:
         print(
             "Não consegui instalar as dependências do menu. "
@@ -144,11 +239,11 @@ def acao_instalar(console) -> None:
     """Instala/Setup: dependências da lib (modo dev) e cria o ``.env``."""
 
     console.rule("[bold]Instalar / Setup")
-    console.print(f"Instalando o pacote em modo editável com extras de dev "
-                  f"(pip install -e \".[dev]\") usando {sys.executable}...")
-    codigo = subprocess.call(
-        [sys.executable, "-m", "pip", "install", "-e", ".[dev]"], cwd=RAIZ
+    console.print(
+        f"Instalando o pacote em modo editável com extras de dev "
+        f'(pip install -e ".[dev]") usando {sys.executable}...'
     )
+    codigo = subprocess.call([sys.executable, "-m", "pip", "install", "-e", ".[dev]"], cwd=RAIZ)
     if codigo == 0:
         console.print("[green]✓[/green] Pacote e dependências de dev instalados.")
     else:
@@ -323,9 +418,7 @@ def acao_rodar(console) -> None:
     token_arquivo = _ler_token_env_file()
     if token_arquivo and not ambiente.get(TOKEN_ENV):
         ambiente[TOKEN_ENV] = token_arquivo  # passa o token do .env só ao subprocesso
-    codigo = subprocess.call(
-        [sys.executable, str(script), *args], cwd=RAIZ, env=ambiente
-    )
+    codigo = subprocess.call([sys.executable, str(script), *args], cwd=RAIZ, env=ambiente)
     if codigo == 0:
         console.print("\n[green]✓[/green] Exemplo concluído.")
     else:
@@ -343,9 +436,7 @@ def acao_servidor(console) -> None:
     console.rule("[bold]Subir servidor")
 
     if not _django_disponivel():
-        console.print(
-            "[yellow]•[/yellow] O Django (extra de servidor) não está instalado."
-        )
+        console.print("[yellow]•[/yellow] O Django (extra de servidor) não está instalado.")
         if questionary.confirm("Instalar os extras de servidor agora?").ask():
             codigo = subprocess.call(
                 [sys.executable, "-m", "pip", "install", "-e", ".[server]"], cwd=RAIZ
@@ -353,13 +444,13 @@ def acao_servidor(console) -> None:
             if codigo != 0 or not _django_disponivel():
                 console.print(
                     "[red]✗[/red] Não consegui instalar o Django. Instale manualmente:\n"
-                    f"  {sys.executable} -m pip install -e \".[server]\""
+                    f'  {sys.executable} -m pip install -e ".[server]"'
                 )
                 return
         else:
             console.print(
                 "[dim]Sem o Django o servidor não sobe. Instale quando quiser:\n"
-                f"  {sys.executable} -m pip install -e \".[server]\"[/dim]"
+                f'  {sys.executable} -m pip install -e ".[server]"[/dim]'
             )
             return
 
@@ -395,7 +486,7 @@ def acao_servidor(console) -> None:
 
     console.print(
         f"Subindo o servidor em [bold]http://{endereco}/[/bold] — health em "
-        "[bold]/api/health[/bold]. Pressione [bold]Ctrl+C[/bold] para voltar ao menu."
+        "[bold]/api/health[/bold]. Pressione [bold]Ctrl+C[/bold] para encerrar este servidor."
     )
     try:
         subprocess.call(
@@ -438,9 +529,7 @@ def acao_mcp(console) -> None:
             "com o Notion vão falhar até o token ser configurado em [bold]Configurar[/bold]."
         )
 
-    database_id = os.environ.get(DATABASE_ENV, "").strip() or _ler_valor_env_file(
-        DATABASE_ENV
-    )
+    database_id = os.environ.get(DATABASE_ENV, "").strip() or _ler_valor_env_file(DATABASE_ENV)
     if not database_id:
         console.print(
             f"[yellow]•[/yellow] {DATABASE_ENV} não configurado. As ferramentas MCP "
@@ -475,12 +564,12 @@ def acao_mcp(console) -> None:
         args.extend(["--transport", "streamable-http"])
         console.print(
             "Subindo servidor MCP em [bold]http://127.0.0.1:8000/mcp[/bold] — "
-            "Pressione [bold]Ctrl+C[/bold] para voltar ao menu."
+            "Pressione [bold]Ctrl+C[/bold] para encerrar este servidor."
         )
     else:
         console.print(
             "Subindo servidor MCP em modo stdio — "
-            "Pressione [bold]Ctrl+C[/bold] para voltar ao menu."
+            "Pressione [bold]Ctrl+C[/bold] para encerrar este servidor."
         )
 
     try:
@@ -546,9 +635,7 @@ def acao_status(console) -> None:
 
     py = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
     py_ok = sys.version_info >= (3, 10)
-    tabela.add_row(
-        "Python", f"[green]{py}[/green]" if py_ok else f"[red]{py} (requer 3.10+)[/red]"
-    )
+    tabela.add_row("Python", f"[green]{py}[/green]" if py_ok else f"[red]{py} (requer 3.10+)[/red]")
 
     if _pacote_instalado():
         import notion_starter
@@ -579,6 +666,44 @@ def acao_status(console) -> None:
     console.print(tabela)
 
 
+def _acoes_menu():
+    """Retorna as ações disponíveis e seus rótulos públicos."""
+
+    return {
+        "rodar": ("▶  Iniciar / Rodar — executa um exemplo da biblioteca", acao_rodar),
+        "servidor": ("🌐  Subir servidor — sobe a API web (Django) local", acao_servidor),
+        "mcp": ("🔗  Subir servidor MCP — ponte para o Felixo-AI-Core", acao_mcp),
+        "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),
+        "instalar": ("⬇  Instalar / Setup — instala deps e cria o .env", acao_instalar),
+        "configurar": ("⚙  Configurar — aponta o token do Notion", acao_configurar),
+        "status": ("ℹ  Status — mostra o estado real do ambiente", acao_status),
+    }
+
+
+def _executar_acao_dedicada(chave: str) -> None:
+    """Executa uma ação no processo filho e mantém o terminal legível ao final."""
+
+    from rich.console import Console
+
+    acoes = _acoes_menu()
+    console = Console()
+    texto, acao = acoes[chave]
+    console.print(f"[bold cyan]{texto}[/bold cyan]\n")
+
+    try:
+        acao(console)
+    except KeyboardInterrupt:
+        console.print("\n[dim]Ação interrompida.[/dim]")
+    except Exception as exc:  # noqa: BLE001 - mostra erro amigável no terminal dedicado
+        console.print(f"\n[red]Erro:[/red] {exc}")
+    finally:
+        if sys.stdin.isatty():
+            try:
+                input("\nPressione Enter para fechar este terminal...")
+            except (EOFError, KeyboardInterrupt):
+                pass
+
+
 # --------------------------------------------------------------------------- #
 # Loop do menu                                                                #
 # --------------------------------------------------------------------------- #
@@ -599,15 +724,7 @@ def _menu_loop() -> None:
         )
     )
 
-    acoes = {
-        "rodar": ("▶  Iniciar / Rodar — executa um exemplo da biblioteca", acao_rodar),
-        "servidor": ("🌐  Subir servidor — sobe a API web (Django) local", acao_servidor),
-        "mcp": ("🔗  Subir servidor MCP — ponte para o Felixo-AI-Core", acao_mcp),
-        "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),
-        "instalar": ("⬇  Instalar / Setup — instala deps e cria o .env", acao_instalar),
-        "configurar": ("⚙  Configurar — aponta o token do Notion", acao_configurar),
-        "status": ("ℹ  Status — mostra o estado real do ambiente", acao_status),
-    }
+    acoes = _acoes_menu()
 
     while True:
         escolha = questionary.select(
@@ -622,19 +739,29 @@ def _menu_loop() -> None:
             console.print("[dim]Até mais![/dim]")
             return
 
-        try:
-            acoes[escolha][1](console)
-        except KeyboardInterrupt:
-            console.print("\n[dim]Ação interrompida.[/dim]")
-        except Exception as exc:  # noqa: BLE001 - o menu nunca quebra com stack trace cru
-            console.print(f"[red]Erro:[/red] {exc}")
-            console.print("[dim]Voltando ao menu.[/dim]")
+        abriu, mensagem = _abrir_terminal_dedicado(escolha, acoes[escolha][0])
+        estilo = "green" if abriu else "red"
+        simbolo = "✓" if abriu else "✗"
+        console.print(f"[{estilo}]{simbolo}[/{estilo}] {mensagem}")
+        if abriu:
+            console.print("[dim]O menu continua disponível para iniciar outras ações.[/dim]")
 
         console.print()
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
     """Ponto de entrada: garante a TUI e abre o menu (ou um fallback claro)."""
+
+    argumentos = sys.argv[1:] if argv is None else argv
+    acao_solicitada: str | None = None
+    if argumentos:
+        if len(argumentos) != 2 or argumentos[0] != "--action":
+            opcoes = ", ".join(_acoes_menu())
+            raise SystemExit(f"Uso: {Path(__file__).name} [--action {{{opcoes}}}]")
+        acao_solicitada = argumentos[1]
+        if acao_solicitada not in _acoes_menu():
+            opcoes = ", ".join(_acoes_menu())
+            raise SystemExit(f"Ação desconhecida: {acao_solicitada}. Opções: {opcoes}")
 
     if not _tui_disponivel():
         print(
@@ -652,6 +779,10 @@ def main() -> None:
                 f"{' '.join(_DEPS_TUI)}"
             )
             raise SystemExit(1)
+
+    if acao_solicitada:
+        _executar_acao_dedicada(acao_solicitada)
+        return
 
     try:
         _menu_loop()
