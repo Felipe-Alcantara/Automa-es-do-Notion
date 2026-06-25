@@ -116,7 +116,7 @@ python start_app.py
 
 No menu você escolhe:
 
-- **Iniciar / Rodar** — executa um exemplo (`export_rows`, `check_schema`, `sync_from_csv`).
+- **Iniciar / Rodar** — executa um exemplo (`export_rows`, `check_schema`, `sync_from_csv`, `gerenciar_tarefas`).
 - **Mapear workspace** — coleta o `mapa.json` e gera o `mapa.html` navegável do seu Notion.
 - **Instalar / Setup** — instala o pacote com as deps de dev e cria o `.env`.
 - **Configurar** — aponta o token do Notion (gravado no `.env`, fora do git).
@@ -307,6 +307,7 @@ Veja [`examples/`](examples/) — são o ponto de partida para a sua lógica:
 - [`export_rows.py`](examples/export_rows.py) — cria uma página por linha de uma lista de dicts.
 - [`check_schema.py`](examples/check_schema.py) — valida o schema de um database.
 - [`sync_from_csv.py`](examples/sync_from_csv.py) — fluxo end-to-end: lê um CSV, valida o schema e cria uma página por linha.
+- [`gerenciar_tarefas.py`](examples/gerenciar_tarefas.py) — usa a `TaskList` para listar, criar e concluir tarefas num database de tarefas.
 - [`listar_paginas.py`](examples/listar_paginas.py) — lista tudo que a integração enxerga (páginas e databases, com IDs).
 - [`coletar_mapa.py`](examples/coletar_mapa.py) — varre o workspace e salva `mapa.json` (estrutura, duplicatas, órfãos, nº de linhas por database).
 - [`gerar_arvore_html.py`](examples/gerar_arvore_html.py) — lê o `mapa.json` e gera um `mapa.html` navegável (árvore + destaques).

@@ -43,6 +43,10 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
 - [2026-06-25] ✅ `tasks.py` — camada de alto nível de tasklist (objeto `Tarefa`,
   classe `TaskList` com listar/criar/atualizar_status/concluir) sobre o
   `NotionClient`. Colunas configuráveis via `CamposTarefa`. Base para o front + IA.
+- [2026-06-25] ✅ Fechamento da `TaskList` no padrão: exemplo executável
+  `examples/gerenciar_tarefas.py` (lista/cria/conclui), ação no menu
+  (`start_app.py` → Iniciar/Rodar) e menção no README. Assim o recurso fica
+  alcançável pela porta de entrada e documentado, não só no core + teste.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 helpers de leitura (extrair valores de páginas), suporte a blocos, mais exemplos

@@ -232,6 +232,10 @@ def acao_rodar(console) -> None:
                 "sync_from_csv.py — valida o schema e cria uma página por linha de um CSV",
                 value="sync_from_csv",
             ),
+            questionary.Choice(
+                "gerenciar_tarefas.py — lista, cria e conclui tarefas via TaskList",
+                value="gerenciar_tarefas",
+            ),
             questionary.Choice("Voltar", value=None),
         ],
     ).ask()
