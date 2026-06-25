@@ -34,6 +34,10 @@ dev = [
     "responses>=0.23",
     "ruff>=0.4",
 ]
+# Dependências do servidor Django (Fase 2+). Instale com: pip install -e ".[server]"
+server = [
+    "django>=5.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/flaviavs-commits/notion-starter-boilerplate"
@@ -46,6 +50,8 @@ packages = ["src/notion_starter"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+# Migrações do Django são autogeradas — não as linta.
+extend-exclude = ["server/**/migrations/*.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

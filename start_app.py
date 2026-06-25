@@ -22,6 +22,8 @@ RAIZ = Path(__file__).resolve().parent
 ENV_FILE = RAIZ / ".env"
 ENV_EXEMPLO = RAIZ / ".env.example"
 EXEMPLOS = RAIZ / "examples"
+SERVIDOR = RAIZ / "server"
+MANAGE_PY = SERVIDOR / "manage.py"
 TOKEN_ENV = "NOTION_TOKEN"
 TOKEN_PREFIXO = "ntn_"
 
@@ -69,6 +71,16 @@ def _pacote_instalado() -> bool:
 
     try:
         import notion_starter  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def _django_disponivel() -> bool:
+    """Indica se o Django (extra de servidor) está instalado."""
+
+    try:
+        import django  # noqa: F401
     except ImportError:
         return False
     return True
@@ -306,6 +318,76 @@ def acao_rodar(console) -> None:
         )
 
 
+def acao_servidor(console) -> None:
+    """Subir servidor: aplica as migrações e sobe o servidor Django local."""
+
+    import questionary
+
+    console.rule("[bold]Subir servidor")
+
+    if not _django_disponivel():
+        console.print(
+            "[yellow]•[/yellow] O Django (extra de servidor) não está instalado."
+        )
+        if questionary.confirm("Instalar os extras de servidor agora?").ask():
+            codigo = subprocess.call(
+                [sys.executable, "-m", "pip", "install", "-e", ".[server]"], cwd=RAIZ
+            )
+            if codigo != 0 or not _django_disponivel():
+                console.print(
+                    "[red]✗[/red] Não consegui instalar o Django. Instale manualmente:\n"
+                    f"  {sys.executable} -m pip install -e \".[server]\""
+                )
+                return
+        else:
+            console.print(
+                "[dim]Sem o Django o servidor não sobe. Instale quando quiser:\n"
+                f"  {sys.executable} -m pip install -e \".[server]\"[/dim]"
+            )
+            return
+
+    configurado, origem = _token_configurado()
+    if not configurado:
+        console.print(
+            f"[yellow]•[/yellow] Token {origem}. O servidor sobe, mas as rotas que falam "
+            "com o Notion vão falhar até o token ser configurado em [bold]Configurar[/bold]."
+        )
+
+    endereco = questionary.text(
+        "Endereço do servidor (host:porta):", default="127.0.0.1:8000"
+    ).ask()
+    if not endereco:
+        console.print("[dim]Cancelado.[/dim]")
+        return
+    endereco = endereco.strip()
+
+    # Ambiente do subprocesso: DEBUG ligado para uso local + token do .env, se houver.
+    ambiente = dict(os.environ)
+    ambiente.setdefault("DJANGO_DEBUG", "1")
+    token_arquivo = _ler_token_env_file()
+    if token_arquivo and not ambiente.get(TOKEN_ENV):
+        ambiente[TOKEN_ENV] = token_arquivo
+
+    console.print("Aplicando migrações do estado operacional (SQLite)...")
+    codigo = subprocess.call(
+        [sys.executable, str(MANAGE_PY), "migrate", "--noinput"], cwd=SERVIDOR, env=ambiente
+    )
+    if codigo != 0:
+        console.print(f"[red]✗[/red] Falha ao migrar (código {codigo}).")
+        return
+
+    console.print(
+        f"Subindo o servidor em [bold]http://{endereco}/[/bold] — health em "
+        "[bold]/api/health[/bold]. Pressione [bold]Ctrl+C[/bold] para voltar ao menu."
+    )
+    try:
+        subprocess.call(
+            [sys.executable, str(MANAGE_PY), "runserver", endereco], cwd=SERVIDOR, env=ambiente
+        )
+    except KeyboardInterrupt:
+        console.print("\n[dim]Servidor encerrado.[/dim]")
+
+
 def acao_mapear(console) -> None:
     """Mapear workspace: coleta o mapa e gera o relatório HTML navegável."""
 
@@ -418,6 +500,7 @@ def _menu_loop() -> None:
 
     acoes = {
         "rodar": ("▶  Iniciar / Rodar — executa um exemplo da biblioteca", acao_rodar),
+        "servidor": ("🌐  Subir servidor — sobe a API web (Django) local", acao_servidor),
         "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),
         "instalar": ("⬇  Instalar / Setup — instala deps e cria o .env", acao_instalar),
         "configurar": ("⚙  Configurar — aponta o token do Notion", acao_configurar),

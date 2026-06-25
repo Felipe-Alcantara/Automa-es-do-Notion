@@ -22,6 +22,11 @@ htmlcov/
 .env.*
 !.env.example
 
+# Servidor Django — estado operacional e estáticos coletados (não são fonte da verdade)
+*.sqlite3
+operacional.sqlite3
+server/staticfiles/
+
 # Editors / OS
 .idea/
 .vscode/
