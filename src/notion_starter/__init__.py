@@ -2,7 +2,8 @@
 
 API pública:
     NotionClient: o cliente HTTP (cria/consulta databases e páginas).
-    properties: helpers para montar valores de propriedade do Notion.
+    properties / readers: par de escrita e leitura de valores de propriedade.
+    extrair_valores: reduz uma página do Notion a um mapa coluna -> valor simples.
     comparar_schema / SchemaComparison: valida um database contra um schema.
     construir_inventario / Inventario: mapeia o workspace (árvore, duplicatas, órfãos).
     configure_logging: logging opcional em console/arquivo.
@@ -11,7 +12,7 @@ API pública:
 
 from __future__ import annotations
 
-from . import properties
+from . import properties, readers
 from .client import NotionClient
 from .exceptions import (
     NotionAPIError,
@@ -36,6 +37,7 @@ from .inventory import (
     normalizar_item,
 )
 from .logging import configure_logging, get_logger
+from .readers import extrair_valores, ler_propriedade
 from .schema import (
     Schema,
     SchemaComparison,
@@ -49,6 +51,9 @@ __version__ = "0.1.0"
 __all__ = [
     "NotionClient",
     "properties",
+    "readers",
+    "extrair_valores",
+    "ler_propriedade",
     "Schema",
     "SchemaComparison",
     "comparar_schema",
