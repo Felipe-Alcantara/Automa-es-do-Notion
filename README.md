@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Boilerplate](https://img.shields.io/badge/tipo-boilerplate-8A2BE2?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-193%20passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-238%20passing-success?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Ponto de partida tipado para construir projetos sobre a API do Notion — clone, adapte e construa em cima.**
@@ -86,6 +86,7 @@ notion-starter-boilerplate/
 │
 ├── 📁 server/                    # Servidor Django (opcional — pip install -e ".[server]")
 │   ├── manage.py                 # CLI do Django
+│   ├── mcp_server.py             # Servidor MCP de ferramentas notion.*
 │   ├── config/                   # Projeto Django: settings, urls, wsgi, asgi
 │   ├── core/                     # Config por ambiente (sem HTTP, sem regra de negócio)
 │   ├── integrations/             # Fábrica fina sobre o notion_starter + OpenRouter
@@ -132,6 +133,11 @@ notion-starter-boilerplate/
   JS vanilla consumindo a API REST, sem framework.
 - **IA copiloto** — camada de IA plugável (OpenRouter) para linguagem natural →
   operações de tasklist. Sugere ações, pessoa confirma antes de escrever.
+- **Servidor MCP** — expõe `notion.list_tasks`, `notion.create_task`,
+  `notion.move_status`, `notion.conclude_task` e `notion.update_project_page` como
+  invólucros dos casos de uso. Escritas são anotadas para confirmação; a política
+  obrigatória fica no catálogo do host Felixo-AI-Core. Instale com
+  `pip install -e ".[mcp]"`.
 - **Logging opcional**; silencioso por padrão (`NullHandler`, amigável a bibliotecas).
 - **Exemplos executáveis**, testes com HTTP mockado, CI e um menu de entrada — a base
   para você só adicionar a lógica do seu projeto.
@@ -152,6 +158,8 @@ No menu você escolhe:
 
 - **Iniciar / Rodar** — executa um exemplo (`export_rows`, `check_schema`, `sync_from_csv`, `gerenciar_tarefas`).
 - **Subir servidor** — instala o Django (se necessário), aplica migrações e sobe a API REST local (`/api/health`, `/api/tarefas`).
+- **Subir servidor MCP** — instala o SDK MCP e inicia a ponte em `stdio` ou
+  Streamable HTTP para depuração local.
 - **Mapear workspace** — coleta o `mapa.json` e gera o `mapa.html` navegável do seu Notion.
 - **Instalar / Setup** — instala o pacote com as deps de dev e cria o `.env`.
 - **Configurar** — aponta o token do Notion (gravado no `.env`, fora do git).
@@ -372,7 +380,8 @@ Notion — está documentado em [`docs/`](docs/README.md):
 [roadmap e visão final](docs/PLANO.md), [modelos de uso](docs/MODELOS-DE-USO.md),
 [portabilidade](docs/PORTABILIDADE.md) e os caminhos de evolução
 ([SaaS](docs/SAAS.md), [escala](docs/ESCALA.md), [otimização](docs/OTIMIZACAO.md) e
-[ideias extras](docs/IDEIAS-EXTRAS.md)). São documentos de direção, abertos à contribuição.
+[ideias extras](docs/IDEIAS-EXTRAS.md)). A ponte com o Felixo-AI-Core está em
+[`docs/MCP.md`](docs/MCP.md). São documentos de direção, abertos à contribuição.
 
 ## 🧪 Desenvolvimento
 
@@ -383,6 +392,9 @@ pip install -e ".[dev]"
 # Para trabalhar no servidor (opcional):
 pip install -e ".[server]"
 
+# Para trabalhar no servidor MCP (opcional):
+pip install -e ".[mcp]"
+
 # Rode os testes e o lint
 pytest -q
 ruff check .
@@ -390,7 +402,8 @@ ruff check .
 
 Os testes do core mockam todo o HTTP com [`responses`](https://github.com/getsentry/responses);
 nenhum token real do Notion ou acesso à rede é necessário. Os testes do servidor
-usam o Django test client e `TaskList` injetada — também sem rede.
+usam o Django test client e `TaskList` injetada — também sem rede. A suíte MCP valida
+a superfície `notion.*`, anotações, transportes e entradas com o Notion mockado.
 
 ---
 

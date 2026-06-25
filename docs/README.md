@@ -24,6 +24,7 @@
 | [🤖 AGENTES.md](AGENTES.md) | Playbook de orquestração multi-agente: papéis, o que cada agente lê e entrega, ordem e coordenação (para o Felixo-AI-Core). |
 | [🧱 CONTRATOS.md](CONTRATOS.md) | Contrato fixado pelo Agente 0: objetos de domínio, rotas REST, formato de erro e estrutura de pastas do servidor. |
 | [🤖 IA-CAMADA.md](IA-CAMADA.md) | Camada de IA plugável: ProvedorIA, OpenRouter, catálogo de modelos, caso de uso copiloto (NL → tasklist). |
+| [🔗 MCP.md](MCP.md) | Camada MCP: ferramentas `notion.*`, transportes, confirmação no catálogo do Felixo-AI-Core e estado da integração. |
 
 ---
 
@@ -33,6 +34,7 @@
 - **Quero reaproveitar o projeto** → [PORTABILIDADE.md](PORTABILIDADE.md)
 - **Quero pensar em produto** → [SAAS.md](SAAS.md) → [ESCALA.md](ESCALA.md)
 - **Quero entender a camada de IA** → [IA-CAMADA.md](IA-CAMADA.md)
+- **Quero integrar com o Felixo-AI-Core via MCP** → [MCP.md](MCP.md)
 - **Quero deixar mais rápido/barato** → [OTIMIZACAO.md](OTIMIZACAO.md)
 - **Quero contribuir com algo novo** → [IDEIAS-EXTRAS.md](IDEIAS-EXTRAS.md)
 - **Sou um agente (ou o orquestrador) construindo o projeto** → [AGENTES.md](AGENTES.md)

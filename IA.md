@@ -107,6 +107,12 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   `NotionClient`: retry/backoff configurável para operações idempotentes, suporte a
   `Retry-After`, status transitórios do Notion, cache de schema com TTL/invalidação
   e cópias defensivas. Criações só repetem 429/529; rede/5xx ambíguos falham sem retry.
+- [2026-06-25] ✅ **Agente 6 (MCP)** — servidor MCP e contrato do host concluídos:
+  ferramentas `notion.list_tasks/create_task/move_status/conclude_task` e
+  `notion.update_project_page`, validação da borda, erros sanitizados, anotações
+  read/write/idempotência e transportes `stdio` + Streamable HTTP. As entradas
+  `notion.*` foram incorporadas ao catálogo do Felixo-AI-Core no commit `75c8a12`,
+  com confirmação obrigatória em todas as operações de escrita.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
@@ -123,6 +129,9 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   `pip install -e ".[server]"`. O Django não é dependência do core — só do servidor
   em `server/`. SQLite apenas para estado operacional (jobs, locks); o conteúdo
   continua no Notion.
+- [2026-06-25] MCP (extra opcional `[mcp]`): `mcp>=1.28,<2`. O servidor
+  `server/mcp_server.py` não depende do Django; usa `stdio` por padrão e oferece
+  Streamable HTTP somente para depuração local.
 - [2026-06-24] Dev: `pytest`, `responses` (mock de HTTP), `ruff`.
 - [2026-06-24] Build: `hatchling`. Layout `src/`.
 
@@ -167,6 +176,10 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   método HTTP: buscas `POST` são idempotentes e podem repetir; criação de database
   ou página só repete 429/529; atualizações `PATCH` que definem estado podem repetir.
   O cache de schema usa relógio monotônico e cópias defensivas.
+- [2026-06-25] A borda MCP é um processo independente e fino sobre
+  `server/services/tarefas.py`. Os nomes públicos incluem o namespace `notion.*`;
+  anotações MCP são hints, enquanto `requiresConfirmation` pertence ao catálogo
+  confiável do host Felixo-AI-Core.
 
 ---
 
@@ -198,8 +211,11 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 - [2026-06-25] ✅ `tests/test_client_resiliencia.py` (30) — 409/429/5xx/529,
   `Retry-After`, rede, backoff, política de idempotência, cache TTL/invalidação
   e proteção contra mutação do retorno.
-- [2026-06-25] ✅ Suíte sem o escopo MCP ainda não versionado:
-  **193 testes passando, 2 skips**; `ruff` e formatação limpos.
+- [2026-06-25] ✅ MCP e projetos: **32 testes focados** cobrindo a superfície
+  `notion.*`, validação, anotações, transportes, erros sanitizados e atualização
+  de página de projeto.
+- [2026-06-25] ✅ Suíte completa do working tree compartilhado:
+  **238 testes passando**; `ruff` limpo e `manage.py check` sem problemas.
 
 ---
 
@@ -226,6 +242,10 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   em testes, injeta-se um mock sem precisar de token nem de Django.
 - [2026-06-25] OpenRouter via `server/integrations/openrouter.py` — catálogo de
   modelos com cache 24 h, chat completions. Chave via `OPENROUTER_API_KEY` (env).
+- [2026-06-25] MCP Python SDK 1.x via `server/mcp_server.py`. O catálogo do
+  Felixo-AI-Core possui a camada `notion` e marca as quatro ferramentas de escrita
+  com `requiresConfirmation: true`; a conexão operacional de servidores externos
+  permanece no roadmap do cliente MCP do host.
 
 ---
 
