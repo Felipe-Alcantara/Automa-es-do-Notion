@@ -68,13 +68,14 @@ local, ignorado pelo git). Lidas por `core/config.py`:
 Pelo menu (porta de entrada única):
 
 ```bash
-python start_app.py     # → "🌐 Subir servidor"
+python start_app.py     # → "🚀 Iniciar tudo"
 ```
 
-A ação abre um terminal dedicado, instala os extras de servidor (se faltarem),
-pergunta `host:porta` (`127.0.0.1:8000`), aplica as migrações e sobe o `runserver`
-com `DJANGO_DEBUG=1` e o token do `.env`. O menu principal permanece disponível;
-`Ctrl+C` encerra somente o servidor no terminal dedicado.
+A opção principal usa `127.0.0.1:8000`, instala o extra de servidor se necessário,
+aplica as migrações, sobe front + API com `DJANGO_DEBUG=1` e abre o navegador
+automaticamente. O menu principal permanece disponível; `Ctrl+C` encerra somente
+o app no terminal dedicado. A opção “Subir servidor” permanece para quem quiser
+escolher outro `host:porta`.
 
 Manualmente:
 
