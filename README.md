@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Boilerplate](https://img.shields.io/badge/tipo-boilerplate-8A2BE2?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-124%20passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-193%20passing-success?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Ponto de partida tipado para construir projetos sobre a API do Notion — clone, adapte e construa em cima.**
@@ -111,7 +111,9 @@ notion-starter-boilerplate/
 ## ✨ O que já vem pronto
 
 - **`NotionClient`** — cria/consulta databases, cria/atualiza/arquiva páginas, com
-  paginação automática nas consultas.
+  paginação automática, retry/backoff seguro para operações idempotentes e cache
+  de schema com TTL. Criações repetem apenas rate limit confirmado (429/529), não
+  falhas ambíguas de rede/5xx que poderiam gerar duplicatas.
 - **Payloads tipados** (`TypedDict`) e exceções explícitas e capturáveis.
 - **Helpers de `properties`** (`title`, `email`, `select`, `date`, …) para montar
   valores de propriedade.
