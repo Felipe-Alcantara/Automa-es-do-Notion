@@ -60,10 +60,19 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   **e** assinaturas (Codex, Claude Code Pro, Cursor; futuramente Gemini CLI e
   Copilot CLI), espelhando o projeto Openia. São documentos de direção (não código),
   abertos à contribuição; o `notion_starter` atual vira a base de tudo.
+- [2026-06-25] ✅ **Agente 0 (Contratos & Fundação)** — Fase 0 entregue: `readers.py`
+  (par de leitura de `properties.py`: `ler_title/ler_select/ler_status/ler_date/
+  ler_multi_select/ler_relation/ler_people…`, `ler_propriedade` por `type` e
+  `extrair_valores(pagina)` → mapa coluna→valor simples), com testes puros em
+  `tests/test_readers.py` (19) e export em `__init__.py`. Contrato formalizado em
+  `docs/CONTRATOS.md`: objetos de domínio (`Tarefa` + serialização da API), rotas REST
+  (`GET/POST /api/tarefas`, `PATCH /api/tarefas/{id}`), envelope de erro e a estrutura de
+  pastas por camadas. Trabalho coordenado no canvas multi-agente (Infra montou o esqueleto
+  Django em `server/` em paralelo).
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
-helpers de leitura (extrair valores de páginas), suporte a blocos, mais exemplos
-de "Iniciar/Rodar" por fonte de dados (banco, API, planilha).
+suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
+(banco, API, planilha).
 
 ---
 
