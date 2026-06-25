@@ -349,6 +349,15 @@ com o provedor mockado em teste, e o modo confirmar-antes-de-escrever está gara
 
 ### Fase 6 — Integração com Felixo-AI-Core via MCP (o estado final)
 
+> **Servidor e contrato MCP entregues** [2026-06-25]: este repositório publica
+> `notion.list_tasks`, `notion.create_task`, `notion.move_status` e
+> `notion.conclude_task` sobre os casos de uso de tarefas, com validação, erros
+> sanitizados, anotações MCP e transportes `stdio`/Streamable HTTP.
+> `notion.update_project_page` também está disponível sobre o caso de uso de projetos
+> estabilizado na Fase 4. O catálogo do Felixo-AI-Core incorporou as cinco entradas
+> no commit `75c8a12`, exigindo confirmação nas quatro operações de escrita. A conexão
+> operacional de servidores MCP externos permanece uma evolução do cliente do host.
+
 **Objetivo**: vários agentes trabalhando; a pessoa só lê e adiciona tarefas.
 
 O [Felixo-AI-Core](https://github.com/Felipe-Alcantara/Felixo-AI-Core) já mantém um

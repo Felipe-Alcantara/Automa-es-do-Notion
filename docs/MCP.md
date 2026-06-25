@@ -1,0 +1,220 @@
+# 🔗 MCP — Ponte com o Felixo-AI-Core
+
+> **O que é este documento**: descreve a camada MCP (Model Context Protocol)
+> deste projeto — como as capacidades de Notion são expostas como ferramentas
+> que agentes do Felixo-AI-Core consomem.
+
+---
+
+## Visão geral
+
+O [Felixo-AI-Core](https://github.com/Felipe-Alcantara/Felixo-AI-Core) é o
+orquestrador de agentes. Este projeto é a **camada de dados do Notion**. A
+comunicação entre os dois acontece via **MCP**: este projeto oferece
+ferramentas; o Felixo-AI-Core decide qual agente usa qual ferramenta.
+
+```text
+┌─────────────────────────────────┐
+│  Felixo-AI-Core (orquestrador) │
+│  Decide quem faz o que         │
+└──────────┬──────────────────────┘
+           │ MCP (stdio)
+┌──────────▼──────────────────────┐
+│  mcp_server.py (este projeto)   │
+│  Ferramentas notion.*           │
+│  Invólucros sobre services/     │
+└──────────┬──────────────────────┘
+           │ notion_starter
+┌──────────▼──────────────────────┐
+│  API do Notion                  │
+└─────────────────────────────────┘
+```
+
+---
+
+## Ferramentas expostas
+
+| Ferramenta | Acesso | Confirmação | O que faz |
+|---|---|---|---|
+| `notion.list_tasks` | read | não | Lista tarefas, com filtro opcional por status |
+| `notion.create_task` | write | sim | Cria uma nova tarefa |
+| `notion.move_status` | write | sim | Move uma tarefa para outro status |
+| `notion.conclude_task` | write | sim | Conclui uma tarefa com o status informado |
+| `notion.update_project_page` | write | sim | Atualiza metadados de uma página de projeto |
+
+Cada ferramenta é um invólucro fino sobre os casos de uso de
+`server/services/tarefas.py` e `server/services/projetos.py` — não reimplementa
+regra de negócio. Entradas textuais obrigatórias são validadas na borda MCP e
+erros internos/upstream são sanitizados.
+
+### Anotações MCP
+
+As ferramentas declaram anotações MCP:
+
+- **read** (`notion.list_tasks`): `readOnlyHint=True`, `destructiveHint=False`,
+  `openWorldHint=True`
+- **create** (`notion.create_task`): `readOnlyHint=False`, `destructiveHint=False`,
+  `idempotentHint=False`, `openWorldHint=True`
+- **update** (`notion.move_status`, `notion.conclude_task` e
+  `notion.update_project_page`):
+  `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=True`,
+  `openWorldHint=True`
+
+Essas anotações são apenas **hints do protocolo**. A confirmação obrigatória é
+responsabilidade do host: o catálogo do Felixo-AI-Core deve registrar toda ferramenta
+`write` com `requiresConfirmation: true`.
+
+---
+
+## Como rodar
+
+### Pré-requisitos
+
+```bash
+pip install -e ".[mcp]"    # instala MCP Python SDK 1.x + notion_starter
+```
+
+### Variáveis de ambiente
+
+O servidor MCP lê do ambiente (ou do `.env` na raiz):
+
+| Variável | Obrigatória | Descrição |
+|---|---|---|
+| `NOTION_TOKEN` | sim | Token de integração do Notion |
+| `NOTION_DATABASE_ID` | sim | ID do database de tarefas |
+
+### Execução
+
+```bash
+# stdio (padrão — o Felixo-AI-Core spawna assim)
+python server/mcp_server.py
+
+# Streamable HTTP para debug local (endpoint http://127.0.0.1:8000/mcp)
+python server/mcp_server.py --transport streamable-http
+```
+
+Ou pelo menu interativo:
+
+```bash
+python start_app.py
+# → "Subir servidor MCP"
+```
+
+---
+
+## Configuração no Felixo-AI-Core
+
+A configuração abaixo representa o contrato esperado para o cliente de servidores MCP
+externos do Felixo-AI-Core:
+
+```json
+{
+  "notion": {
+    "command": "python",
+    "args": ["server/mcp_server.py"],
+    "cwd": "/caminho/para/Automa-es-do-Notion",
+    "env": {
+      "NOTION_TOKEN": "${NOTION_TOKEN}",
+      "NOTION_DATABASE_ID": "${NOTION_DATABASE_ID}"
+    }
+  }
+}
+```
+
+### Contrato do catálogo
+
+Em 25 de junho de 2026, o catálogo real em
+`app/electron/services/mcp/felixo-tool-catalog.cjs` incorporou a camada `notion`
+no commit `75c8a12`. As entradas registradas são:
+
+```javascript
+{
+  name: 'notion.list_tasks',
+  layer: 'notion',
+  access: 'read',
+  status: 'planned',
+  description: 'List Notion tasks, optionally filtered by status.',
+},
+{
+  name: 'notion.create_task',
+  layer: 'notion',
+  access: 'write',
+  status: 'planned',
+  requiresConfirmation: true,
+  description: 'Create a task in Notion after confirmation.',
+},
+{
+  name: 'notion.move_status',
+  layer: 'notion',
+  access: 'write',
+  status: 'planned',
+  requiresConfirmation: true,
+  description: 'Move a Notion task to another status after confirmation.',
+},
+{
+  name: 'notion.conclude_task',
+  layer: 'notion',
+  access: 'write',
+  status: 'planned',
+  requiresConfirmation: true,
+  description: 'Conclude a Notion task after confirmation.',
+},
+{
+  name: 'notion.update_project_page',
+  layer: 'notion',
+  access: 'write',
+  status: 'planned',
+  requiresConfirmation: true,
+  description: 'Update a Notion project page after confirmation.',
+},
+```
+
+O catálogo já fixa a política de confirmação do host. A conexão e o ciclo de vida de
+servidores MCP externos ainda dependem da implementação do cliente prevista no roadmap
+do Felixo-AI-Core; até lá, o servidor deste projeto pode ser validado diretamente por
+`stdio` ou Streamable HTTP.
+
+---
+
+## Arquitetura e decisões
+
+1. **Sem Django**: o servidor MCP cria a `TaskList` diretamente do
+   `notion_starter`, lendo token e database ID do ambiente. Não depende do
+   Django — é um processo separado do servidor web.
+
+2. **DI dos serviços**: as funções de `services.tarefas` aceitam um parâmetro
+   `tasklist` injetável. O MCP server cria a `TaskList` e injeta, seguindo o
+   mesmo padrão que os testes usam.
+
+3. **Sem delete**: nenhuma ferramenta apaga dados. Mudanças de tarefa e atualização
+   de página de projeto requerem confirmação no host.
+
+4. **Transportes**: `stdio` é o padrão local para o Felixo-AI-Core. Streamable HTTP
+   existe apenas para depuração local. SSE legado não é exposto.
+
+5. **Página de projeto por caso de uso**: `notion.update_project_page` constrói um
+   `RepoInfo` normalizado e delega a `services.projetos.atualizar_pagina_projeto`.
+   O serviço reutiliza `CamposProjeto` e o mapeamento da sincronização GitHub; o MCP
+   não monta payload cru do Notion.
+
+---
+
+## Testes
+
+```bash
+python -m pytest tests/test_mcp_server.py tests/test_services_projetos.py -v
+```
+
+Os testes cobrem:
+
+- superfície pública com namespace `notion.*`;
+- anotações MCP de leitura, criação e atualização;
+- serialização de `Tarefa` sem expor `bruto`;
+- validação de entradas e variáveis de ambiente;
+- ferramentas com Notion mockado (`responses`);
+- seleção real do transporte passado ao SDK;
+- metadata do servidor.
+
+Validação de 25 de junho de 2026: **32 testes focados** (`test_mcp_server.py` +
+`test_services_projetos.py`) e handshake real por `stdio` listando as cinco
+ferramentas `notion.*`.

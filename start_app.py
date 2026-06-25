@@ -25,6 +25,7 @@ EXEMPLOS = RAIZ / "examples"
 SERVIDOR = RAIZ / "server"
 MANAGE_PY = SERVIDOR / "manage.py"
 TOKEN_ENV = "NOTION_TOKEN"
+DATABASE_ENV = "NOTION_DATABASE_ID"
 TOKEN_PREFIXO = "ntn_"
 
 # As deps de TUI são do próprio menu; o passo de Instalar/Setup garante que
@@ -86,16 +87,32 @@ def _django_disponivel() -> bool:
     return True
 
 
-def _ler_token_env_file() -> str | None:
-    """Lê ``NOTION_TOKEN`` do arquivo ``.env`` local, se existir."""
+def _mcp_disponivel() -> bool:
+    """Indica se o SDK MCP está instalado."""
+
+    try:
+        import mcp  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def _ler_valor_env_file(nome: str) -> str | None:
+    """Lê uma variável do arquivo ``.env`` local, se existir."""
 
     if not ENV_FILE.exists():
         return None
     for linha in ENV_FILE.read_text(encoding="utf-8").splitlines():
         linha = linha.strip()
-        if linha.startswith(f"{TOKEN_ENV}="):
+        if linha.startswith(f"{nome}="):
             return linha.split("=", 1)[1].strip()
     return None
+
+
+def _ler_token_env_file() -> str | None:
+    """Lê ``NOTION_TOKEN`` do arquivo ``.env`` local, se existir."""
+
+    return _ler_valor_env_file(TOKEN_ENV)
 
 
 def _token_configurado() -> tuple[bool, str]:
@@ -388,6 +405,90 @@ def acao_servidor(console) -> None:
         console.print("\n[dim]Servidor encerrado.[/dim]")
 
 
+def acao_mcp(console) -> None:
+    """Subir o servidor MCP para o Felixo-AI-Core."""
+
+    import questionary
+
+    console.rule("[bold]Subir servidor MCP")
+
+    if not _mcp_disponivel():
+        console.print("[yellow]•[/yellow] O SDK MCP não está instalado.")
+        if questionary.confirm("Instalar os extras de MCP agora?").ask():
+            codigo = subprocess.call(
+                [sys.executable, "-m", "pip", "install", "-e", ".[mcp]"], cwd=RAIZ
+            )
+            if codigo != 0 or not _mcp_disponivel():
+                console.print(
+                    "[red]✗[/red] Não consegui instalar o MCP. Instale manualmente:\n"
+                    f'  {sys.executable} -m pip install -e ".[mcp]"'
+                )
+                return
+        else:
+            console.print(
+                "[dim]Sem o SDK MCP o servidor não sobe. Instale quando quiser:\n"
+                f'  {sys.executable} -m pip install -e ".[mcp]"[/dim]'
+            )
+            return
+
+    configurado, origem = _token_configurado()
+    if not configurado:
+        console.print(
+            f"[yellow]•[/yellow] Token {origem}. As ferramentas MCP que falam "
+            "com o Notion vão falhar até o token ser configurado em [bold]Configurar[/bold]."
+        )
+
+    database_id = os.environ.get(DATABASE_ENV, "").strip() or _ler_valor_env_file(
+        DATABASE_ENV
+    )
+    if not database_id:
+        console.print(
+            f"[yellow]•[/yellow] {DATABASE_ENV} não configurado. As ferramentas MCP "
+            "vão falhar até o database de tarefas ser definido no ambiente ou no .env."
+        )
+
+    modo = questionary.select(
+        "Modo de transporte:",
+        choices=[
+            questionary.Choice(
+                "stdio (padrão — o Felixo-AI-Core spawna assim)",
+                value="stdio",
+            ),
+            questionary.Choice(
+                "Streamable HTTP (debug local — endpoint /mcp)",
+                value="streamable-http",
+            ),
+        ],
+    ).ask()
+    if not modo:
+        console.print("[dim]Cancelado.[/dim]")
+        return
+
+    mcp_script = SERVIDOR / "mcp_server.py"
+    ambiente = dict(os.environ)
+    token_arquivo = _ler_token_env_file()
+    if token_arquivo and not ambiente.get(TOKEN_ENV):
+        ambiente[TOKEN_ENV] = token_arquivo
+
+    args = [sys.executable, str(mcp_script)]
+    if modo == "streamable-http":
+        args.extend(["--transport", "streamable-http"])
+        console.print(
+            "Subindo servidor MCP em [bold]http://127.0.0.1:8000/mcp[/bold] — "
+            "Pressione [bold]Ctrl+C[/bold] para voltar ao menu."
+        )
+    else:
+        console.print(
+            "Subindo servidor MCP em modo stdio — "
+            "Pressione [bold]Ctrl+C[/bold] para voltar ao menu."
+        )
+
+    try:
+        subprocess.call(args, cwd=SERVIDOR, env=ambiente)
+    except KeyboardInterrupt:
+        console.print("\n[dim]Servidor MCP encerrado.[/dim]")
+
+
 def acao_mapear(console) -> None:
     """Mapear workspace: coleta o mapa e gera o relatório HTML navegável."""
 
@@ -501,6 +602,7 @@ def _menu_loop() -> None:
     acoes = {
         "rodar": ("▶  Iniciar / Rodar — executa um exemplo da biblioteca", acao_rodar),
         "servidor": ("🌐  Subir servidor — sobe a API web (Django) local", acao_servidor),
+        "mcp": ("🔗  Subir servidor MCP — ponte para o Felixo-AI-Core", acao_mcp),
         "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),
         "instalar": ("⬇  Instalar / Setup — instala deps e cria o .env", acao_instalar),
         "configurar": ("⚙  Configurar — aponta o token do Notion", acao_configurar),

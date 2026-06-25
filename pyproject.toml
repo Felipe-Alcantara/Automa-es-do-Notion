@@ -38,6 +38,10 @@ dev = [
 server = [
     "django>=5.0",
 ]
+# Dependências do servidor MCP (Fase 6). Instale com: pip install -e ".[mcp]"
+mcp = [
+    "mcp>=1.28,<2",
+]
 
 [project.urls]
 Homepage = "https://github.com/flaviavs-commits/notion-starter-boilerplate"
