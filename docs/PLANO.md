@@ -101,7 +101,8 @@ específica": primeiro a ferramenta reutilizável, depois a aplicação concreta
 | Peça | Onde | O que faz |
 |---|---|---|
 | **`NotionClient`** | [`client.py`](../src/notion_starter/client.py) | Cliente HTTP tipado: buscar, get/criar database, consultar (paginação), criar/atualizar/arquivar páginas |
-| **Helpers de propriedade** | [`properties.py`](../src/notion_starter/properties.py) | Montam os payloads de `title`, `email`, `select`, `status`, `date`… sem decorar o JSON do Notion |
+| **Helpers de propriedade (escrita)** | [`properties.py`](../src/notion_starter/properties.py) | Montam os payloads de `title`, `email`, `select`, `status`, `date`… sem decorar o JSON do Notion |
+| **Helpers de leitura** | [`readers.py`](../src/notion_starter/readers.py) | Par de leitura: `ler_title/ler_select/ler_status/ler_date/ler_relation…` e `extrair_valores(pagina)` → mapa coluna→valor simples (Fase 0) |
 | **`comparar_schema`** | [`schema.py`](../src/notion_starter/schema.py) | Valida se um database tem as colunas/tipos esperados antes de escrever |
 | **`construir_inventario` / `assinatura_perfil`** | [`inventory.py`](../src/notion_starter/inventory.py) | Lógica pura: árvore do workspace, duplicatas, órfãos e assinatura de perfil (colunas + opções) para distinguir databases parecidos |
 | **`TaskList` / `Tarefa` / `CamposTarefa`** | [`tasks.py`](../src/notion_starter/tasks.py) | Camada de alto nível sobre um database de tarefas: listar/criar/atualizar_status/concluir |
@@ -146,7 +147,11 @@ Cada fase é independente e entregue em passos pequenos e rastreáveis (um módu
 com testes). As assinaturas abaixo são **esboços** para guiar a implementação, não
 contratos finais.
 
-### Fase 0 — Helpers de leitura
+### Fase 0 — Helpers de leitura ✅
+
+> **Entregue** [2026-06-25] em [`src/notion_starter/readers.py`](../src/notion_starter/readers.py),
+> com testes puros em [`tests/test_readers.py`](../tests/test_readers.py). O contrato está
+> em [CONTRATOS.md](CONTRATOS.md) §5.
 
 **Objetivo**: hoje há helpers de *escrita* de propriedade, mas ler valores de volta de
 uma página ainda é manual. Esta fase fecha o par.
