@@ -80,6 +80,7 @@ notion-starter-boilerplate/
 │
 ├── 📁 tests/                     # Testes com HTTP mockado (responses)
 ├── 📁 examples/                  # Scripts de exemplo executáveis (ponto de partida)
+├── 📁 docs/                      # Visão e estratégia: roadmap, SaaS, escala, otimização
 │
 ├── start_app.py                  # Menu de entrada interativo (instala, configura, roda)
 ├── .env.example                  # Modelo de variáveis de ambiente
@@ -311,6 +312,15 @@ Veja [`examples/`](examples/) — são o ponto de partida para a sua lógica:
 - [`listar_paginas.py`](examples/listar_paginas.py) — lista tudo que a integração enxerga (páginas e databases, com IDs).
 - [`coletar_mapa.py`](examples/coletar_mapa.py) — varre o workspace e salva `mapa.json` (estrutura, duplicatas, órfãos, nº de linhas por database).
 - [`gerar_arvore_html.py`](examples/gerar_arvore_html.py) — lê o `mapa.json` e gera um `mapa.html` navegável (árvore + destaques).
+
+## 🗺️ Roadmap e Visão
+
+Para onde o projeto caminha — de biblioteca tipada a um front próprio com IA sobre o
+Notion — está documentado em [`docs/`](docs/README.md):
+[roadmap e visão final](docs/PLANO.md), [modelos de uso](docs/MODELOS-DE-USO.md),
+[portabilidade](docs/PORTABILIDADE.md) e os caminhos de evolução
+([SaaS](docs/SAAS.md), [escala](docs/ESCALA.md), [otimização](docs/OTIMIZACAO.md) e
+[ideias extras](docs/IDEIAS-EXTRAS.md)). São documentos de direção, abertos à contribuição.
 
 ## 🧪 Desenvolvimento
 

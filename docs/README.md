@@ -1,0 +1,42 @@
+# 📚 Documentação — Automações do Notion
+
+> **O que é esta pasta**: a documentação de visão e estratégia do projeto. Aqui mora o
+> plano de longo prazo, os modelos de uso e os caminhos possíveis de evolução
+> (portabilidade, SaaS, escala, otimização). É leitura para quem quer entender **onde o
+> projeto está indo** e **como contribuir** — não a referência de API (essa fica no
+> [`README.md`](../README.md) da raiz e nas docstrings do código).
+
+---
+
+## 🗂️ Índice da documentação
+
+| Documento | Para quê serve |
+|---|---|
+| [🗺️ PLANO.md](PLANO.md) | **Comece aqui.** Roadmap completo, visão final, arquitetura-alvo e as fases de evolução. |
+| [🎭 MODELOS-DE-USO.md](MODELOS-DE-USO.md) | Quem usa, em quais cenários, e os modos de operação (lib, CLI, servidor, IA, MCP). |
+| [🔌 PORTABILIDADE.md](PORTABILIDADE.md) | Como adaptar para outro domínio, outro provedor ou outra linguagem. Usar como template. |
+| [💼 SAAS.md](SAAS.md) | O que mudaria para virar um produto multiusuário (auth, multi-tenant, cobrança, segurança). |
+| [📈 ESCALA.md](ESCALA.md) | Como crescer sem quebrar: fila de jobs, workers, cache, rate limit, observabilidade. |
+| [⚡ OTIMIZACAO.md](OTIMIZACAO.md) | Como reduzir latência e custo (chamadas ao Notion e ao OpenRouter, cache, idempotência). |
+| [💡 IDEIAS-EXTRAS.md](IDEIAS-EXTRAS.md) | Brainstorm aberto: funcionalidades e integrações além do roadmap. |
+
+---
+
+## 🧭 Como ler, por objetivo
+
+- **Quero entender a visão** → [PLANO.md](PLANO.md) → [MODELOS-DE-USO.md](MODELOS-DE-USO.md)
+- **Quero reaproveitar o projeto** → [PORTABILIDADE.md](PORTABILIDADE.md)
+- **Quero pensar em produto** → [SAAS.md](SAAS.md) → [ESCALA.md](ESCALA.md)
+- **Quero deixar mais rápido/barato** → [OTIMIZACAO.md](OTIMIZACAO.md)
+- **Quero contribuir com algo novo** → [IDEIAS-EXTRAS.md](IDEIAS-EXTRAS.md)
+
+---
+
+## ⚠️ Natureza destes documentos
+
+- São **documentos vivos**: evoluem junto com o código, o [`README.md`](../README.md) e o
+  [`IA.md`](../IA.md).
+- São **exploratórios**: descrevem caminhos possíveis, não compromissos. Muitos itens
+  são **ideias abertas à comunidade**, não tarefas internas.
+- Seguem o padrão de qualidade do projeto: linguagem acessível, sem segredos nem valores
+  privados hardcoded, e trabalho futuro enquadrado como convite à contribuição.

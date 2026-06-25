@@ -51,6 +51,15 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   (painel `rich`) para obter o token do Notion: criar a integração, copiar o
   secret e — o passo que mais derruba iniciante — compartilhar a página com a
   integração via ••• → Conexões. Antes a orientação só existia no `.env.example`.
+- [2026-06-25] ✅ Biblioteca de visão/estratégia em `docs/`: `PLANO.md` (roadmap
+  completo + visão final — front próprio + IA sobre o Notion, em 6 fases),
+  `MODELOS-DE-USO.md`, `PORTABILIDADE.md`, `SAAS.md`, `ESCALA.md`, `OTIMIZACAO.md`,
+  `IDEIAS-EXTRAS.md` e um índice `README.md`. Decisões direcionais registradas:
+  stack-alvo Django + SQLite; integração de agentes via MCP com o projeto irmão
+  Felixo-AI-Core; camada de IA com provedor plugável — OpenRouter (pague por uso)
+  **e** assinaturas (Codex, Claude Code Pro, Cursor; futuramente Gemini CLI e
+  Copilot CLI), espelhando o projeto Openia. São documentos de direção (não código),
+  abertos à contribuição; o `notion_starter` atual vira a base de tudo.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 helpers de leitura (extrair valores de páginas), suporte a blocos, mais exemplos
