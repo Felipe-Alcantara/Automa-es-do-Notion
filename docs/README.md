@@ -17,6 +17,7 @@
 | [🔌 PORTABILIDADE.md](PORTABILIDADE.md) | Como adaptar para outro domínio, outro provedor ou outra linguagem. Usar como template. |
 | [💼 SAAS.md](SAAS.md) | O que mudaria para virar um produto multiusuário (auth, multi-tenant, cobrança, segurança). |
 | [🏗️ INFRA.md](INFRA.md) | Como o servidor roda local e é hospedado: estrutura de pastas, config por ambiente, SQLite operacional, deploy. |
+| [🔄 INTEGRACOES.md](INTEGRACOES.md) | GitHub e arquivos locais: configuração, schemas, idempotência, segurança e exemplos de sincronização. |
 | [📈 ESCALA.md](ESCALA.md) | Como crescer sem quebrar: fila de jobs, workers, cache, rate limit, observabilidade. |
 | [⚡ OTIMIZACAO.md](OTIMIZACAO.md) | Como reduzir latência e custo (chamadas ao Notion e ao OpenRouter, cache, idempotência). |
 | [💡 IDEIAS-EXTRAS.md](IDEIAS-EXTRAS.md) | Brainstorm aberto: funcionalidades e integrações além do roadmap. |
