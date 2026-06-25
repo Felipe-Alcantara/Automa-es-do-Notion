@@ -38,8 +38,13 @@ O Notion tem rate limit, então cada chamada conta:
 - **Não releia o que não mudou** — guarde resultados estáveis (schema de um database,
   opções de um select) em cache; eles mudam raramente.
 - **Agrupe quando der** — evite N chamadas quando uma consulta filtrada resolve.
-- **Respeite o rate limit** — retry com backoff e tratamento de 429 (Fase 1 do
-  [PLANO.md](PLANO.md)) evitam tomar bloqueio por insistência.
+- **Respeite o rate limit** — a Fase 1 do [PLANO.md](PLANO.md) entrega retry com
+  backoff para operações idempotentes, trata `Retry-After` e os status transitórios
+  documentados pelo Notion (`409`, `429`, `500`, `502`, `503`, `504`, `529`).
+- **Não repita criação às cegas** — `POST` de criação só recebe retry automático
+  após 429/529, quando o Notion orienta aguardar e repetir. Falha de rede ou 5xx é
+  ambígua: a operação pode ter sido processada antes da resposta se perder. Quem
+  precisar reprocessá-la deve reconciliar por um identificador estável no caso de uso.
 
 ---
 
@@ -78,6 +83,9 @@ O que vale a pena guardar, e por quanto tempo:
 | Resumos/priorizações de IA | quando a tarefa muda | guardar junto da tarefa, recomputar só no que mudou |
 
 Cache é otimização: a falha em ler/gravar o cache nunca deve quebrar o fluxo principal.
+O `NotionClient` mantém o schema de `get_database` em memória por 5 minutos por padrão,
+retorna cópias defensivas e oferece `invalidar_cache(database_id)` ou
+`invalidar_cache()` para expiração explícita.
 
 ---
 

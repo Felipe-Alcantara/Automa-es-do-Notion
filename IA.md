@@ -103,6 +103,10 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   filtro por status, criação de tarefa, modal de mover/concluir por status, estados
   de carregando/vazio/erro, feedback acessível (`aria-live`, diálogo semântico e
   restauração de foco). Testes de integração do front: 4. Zero dependências novas.
+- [2026-06-25] ✅ **Agente 7 (Otimização & Qualidade)** — Fase 1 entregue no
+  `NotionClient`: retry/backoff configurável para operações idempotentes, suporte a
+  `Retry-After`, status transitórios do Notion, cache de schema com TTL/invalidação
+  e cópias defensivas. Criações só repetem 429/529; rede/5xx ambíguos falham sem retry.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
@@ -159,6 +163,10 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   estáticos em `server/static/`. JS vanilla consumindo a API REST, sem framework de
   front. Rota `/` via `TemplateView`; interações preservam o atributo `hidden` e
   oferecem feedback semântico para tecnologias assistivas.
+- [2026-06-25] Retry no `NotionClient` é decidido por semântica, não apenas pelo
+  método HTTP: buscas `POST` são idempotentes e podem repetir; criação de database
+  ou página só repete 429/529; atualizações `PATCH` que definem estado podem repetir.
+  O cache de schema usa relógio monotônico e cópias defensivas.
 
 ---
 
@@ -187,7 +195,11 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   de erro (400/404/502/500).
 - [2026-06-25] ✅ `tests/test_front.py` (4) — rota `/`, elementos essenciais,
   assets estáticos e regressão do atributo `hidden`.
-- [2026-06-25] ✅ Suíte completa: **124 testes passando**; `ruff check .` limpo.
+- [2026-06-25] ✅ `tests/test_client_resiliencia.py` (30) — 409/429/5xx/529,
+  `Retry-After`, rede, backoff, política de idempotência, cache TTL/invalidação
+  e proteção contra mutação do retorno.
+- [2026-06-25] ✅ Suíte sem o escopo MCP ainda não versionado:
+  **193 testes passando, 2 skips**; `ruff` e formatação limpos.
 
 ---
 
@@ -196,6 +208,10 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 - [2026-06-25] BUG: o `display: flex` do overlay podia prevalecer sobre o atributo
   HTML `hidden` e exibir o modal de status antes da interação. FIX: regra global
   `[hidden] { display: none !important; }`, coberta por teste de regressão.
+- [2026-06-25] BUG: a primeira implementação de resiliência repetia `POST /pages`
+  após 5xx ou falha de rede, podendo duplicar uma página já processada pelo Notion.
+  FIX: retry ambíguo restrito a operações explicitamente idempotentes; criações só
+  repetem 429/529, com regressão cobrindo página e database.
 
 ---
 

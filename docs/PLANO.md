@@ -175,7 +175,13 @@ helpers de escrita.
 
 ---
 
-### Fase 1 — Robustez do cliente
+### Fase 1 — Robustez do cliente ✅
+
+> **Entregue** [2026-06-25]: `NotionClient` com retry configurável e backoff
+> exponencial para operações idempotentes, suporte a `Retry-After`, tratamento dos
+> status transitórios documentados pelo Notion, cache defensivo de schema com TTL e
+> invalidação explícita. Criações só repetem após 429/529; falhas ambíguas de rede
+> ou 5xx não são retentadas para evitar duplicatas quando a resposta se perde.
 
 **Objetivo**: tornar o `NotionClient` resistente a rate limit e falhas temporárias.
 
@@ -185,7 +191,8 @@ HTTP 429 respeitando `Retry-After`; idempotência em escritas sujeitas a reproce
 **Reusar**: o padrão de cliente resiliente (retry com backoff, tratamento de rate limit)
 já documentado no guia de integração com API do GitHub do padrão de qualidade.
 
-**Pronto quando**: testes simulam 429/5xx e verificam o backoff sem rede real.
+**Pronto quando**: testes simulam 409/429/5xx/529, falhas de rede, backoff, cache,
+retry seguro de rate limit e proteção contra repetição ambígua de criação. ✅
 
 ---
 

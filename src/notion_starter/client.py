@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import time
+from copy import deepcopy
 from typing import Any
 
 import requests
@@ -13,7 +15,12 @@ except ImportError:  # pragma: no cover - fallback para Python 3.10
     from typing_extensions import NotRequired, TypedDict
 
 from .constants import (
+    NOTION_BACKOFF_BASE,
     NOTION_BASE_URL,
+    NOTION_MAX_RETRIES,
+    NOTION_RATE_LIMIT_STATUS_CODES,
+    NOTION_RETRYABLE_STATUS_CODES,
+    NOTION_SCHEMA_CACHE_TTL,
     NOTION_TIMEOUT_SECONDS,
     NOTION_TOKEN_ENV,
     NOTION_TOKEN_PREFIX,
@@ -133,9 +140,17 @@ class NotionClient:
         base_url: Sobrescreve a URL base da API (útil para testes).
         timeout: Timeout por requisição, em segundos.
         version: Valor enviado no header ``Notion-Version``.
+        max_retries: Número de retentativas em operações idempotentes após
+            erros transitórios. ``0`` desabilita o retry.
+        backoff_base: Base do backoff exponencial entre retentativas, em
+            segundos. O tempo de espera é ``backoff_base * 2^tentativa``,
+            exceto em 429 com ``Retry-After``, que tem prioridade.
+        cache_ttl: TTL do cache de schema (``get_database``), em segundos.
+            ``0`` desabilita o cache.
 
     Raises:
         NotionConfigurationError: Se nenhum token válido puder ser resolvido.
+        ValueError: Se a configuração de retry/cache for negativa.
     """
 
     def __init__(
@@ -145,11 +160,25 @@ class NotionClient:
         base_url: str = NOTION_BASE_URL,
         timeout: int = NOTION_TIMEOUT_SECONDS,
         version: str = NOTION_VERSION,
+        max_retries: int = NOTION_MAX_RETRIES,
+        backoff_base: float = NOTION_BACKOFF_BASE,
+        cache_ttl: int = NOTION_SCHEMA_CACHE_TTL,
     ) -> None:
         self._token = self._resolver_token(token)
+        if max_retries < 0:
+            raise ValueError("max_retries não pode ser negativo.")
+        if backoff_base < 0:
+            raise ValueError("backoff_base não pode ser negativo.")
+        if cache_ttl < 0:
+            raise ValueError("cache_ttl não pode ser negativo.")
+
         self._base_url = base_url.rstrip("/")
         self._timeout = timeout
         self._version = version
+        self._max_retries = max_retries
+        self._backoff_base = backoff_base
+        self._cache_ttl = cache_ttl
+        self._cache_schema: dict[str, tuple[float, dict[str, Any]]] = {}
 
     @staticmethod
     def _resolver_token(token: str | None) -> str:
@@ -174,8 +203,7 @@ class NotionClient:
             )
         if not limpo.startswith(NOTION_TOKEN_PREFIX):
             raise NotionConfigurationError(
-                f"Token do Notion inválido: ele deve começar com "
-                f"'{NOTION_TOKEN_PREFIX}'."
+                f"Token do Notion inválido: ele deve começar com '{NOTION_TOKEN_PREFIX}'."
             )
         return limpo
 
@@ -194,49 +222,111 @@ class NotionClient:
         method: str,
         path: str,
         payload: dict[str, object] | None = None,
+        idempotente: bool,
     ) -> dict[str, Any]:
         """Executa uma requisição JSON contra a API do Notion.
+
+        Operações idempotentes são retentadas em erros transitórios e falhas de
+        rede, com backoff exponencial. Em criações, o retry fica restrito a
+        respostas 429/529, nas quais o Notion orienta aguardar e repetir; falhas
+        ambíguas de rede ou 5xx não são repetidas para evitar duplicatas.
+        Respostas com ``Retry-After`` têm prioridade.
 
         Args:
             method: Método HTTP.
             path: Caminho relativo à URL base.
             payload: Corpo JSON opcional.
+            idempotente: Se repetir a operação preserva o mesmo efeito.
 
         Returns:
             A resposta JSON decodificada.
 
         Raises:
-            NotionHTTPError: Se a API responder com 4xx/5xx.
-            NotionConnectionError: Em falha de rede ou timeout.
+            NotionHTTPError: Se a API responder com 4xx/5xx após esgotadas
+                as retentativas.
+            NotionConnectionError: Em falha de rede ou timeout após esgotadas
+                as retentativas.
             NotionInvalidResponseError: Se a resposta não for JSON válido.
         """
 
         url = f"{self._base_url}{path}"
-        try:
-            response = requests.request(
-                method=method,
-                url=url,
-                json=payload,
-                headers=self._headers(),
-                timeout=self._timeout,
-            )
-            response.raise_for_status()
-        except requests.HTTPError as exc:
-            status_code = exc.response.status_code if exc.response is not None else 500
-            body = exc.response.text if exc.response is not None else str(exc)
-            logger.error("Erro HTTP do Notion", extra={"status_code": status_code, "path": path})
-            raise NotionHTTPError(status_code, body) from exc
-        except requests.RequestException as exc:
-            logger.error("Erro de conexão com o Notion", extra={"path": path, "error": str(exc)})
-            raise NotionConnectionError(str(exc)) from exc
+        total_tentativas = self._max_retries + 1
 
-        try:
-            return response.json()
-        except ValueError as exc:
-            logger.error("Resposta JSON inválida do Notion", extra={"path": path})
-            raise NotionInvalidResponseError(
-                "A API do Notion retornou um JSON inválido."
-            ) from exc
+        for tentativa in range(total_tentativas):
+            try:
+                resp = requests.request(
+                    method=method,
+                    url=url,
+                    json=payload,
+                    headers=self._headers(),
+                    timeout=self._timeout,
+                )
+            except requests.RequestException as exc:
+                if idempotente and tentativa + 1 < total_tentativas:
+                    espera = self._backoff_base * (2**tentativa)
+                    logger.warning(
+                        "Retentativa %d/%d após erro de conexão",
+                        tentativa + 1,
+                        self._max_retries,
+                        extra={"path": path, "error": str(exc)},
+                    )
+                    time.sleep(espera)
+                    continue
+                logger.error(
+                    "Erro de conexão com o Notion",
+                    extra={"path": path, "error": str(exc)},
+                )
+                raise NotionConnectionError(str(exc)) from exc
+
+            if resp.status_code < 400:
+                try:
+                    return resp.json()
+                except ValueError as exc:
+                    logger.error("Resposta JSON inválida do Notion", extra={"path": path})
+                    raise NotionInvalidResponseError(
+                        "A API do Notion retornou um JSON inválido."
+                    ) from exc
+
+            pode_retentar = idempotente or (resp.status_code in NOTION_RATE_LIMIT_STATUS_CODES)
+            if (
+                pode_retentar
+                and resp.status_code in NOTION_RETRYABLE_STATUS_CODES
+                and tentativa + 1 < total_tentativas
+            ):
+                espera = self._calcular_espera(resp, tentativa)
+                logger.warning(
+                    "Retentativa %d/%d após HTTP %d",
+                    tentativa + 1,
+                    self._max_retries,
+                    resp.status_code,
+                    extra={"path": path},
+                )
+                time.sleep(espera)
+                continue
+
+            logger.error(
+                "Erro HTTP do Notion",
+                extra={"status_code": resp.status_code, "path": path},
+            )
+            raise NotionHTTPError(resp.status_code, resp.text)
+
+        raise RuntimeError("Fluxo de requisição terminou sem resposta.")
+
+    def _calcular_espera(self, resp: requests.Response, tentativa: int) -> float:
+        """Calcula o tempo de espera respeitando ``Retry-After``.
+
+        Se a resposta contém o header ``Retry-After`` (comum em 429), usa esse
+        valor. Caso contrário, usa backoff exponencial:
+        ``backoff_base * 2^tentativa``.
+        """
+
+        retry_after = resp.headers.get("Retry-After")
+        if retry_after:
+            try:
+                return max(float(retry_after), 0.0)
+            except ValueError:
+                pass
+        return self._backoff_base * (2**tentativa)
 
     # -- Busca -------------------------------------------------------------
 
@@ -279,7 +369,12 @@ class NotionClient:
         resultados: list[dict[str, Any]] = []
 
         while True:
-            data = self._request_json(method="POST", path="/search", payload=payload)
+            data = self._request_json(
+                method="POST",
+                path="/search",
+                payload=payload,
+                idempotente=True,
+            )
             resultados.extend(data.get("results", []))
 
             if not buscar_todos or not data.get("has_more"):
@@ -297,6 +392,10 @@ class NotionClient:
     def get_database(self, database_id: str) -> dict[str, Any]:
         """Busca os metadados de um database Notion.
 
+        Usa cache em memória quando ``cache_ttl > 0`` — o schema de um database
+        muda raramente, então evitar chamadas repetidas reduz latência e
+        consumo de rate limit. Falha no cache nunca quebra o fluxo.
+
         Args:
             database_id: ID do database.
 
@@ -305,7 +404,37 @@ class NotionClient:
         """
 
         limpo = _validar_identificador(database_id, "database_id")
-        return self._request_json(method="GET", path=f"/databases/{limpo}")
+
+        if self._cache_ttl > 0 and limpo in self._cache_schema:
+            instante, dados = self._cache_schema[limpo]
+            if time.monotonic() - instante < self._cache_ttl:
+                return deepcopy(dados)
+            self._cache_schema.pop(limpo, None)
+
+        resultado = self._request_json(
+            method="GET",
+            path=f"/databases/{limpo}",
+            idempotente=True,
+        )
+
+        if self._cache_ttl > 0:
+            self._cache_schema[limpo] = (time.monotonic(), deepcopy(resultado))
+
+        return resultado
+
+    def invalidar_cache(self, database_id: str | None = None) -> None:
+        """Invalida o cache de schema.
+
+        Args:
+            database_id: ID específico para invalidar. ``None`` limpa todo
+                o cache.
+        """
+
+        if database_id is None:
+            self._cache_schema.clear()
+        else:
+            limpo = _validar_identificador(database_id, "database_id")
+            self._cache_schema.pop(limpo, None)
 
     def criar_database(
         self,
@@ -331,7 +460,12 @@ class NotionClient:
             "title": [{"type": "text", "text": {"content": titulo_limpo}}],
             "properties": propriedades,
         }
-        return self._request_json(method="POST", path="/databases", payload=payload)
+        return self._request_json(
+            method="POST",
+            path="/databases",
+            payload=payload,
+            idempotente=False,
+        )
 
     def consultar_database(
         self,
@@ -371,6 +505,7 @@ class NotionClient:
                 method="POST",
                 path=f"/databases/{limpo}/query",
                 payload=payload,
+                idempotente=True,
             )
             resultados.extend(data.get("results", []))
 
@@ -406,7 +541,12 @@ class NotionClient:
             "parent": {"database_id": limpo},
             "properties": propriedades,
         }
-        return self._request_json(method="POST", path="/pages", payload=payload)
+        return self._request_json(
+            method="POST",
+            path="/pages",
+            payload=payload,
+            idempotente=False,
+        )
 
     def atualizar_pagina(
         self,
@@ -425,7 +565,12 @@ class NotionClient:
 
         limpo = _validar_identificador(page_id, "page_id")
         payload: PageUpdatePayload = {"properties": propriedades}
-        return self._request_json(method="PATCH", path=f"/pages/{limpo}", payload=payload)
+        return self._request_json(
+            method="PATCH",
+            path=f"/pages/{limpo}",
+            payload=payload,
+            idempotente=True,
+        )
 
     def arquivar_pagina(self, page_id: str) -> dict[str, Any]:
         """Arquiva uma página do Notion.
@@ -439,4 +584,9 @@ class NotionClient:
 
         limpo = _validar_identificador(page_id, "page_id")
         payload: PageArchivePayload = {"archived": True}
-        return self._request_json(method="PATCH", path=f"/pages/{limpo}", payload=payload)
+        return self._request_json(
+            method="PATCH",
+            path=f"/pages/{limpo}",
+            payload=payload,
+            idempotente=True,
+        )

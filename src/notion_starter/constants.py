@@ -11,3 +11,18 @@ NOTION_TOKEN_ENV = "NOTION_TOKEN"
 
 #: Prefixo com que todo token de integração atual do Notion começa.
 NOTION_TOKEN_PREFIX = "ntn_"
+
+#: Número padrão de retentativas em erros retentáveis (429, 5xx, rede).
+NOTION_MAX_RETRIES = 3
+
+#: Base do backoff exponencial entre retentativas, em segundos.
+NOTION_BACKOFF_BASE = 1.0
+
+#: Rate limit e sobrecarga: o Notion confirma que a chamada deve ser repetida.
+NOTION_RATE_LIMIT_STATUS_CODES = frozenset({429, 529})
+
+#: Status que a documentação do Notion orienta tentar novamente.
+NOTION_RETRYABLE_STATUS_CODES = frozenset({409, 429, 500, 502, 503, 504, 529})
+
+#: TTL padrão do cache de schema (get_database), em segundos.
+NOTION_SCHEMA_CACHE_TTL = 300

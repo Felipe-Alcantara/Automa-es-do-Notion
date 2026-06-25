@@ -17,7 +17,7 @@ TOKEN = "ntn_test_token"
 
 
 def criar_client() -> NotionClient:
-    return NotionClient(token=TOKEN)
+    return NotionClient(token=TOKEN, max_retries=0)
 
 
 # -- Resolução de token ----------------------------------------------------
