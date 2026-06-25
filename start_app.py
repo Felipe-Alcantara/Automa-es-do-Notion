@@ -142,14 +142,42 @@ def acao_configurar(console) -> None:
     """Configurar: orienta como apontar o token do Notion (sem editar à mão)."""
 
     import questionary
+    from rich.panel import Panel
 
     console.rule("[bold]Configurar")
     configurado, origem = _token_configurado()
     console.print(f"Token atual: [bold]{origem}[/bold].")
     console.print(
         "O token nunca é gravado neste script. Ele vive na variável de ambiente "
-        f"[bold]{TOKEN_ENV}[/bold] ou no arquivo [bold].env[/bold] (ignorado pelo git)."
+        f"[bold]{TOKEN_ENV}[/bold] ou no arquivo [bold].env[/bold] (ignorado pelo git).\n"
     )
+
+    console.print(
+        Panel(
+            "[bold]1.[/bold] Acesse [cyan]https://www.notion.so/my-integrations[/cyan] "
+            "e clique em [bold]New integration[/bold].\n"
+            "[bold]2.[/bold] Dê um nome, escolha o workspace e salve. Em "
+            "[bold]Configuration[/bold], copie o [bold]Internal Integration Secret[/bold] "
+            f"(começa com [bold]{TOKEN_PREFIXO}[/bold]) — é o token que você vai colar aqui.\n"
+            "[bold]3.[/bold] Abra no Notion a página ou o database que quer usar, clique no "
+            "menu [bold]•••[/bold] (canto superior direito) → [bold]Conexões[/bold] / "
+            "[bold]Connections[/bold] e selecione a integração que você acabou de criar.\n"
+            "   [dim]Sem este passo o token é válido, mas não enxerga nada — o Notion só "
+            "expõe à integração o que foi explicitamente compartilhado com ela.[/dim]\n"
+            "[bold]4.[/bold] Volte aqui e cole o token abaixo. Depois, em "
+            "[bold]Status[/bold], confira se ele foi reconhecido.",
+            title="[bold]Como obter o token do Notion (passo a passo)",
+            border_style="cyan",
+            padding=(1, 2),
+        )
+    )
+
+    if not questionary.confirm("Já tem o token em mãos para colar agora?").ask():
+        console.print(
+            "[dim]Sem problema. Siga os passos acima e volte em "
+            "[bold]Configurar[/bold] quando tiver o token.[/dim]"
+        )
+        return
 
     if not ENV_FILE.exists() and ENV_EXEMPLO.exists():
         if questionary.confirm("Criar um .env a partir do .env.example agora?").ask():
