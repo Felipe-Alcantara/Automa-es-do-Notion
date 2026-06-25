@@ -230,7 +230,11 @@ entrada única.
 
 ---
 
-### Fase 3 — Ingestão de arquivos locais → Notion
+### Fase 3 — Ingestão de arquivos locais → Notion ✅
+
+> **Entregue** [2026-06-25] em `server/services/ingestao.py`: contrato `Fonte`,
+> estratégias `FonteArquivos`/`FonteGitHub`, prévia textual limitada, caminhos relativos
+> e criação/atualização idempotente pela propriedade `Origem`.
 
 **Objetivo**: analisar arquivos locais, enviá-los ao servidor e organizá-los no Notion.
 
@@ -247,11 +251,16 @@ FonteGitHub(...)     # repositórios (ver Fase 4)
 ```
 
 **Pronto quando**: ao menos uma fonte funcionando ponta a ponta, com a parte pura
-(montar o item a partir do arquivo) testada sem rede.
+(montar o item a partir do arquivo) testada sem rede. ✅
 
 ---
 
-### Fase 4 — Conector GitHub
+### Fase 4 — Conector GitHub ✅
+
+> **Entregue** [2026-06-25] em `server/integrations/github.py` e
+> `server/services/sincronizar_github.py`: públicos/privados do próprio usuário,
+> paginação/deduplicação, retry seletivo, rate limit, linguagens/README e sincronização
+> idempotente de página + tarefa. Guia: [INTEGRACOES.md](INTEGRACOES.md).
 
 **Objetivo**: cada repositório vira uma **página no Notion** (o que é, estado atual,
 como pode evoluir) e um **tópico no todolist**.
@@ -273,7 +282,7 @@ enriquecimento, orquestração, tratamento de erro/rate limit) e os helpers de l
 Fase 0.
 
 **Pronto quando**: um repositório de exemplo vira página + tarefa, com o mapeamento
-testado.
+testado. ✅
 
 ---
 

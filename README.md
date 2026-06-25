@@ -41,6 +41,7 @@ e constrói a lógica do seu projeto em cima da base.
 - [🚀 Usando o Cliente em Código](#-usando-o-cliente-em-código)
 - [📖 Lendo com Paginação](#-lendo-com-paginação)
 - [🛡️ Validando o Schema Primeiro](#-validando-o-schema-primeiro)
+- [🔄 GitHub e Ingestão](#-github-e-ingestão)
 - [🧩 Helpers de Propriedades](#-helpers-de-propriedades)
 - [🔧 Superfície da API](#-superfície-da-api)
 - [📊 Logging](#-logging)
@@ -280,6 +281,24 @@ for t in tl.listar(status="00. Inbox"):
 tl.criar("Revisar PR", status="02. ASAP", prazo="2026-07-01")
 tl.atualizar_status("id_da_tarefa", "06. Feito")
 ```
+
+## 🔄 GitHub e Ingestão
+
+O servidor inclui um cliente GitHub resiliente e fontes extensíveis para transformar
+repositórios ou arquivos locais em páginas do Notion. A sincronização atualiza páginas
+existentes e evita duplicar tarefas.
+
+```python
+from services.ingestao import FonteArquivos, ingerir
+from services.sincronizar_github import sincronizar
+
+ingerir(FonteArquivos("./documentos", extensoes=[".md", ".txt"]))
+sincronizar("usuario", status_tarefa="Backlog")
+```
+
+Tokens ficam no ambiente; repositórios privados só são coletados quando o token pertence
+ao mesmo usuário consultado. Schemas, variáveis e limites estão detalhados em
+[`docs/INTEGRACOES.md`](docs/INTEGRACOES.md).
 
 ## 🧩 Helpers de Propriedades
 
