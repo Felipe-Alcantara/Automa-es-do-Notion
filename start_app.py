@@ -38,6 +38,11 @@ TOKEN_PREFIXO = "ntn_"
 APP_ENDERECO_PADRAO = "127.0.0.1:8000"
 APP_URL = f"http://{APP_ENDERECO_PADRAO}/"
 APP_HEALTH_URL = f"{APP_URL}api/health"
+SCHEMA_TAREFAS = {
+    "Nome": "title",
+    "Status": "status",
+    "Próximo prazo": "date",
+}
 
 # As deps de TUI são do próprio menu; o passo de Instalar/Setup garante que
 # existem. Antes disso, caímos num fallback em texto puro para nunca quebrar.
@@ -219,6 +224,15 @@ def _ler_token_env_file() -> str | None:
     return _ler_valor_env_file(TOKEN_ENV)
 
 
+def _valor_configurado(nome: str) -> str | None:
+    """Resolve uma configuração do ambiente ou do ``.env``, ignorando placeholders."""
+
+    valor = os.environ.get(nome, "").strip() or (_ler_valor_env_file(nome) or "").strip()
+    if not valor or "xxx" in valor.lower():
+        return None
+    return valor
+
+
 def _token_configurado() -> tuple[bool, str]:
     """Resolve a origem do token sem expor o valor.
 
@@ -341,21 +355,120 @@ def acao_configurar(console) -> None:
         )
 
 
-def _gravar_token_env_file(token: str) -> None:
-    """Grava/atualiza ``NOTION_TOKEN`` no ``.env`` preservando o resto."""
+def _gravar_valor_env_file(nome: str, valor: str) -> None:
+    """Grava/atualiza uma configuração no ``.env`` preservando o resto."""
 
     linhas: list[str] = []
     achou = False
     if ENV_FILE.exists():
         linhas = ENV_FILE.read_text(encoding="utf-8").splitlines()
     for i, linha in enumerate(linhas):
-        if linha.strip().startswith(f"{TOKEN_ENV}="):
-            linhas[i] = f"{TOKEN_ENV}={token}"
+        if linha.strip().startswith(f"{nome}="):
+            linhas[i] = f"{nome}={valor}"
             achou = True
             break
     if not achou:
-        linhas.append(f"{TOKEN_ENV}={token}")
+        linhas.append(f"{nome}={valor}")
     ENV_FILE.write_text("\n".join(linhas) + "\n", encoding="utf-8")
+
+
+def _gravar_token_env_file(token: str) -> None:
+    """Grava/atualiza ``NOTION_TOKEN`` no ``.env`` preservando o resto."""
+
+    _gravar_valor_env_file(TOKEN_ENV, token)
+
+
+def _titulo_database(item: dict) -> str:
+    """Extrai um título curto de um database retornado pelo ``/search``."""
+
+    titulo = "".join(parte.get("plain_text", "") for parte in item.get("title", []))
+    return titulo.strip() or "(sem título)"
+
+
+def _database_compativel(item: dict) -> bool:
+    """Verifica o schema mínimo usado pelo front de tarefas."""
+
+    propriedades = {nome: info.get("type") for nome, info in item.get("properties", {}).items()}
+    return all(propriedades.get(nome) == tipo for nome, tipo in SCHEMA_TAREFAS.items())
+
+
+def _buscar_databases_compativeis(token: str) -> list[tuple[str, str]]:
+    """Lista databases acessíveis que atendem ao schema padrão de tarefas."""
+
+    from notion_starter import NotionClient
+
+    itens = NotionClient(token=token).buscar(
+        buscar_todos=True,
+        filtro={"property": "object", "value": "database"},
+    )
+    compativeis = [
+        (_titulo_database(item), item.get("id", ""))
+        for item in itens
+        if item.get("id") and _database_compativel(item)
+    ]
+    return sorted(compativeis, key=lambda item: item[0].casefold())
+
+
+def _garantir_database_tarefas(console) -> bool:
+    """Seleciona e persiste o database de tarefas na primeira execução."""
+
+    import questionary
+
+    database_id = _valor_configurado(DATABASE_ENV)
+    if database_id:
+        os.environ.setdefault(DATABASE_ENV, database_id)
+        return True
+
+    token = _valor_configurado(TOKEN_ENV)
+    if not token or not token.startswith(TOKEN_PREFIXO):
+        console.print(
+            "[yellow]•[/yellow] Configure primeiro o token do Notion pela opção "
+            "[bold]Configurar[/bold]."
+        )
+        return False
+
+    console.print("Procurando databases de tarefas compartilhados com a integração...")
+    try:
+        databases = _buscar_databases_compativeis(token)
+    except Exception as exc:  # noqa: BLE001 - fronteira externa com mensagem segura
+        console.print(
+            "[red]✗[/red] Não consegui consultar os databases do Notion. "
+            f"Verifique a integração e tente novamente ({type(exc).__name__})."
+        )
+        return False
+
+    if not databases:
+        colunas = ", ".join(f"{nome} ({tipo})" for nome, tipo in SCHEMA_TAREFAS.items())
+        console.print(
+            "[red]✗[/red] Nenhum database compatível foi encontrado. Compartilhe com a "
+            f"integração um database que tenha: [bold]{colunas}[/bold]."
+        )
+        return False
+
+    if len(databases) == 1:
+        titulo, database_id = databases[0]
+        console.print(f"Usando o database compatível encontrado: [bold]{titulo}[/bold].")
+    else:
+        escolhas = [
+            questionary.Choice(f"{titulo} · {database_id[:8]}…", value=database_id)
+            for titulo, database_id in databases
+        ]
+        escolhas.append(questionary.Choice("Cancelar", value=None))
+        database_id = questionary.select(
+            "Qual database deve alimentar a lista de tarefas?",
+            choices=escolhas,
+        ).ask()
+        if not database_id:
+            console.print("[dim]Configuração cancelada.[/dim]")
+            return False
+
+    _gravar_valor_env_file(DATABASE_ENV, database_id)
+    os.environ[DATABASE_ENV] = database_id
+    console.print(
+        "[green]✓[/green] Database de tarefas salvo no .env. "
+        "Essa escolha será reutilizada nas próximas execuções."
+    )
+    return True
 
 
 def acao_rodar(console) -> None:
@@ -548,6 +661,9 @@ def acao_iniciar_tudo(console) -> None:
             f"[yellow]•[/yellow] Token {origem}. O app abre normalmente, mas as tarefas "
             "do Notion só carregam depois de configurar o token."
         )
+
+    if not _garantir_database_tarefas(console):
+        return
 
     if _app_web_ativo():
         console.print("[green]✓[/green] O app já está rodando.")

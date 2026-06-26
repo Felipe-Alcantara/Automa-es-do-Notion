@@ -158,6 +158,95 @@ def test_instala_extra_servidor_quando_necessario(monkeypatch):
     assert kwargs["cwd"] == start_app.RAIZ
 
 
+def test_database_compativel_exige_schema_completo():
+    database = {
+        "properties": {
+            "Nome": {"type": "title"},
+            "Status": {"type": "status"},
+            "Próximo prazo": {"type": "date"},
+        }
+    }
+
+    assert start_app._database_compativel(database) is True
+    del database["properties"]["Próximo prazo"]
+    assert start_app._database_compativel(database) is False
+
+
+def test_garantir_database_reutiliza_configuracao_existente(monkeypatch):
+    monkeypatch.setenv(start_app.DATABASE_ENV, "database-existente")
+    monkeypatch.setattr(
+        start_app,
+        "_buscar_databases_compativeis",
+        lambda token: (_ for _ in ()).throw(AssertionError("não deve consultar o Notion")),
+    )
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    assert start_app._garantir_database_tarefas(console) is True
+
+
+def test_garantir_database_unico_salva_no_env(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text("NOTION_TOKEN=ntn_teste\n", encoding="utf-8")
+    monkeypatch.setattr(start_app, "ENV_FILE", env_file)
+    # setenv (em vez de delenv) faz o monkeypatch "adotar" a chave: a escrita
+    # que a produção faz em os.environ é revertida no teardown, sem vazar para
+    # outros testes (ex.: test_api_tarefas, que lê NOTION_DATABASE_ID).
+    monkeypatch.setenv(start_app.DATABASE_ENV, "")
+    monkeypatch.delenv(start_app.DATABASE_ENV, raising=False)
+    monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
+    monkeypatch.setattr(
+        start_app,
+        "_buscar_databases_compativeis",
+        lambda token: [("Tarefas", "database-selecionado")],
+    )
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    assert start_app._garantir_database_tarefas(console) is True
+    assert "NOTION_DATABASE_ID=database-selecionado" in env_file.read_text()
+    assert start_app.os.environ[start_app.DATABASE_ENV] == "database-selecionado"
+
+
+def test_garantir_database_pede_escolha_quando_ha_mais_de_um(monkeypatch, tmp_path):
+    import questionary
+
+    class Pergunta:
+        def ask(self):
+            return "db-2"
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("NOTION_TOKEN=ntn_teste\n", encoding="utf-8")
+    monkeypatch.setattr(start_app, "ENV_FILE", env_file)
+    # setenv adota a chave para que a escrita da produção em os.environ seja
+    # revertida no teardown (ver test_garantir_database_unico_salva_no_env).
+    monkeypatch.setenv(start_app.DATABASE_ENV, "")
+    monkeypatch.delenv(start_app.DATABASE_ENV, raising=False)
+    monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
+    monkeypatch.setattr(
+        start_app,
+        "_buscar_databases_compativeis",
+        lambda token: [("Tarefas", "db-1"), ("Tarefas (1)", "db-2")],
+    )
+    monkeypatch.setattr(questionary, "select", lambda *args, **kwargs: Pergunta())
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    assert start_app._garantir_database_tarefas(console) is True
+    assert start_app.os.environ[start_app.DATABASE_ENV] == "db-2"
+
+
+def test_garantir_database_falha_sem_compativel(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text("NOTION_TOKEN=ntn_teste\n", encoding="utf-8")
+    monkeypatch.setattr(start_app, "ENV_FILE", env_file)
+    monkeypatch.delenv(start_app.DATABASE_ENV, raising=False)
+    monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
+    monkeypatch.setattr(start_app, "_buscar_databases_compativeis", lambda token: [])
+    saida = io.StringIO()
+    console = Console(file=saida, force_terminal=False)
+
+    assert start_app._garantir_database_tarefas(console) is False
+    assert "Nenhum database compatível" in saida.getvalue()
+
+
 def test_app_web_ativo_valida_health_do_projeto(monkeypatch):
     class Resposta:
         def __enter__(self):
@@ -196,6 +285,7 @@ def test_iniciar_tudo_usa_defaults_e_sobe_front_api(monkeypatch):
     agendamentos = []
     monkeypatch.setattr(start_app, "_django_disponivel", lambda: True)
     monkeypatch.setattr(start_app, "_token_configurado", lambda: (True, ".env local"))
+    monkeypatch.setattr(start_app, "_garantir_database_tarefas", lambda console: True)
     monkeypatch.setattr(start_app, "_app_web_ativo", lambda: False)
     monkeypatch.setattr(start_app, "_ambiente_servidor", lambda: {"DJANGO_DEBUG": "1"})
     monkeypatch.setattr(start_app, "_aplicar_migracoes", lambda console, ambiente: True)
@@ -224,6 +314,7 @@ def test_iniciar_tudo_reabre_app_que_ja_esta_rodando(monkeypatch):
     aberturas = []
     monkeypatch.setattr(start_app, "_django_disponivel", lambda: True)
     monkeypatch.setattr(start_app, "_token_configurado", lambda: (True, ".env local"))
+    monkeypatch.setattr(start_app, "_garantir_database_tarefas", lambda console: True)
     monkeypatch.setattr(start_app, "_app_web_ativo", lambda: True)
     monkeypatch.setattr(
         start_app.webbrowser,

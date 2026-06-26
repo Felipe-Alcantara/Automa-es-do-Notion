@@ -25,12 +25,19 @@ DB = "db_tarefas"
 def _django():
     # Config mínima para subir o Django sem segredo real nem rede.
     os.environ.setdefault("DJANGO_DEBUG", "1")
-    os.environ.setdefault("NOTION_TOKEN", "ntn_test_token")
-    os.environ.setdefault("NOTION_DATABASE_ID", DB)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
     import django
 
     django.setup()
+
+
+@pytest.fixture(autouse=True)
+def _notion_env(monkeypatch):
+    # Fixa token/database deste módulo a cada teste. Usa setenv (não
+    # setdefault) para não herdar valores que outro teste possa ter deixado
+    # em os.environ — as rotas montam o NotionClient a partir do ambiente.
+    monkeypatch.setenv("NOTION_TOKEN", "ntn_test_token")
+    monkeypatch.setenv("NOTION_DATABASE_ID", DB)
 
 
 @pytest.fixture
@@ -159,6 +166,23 @@ def test_falha_do_notion_vira_502(client):
     resp = client.get("/api/tarefas")
     assert resp.status_code == 502
     assert resp.json()["erro"]["codigo"] == "erro_upstream"
+
+
+def test_configuracao_ausente_orienta_iniciar_tudo(client, monkeypatch):
+    from api import views
+    from django.core.exceptions import ImproperlyConfigured
+
+    def falhar(*args, **kwargs):
+        raise ImproperlyConfigured("detalhe interno")
+
+    monkeypatch.setattr(views.svc, "listar_tarefas", falhar)
+
+    resp = client.get("/api/tarefas")
+
+    assert resp.status_code == 500
+    assert resp.json()["erro"]["codigo"] == "erro_interno"
+    assert "Iniciar tudo" in resp.json()["erro"]["mensagem"]
+    assert "detalhe interno" not in resp.content.decode()
 
 
 def test_metodo_nao_permitido_e_405(client):

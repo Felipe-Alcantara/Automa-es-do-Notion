@@ -68,7 +68,11 @@ def _responder(acao: Callable[[], JsonResponse]) -> JsonResponse:
     except NotionAPIError:
         return _erro("erro_upstream", "Falha ao falar com o Notion.", 502)
     except (NotionConfigurationError, ImproperlyConfigured):
-        return _erro("erro_interno", "Servidor não configurado corretamente.", 500)
+        return _erro(
+            "erro_interno",
+            "Notion ainda não configurado. Execute “Iniciar tudo” novamente.",
+            500,
+        )
     except Exception:  # noqa: BLE001 - contrato: qualquer outra falha vira 500 erro_interno
         return _erro("erro_interno", "Erro interno inesperado.", 500)
 
