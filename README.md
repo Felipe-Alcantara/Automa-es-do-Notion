@@ -229,7 +229,10 @@ para qualquer página visível à integração — pesquisar, ler, escrever, edi
 apagar. `apagar-bloco` é destrutivo e só executa com `--sim`. Para databases, o
 conteúdo são as **linhas**: use `linhas <database_id>` (e `conteudo` num database
 avisa e já traz as linhas). O `linhas` resolve os *data sources* do modelo novo
-do Notion, então lê inclusive databases criados recentemente.
+do Notion, então lê inclusive databases criados recentemente. O `conteudo` lê a
+página **em profundidade**: desce em colunas, toggles e blocos sincronizados, e
+marca cada database embutido como `**[database: Nome]**` — nada de conteúdo
+aninhado fica de fora.
 
 O envelope JSON é sempre `{ "ok": true, "dados": ... }` em sucesso e
 `{ "ok": false, "erro": { "mensagem": ... } }` em erro. A CLI lê `NOTION_TOKEN`
