@@ -1334,6 +1334,22 @@ def _acoes_menu():
     }
 
 
+def _categorias_menu() -> list[tuple[str, list[str]]]:
+    """Agrupa as ações em poucas categorias, para um menu enxuto por subtelas.
+
+    Cada categoria lista as chaves de ``_acoes_menu()`` que pertencem a ela. O
+    menu mostra primeiro as categorias (pouca informação de uma vez) e só então
+    as ações de dentro — mais intuitivo que despejar tudo numa tela só. ``status``
+    fica como atalho direto (ação única comum), fora das subtelas.
+    """
+
+    return [
+        ("🚀  Usar o app — abrir e rodar", ["tudo", "rodar"]),
+        ("🤖  Para IA e integrações — CLI, MCP, mapa", ["cli", "mcp", "mapear"]),
+        ("⚙  Configurar e instalar — token, deps, API", ["configurar", "instalar", "servidor"]),
+    ]
+
+
 def _executar_acao_dedicada(chave: str) -> None:
     """Executa uma ação no processo filho e mantém o terminal legível ao final."""
 
@@ -1361,8 +1377,40 @@ def _executar_acao_dedicada(chave: str) -> None:
 # --------------------------------------------------------------------------- #
 # Loop do menu                                                                #
 # --------------------------------------------------------------------------- #
+def _disparar_acao(console, chave: str) -> None:
+    """Abre uma ação num terminal dedicado e reporta o resultado."""
+
+    acoes = _acoes_menu()
+    abriu, mensagem = _abrir_terminal_dedicado(chave, acoes[chave][0])
+    estilo = "green" if abriu else "red"
+    simbolo = "✓" if abriu else "✗"
+    console.print(f"[{estilo}]{simbolo}[/{estilo}] {mensagem}")
+    if abriu:
+        console.print("[dim]O menu continua disponível para iniciar outras ações.[/dim]")
+    console.print()
+
+
+def _submenu_categoria(console, titulo: str, chaves: list[str]) -> None:
+    """Mostra as ações de uma categoria e dispara a escolhida."""
+
+    import questionary
+
+    acoes = _acoes_menu()
+    while True:
+        escolha = questionary.select(
+            titulo,
+            choices=[
+                *(questionary.Choice(acoes[chave][0], value=chave) for chave in chaves),
+                questionary.Choice("← Voltar", value=None),
+            ],
+        ).ask()
+        if not escolha:
+            return
+        _disparar_acao(console, escolha)
+
+
 def _menu_loop() -> None:
-    """Desenha o menu interativo e despacha as ações até a pessoa sair."""
+    """Desenha o menu interativo (categorias → ações) até a pessoa sair."""
 
     import questionary
     from rich.console import Console
@@ -1373,18 +1421,19 @@ def _menu_loop() -> None:
         Panel.fit(
             "[bold cyan]notion-starter-boilerplate[/bold cyan]\n"
             "Ponto de partida tipado para construir projetos sobre a API do Notion.\n"
-            "[dim]Instale, configure o token, veja o status e rode os exemplos.[/dim]",
+            "[dim]Escolha uma categoria; cada uma abre suas opções.[/dim]",
             border_style="cyan",
         )
     )
 
-    acoes = _acoes_menu()
+    categorias = _categorias_menu()
 
     while True:
         escolha = questionary.select(
             "O que você quer fazer?",
             choices=[
-                *(questionary.Choice(texto, value=chave) for chave, (texto, _) in acoes.items()),
+                *(questionary.Choice(titulo, value=i) for i, (titulo, _) in enumerate(categorias)),
+                questionary.Choice("ℹ  Status — estado do ambiente", value="status"),
                 questionary.Choice("⏿  Sair", value="sair"),
             ],
         ).ask()
@@ -1392,15 +1441,12 @@ def _menu_loop() -> None:
         if escolha in (None, "sair"):
             console.print("[dim]Até mais![/dim]")
             return
+        if escolha == "status":
+            _disparar_acao(console, "status")
+            continue
 
-        abriu, mensagem = _abrir_terminal_dedicado(escolha, acoes[escolha][0])
-        estilo = "green" if abriu else "red"
-        simbolo = "✓" if abriu else "✗"
-        console.print(f"[{estilo}]{simbolo}[/{estilo}] {mensagem}")
-        if abriu:
-            console.print("[dim]O menu continua disponível para iniciar outras ações.[/dim]")
-
-        console.print()
+        titulo, chaves = categorias[escolha]
+        _submenu_categoria(console, titulo, chaves)
 
 
 def main(argv: list[str] | None = None) -> None:

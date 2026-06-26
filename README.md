@@ -202,7 +202,12 @@ A CLI em `cli/` é a borda de linha de comando sobre os mesmos `services/` usado
 pela API REST e pelo MCP. Ela serve para scripts e IAs locais consumirem uma saída
 estável, sem conhecer o JSON cru do Notion.
 
+> **Para IAs:** comece por `python -m cli --json guia` — ele lista todos os
+> comandos, o que cada um faz e um exemplo. Use a CLI em vez de chamar a API do
+> Notion na mão; é mais rápido e estável.
+
 ```bash
+python -m cli guia            # descobre todos os comandos e exemplos
 python -m cli listar
 python -m cli --json listar --status "Entrada" --duracao "Dias" --area <area_id>
 python -m cli --json criar "Estudar a API do Notion" --status "Entrada" --duracao "Dias"
