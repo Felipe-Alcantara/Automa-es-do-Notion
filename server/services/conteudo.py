@@ -160,6 +160,44 @@ def buscar(
     ]
 
 
+def listar_linhas(
+    database_id: str,
+    *,
+    cliente: NotionClient | None = None,
+) -> list[dict[str, str]]:
+    """Lista as linhas (páginas) de um database, resolvendo *data sources*.
+
+    Um database não tem "conteúdo" em blocos: o que ele guarda são linhas. Esta
+    função as devolve já normalizadas. Suporta o modelo novo do Notion
+    (multi-fonte): resolve os *data sources* do database e consulta cada um.
+
+    Args:
+        database_id: ID do database.
+        cliente: Cliente Notion opcional (injeção para testes/uso alternativo).
+
+    Returns:
+        Lista de ``{"id", "titulo", "url"}`` — uma linha por página do database.
+        Vazia quando o database não tem *data source* acessível à integração
+        (compartilhe-o com a integração no Notion para liberar a leitura).
+    """
+
+    cli = cliente or _cliente_padrao()
+    linhas: list[dict[str, str]] = []
+    for fonte in cli.listar_data_sources(database_id):
+        fonte_id = fonte.get("id")
+        if not fonte_id:
+            continue
+        for pagina in cli.consultar_data_source(fonte_id, buscar_todos=True):
+            linhas.append(
+                {
+                    "id": pagina.get("id", ""),
+                    "titulo": _titulo_de_item(pagina),
+                    "url": pagina.get("url", ""),
+                }
+            )
+    return linhas
+
+
 def _titulo_de_item(item: dict[str, Any]) -> str:
     """Extrai um título legível de uma página ou database do ``/search``.
 

@@ -469,7 +469,13 @@ def _formatar_humano(comando: str, dados: Any) -> str:
     if comando == "buscar":
         return "\n".join(_linhas_tabela(dados, ("id", "tipo", "titulo", "url")))
     if comando == "conteudo":
+        if dados.get("tipo") == "database":
+            cabecalho = dados["aviso"]
+            tabela = "\n".join(_linhas_tabela(dados["linhas"], ("id", "titulo", "url")))
+            return f"{cabecalho}\n\n{tabela}"
         return dados["markdown"] or "(página sem conteúdo)"
+    if comando == "linhas":
+        return "\n".join(_linhas_tabela(dados["linhas"], ("id", "titulo", "url")))
     if comando == "database-atual":
         return f"Database atual: {dados['database_id'] or '(não configurado)'}"
     if comando == "normalizar-nomes":
@@ -626,8 +632,32 @@ def cmd_mapear(args: argparse.Namespace, *, client_factory: ClientFactory) -> An
 
 def cmd_conteudo(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
     page_id = _texto_obrigatorio(args.page_id, "page_id")
-    markdown = svc_conteudo.ler_conteudo(page_id, cliente=client_factory())
-    return {"id": page_id, "markdown": markdown}
+    cliente = client_factory()
+    markdown = svc_conteudo.ler_conteudo(page_id, cliente=cliente)
+    if markdown:
+        return {"id": page_id, "markdown": markdown}
+
+    # Sem corpo em blocos: pode ser um database (o conteúdo são as linhas, não
+    # blocos). Avisa e já entrega as linhas, em vez de devolver vazio em silêncio.
+    linhas = svc_conteudo.listar_linhas(page_id, cliente=cliente)
+    if linhas:
+        return {
+            "id": page_id,
+            "markdown": "",
+            "tipo": "database",
+            "aviso": (
+                "Isto é um database: o conteúdo são as linhas, não blocos. "
+                "Use 'linhas' para listá-las (já incluídas em 'linhas' abaixo)."
+            ),
+            "linhas": linhas,
+        }
+    return {"id": page_id, "markdown": ""}
+
+
+def cmd_linhas(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
+    database_id = _texto_obrigatorio(args.database_id, "database_id")
+    linhas = svc_conteudo.listar_linhas(database_id, cliente=client_factory())
+    return {"id": database_id, "linhas": linhas}
 
 
 def cmd_escrever(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
@@ -727,6 +757,9 @@ def construir_parser() -> argparse.ArgumentParser:
     conteudo = sub.add_parser("conteudo", help="lê o conteúdo de uma página como Markdown")
     conteudo.add_argument("page_id")
 
+    linhas = sub.add_parser("linhas", help="lista as linhas de um database (resolve data sources)")
+    linhas.add_argument("database_id")
+
     escrever = sub.add_parser("escrever", help="anexa conteúdo (Markdown) a uma página")
     escrever.add_argument("page_id")
     escrever.add_argument("conteudo", help="texto em Markdown a anexar")
@@ -780,6 +813,8 @@ def executar(
             dados = cmd_mapear(args, client_factory=client_factory)
         elif comando == "conteudo":
             dados = cmd_conteudo(args, client_factory=client_factory)
+        elif comando == "linhas":
+            dados = cmd_linhas(args, client_factory=client_factory)
         elif comando == "escrever":
             dados = cmd_escrever(args, client_factory=client_factory)
         elif comando == "editar-bloco":

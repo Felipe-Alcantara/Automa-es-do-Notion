@@ -227,6 +227,33 @@ class FakeClient:
         self.chamadas.append(("excluir_bloco", block_id))
         return {"id": block_id, "archived": True}
 
+    def listar_data_sources(self, database_id):
+        self.chamadas.append(("listar_data_sources", database_id))
+        return []
+
+    def consultar_data_source(self, data_source_id, page_size=100, buscar_todos=False, filtro=None):
+        self.chamadas.append(("consultar_data_source", data_source_id))
+        return []
+
+
+class FakeDatabaseClient(FakeClient):
+    """Cliente onde o ID consultado é um database (blocos vazios, com linhas)."""
+
+    def ler_blocos(self, block_id, page_size=100, buscar_todos=False):
+        return []
+
+    def listar_data_sources(self, database_id):
+        return [{"id": "ds1", "name": "Principal"}]
+
+    def consultar_data_source(self, data_source_id, page_size=100, buscar_todos=False, filtro=None):
+        return [
+            {
+                "id": "r1",
+                "url": "https://notion.so/r1",
+                "properties": {"Name": {"type": "title", "title": [{"plain_text": "Linha 1"}]}},
+            }
+        ]
+
 
 def _executar(args, fake: FakeTaskList | None = None, client=None):
     tasklist = fake or FakeTaskList()
@@ -439,3 +466,29 @@ def test_buscar_normaliza_itens():
     assert codigo == 0
     ids = {item["id"] for item in saida["dados"]}
     assert ids == {"p1", "db1"}
+
+
+def test_conteudo_de_database_avisa_e_traz_linhas():
+    codigo, saida = _executar(
+        ["--json", "conteudo", "db1"], client=FakeDatabaseClient()
+    )
+    assert codigo == 0
+    dados = saida["dados"]
+    assert dados["tipo"] == "database"
+    assert "database" in dados["aviso"].lower()
+    assert dados["linhas"][0]["titulo"] == "Linha 1"
+
+
+def test_conteudo_de_pagina_sem_corpo_nao_inventa_linhas():
+    client = FakeClient()
+    # ler_blocos do FakeClient devolve um parágrafo; força vazio aqui.
+    client.ler_blocos = lambda *a, **k: []
+    codigo, saida = _executar(["--json", "conteudo", "page1"], client=client)
+    assert codigo == 0
+    assert saida["dados"] == {"id": "page1", "markdown": ""}
+
+
+def test_linhas_lista_linhas_do_database():
+    codigo, saida = _executar(["--json", "linhas", "db1"], client=FakeDatabaseClient())
+    assert codigo == 0
+    assert saida["dados"]["linhas"][0]["id"] == "r1"

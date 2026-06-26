@@ -4,6 +4,12 @@ from __future__ import annotations
 
 NOTION_BASE_URL = "https://api.notion.com/v1"
 NOTION_VERSION = "2022-06-28"
+
+#: Versão da API exigida pelos endpoints de *data sources* (databases com o
+#: modelo novo, multi-fonte, introduzido pelo Notion em 2025). É enviada apenas
+#: nas chamadas de data source, sem alterar a versão padrão das demais rotas.
+NOTION_DATA_SOURCE_VERSION = "2025-09-03"
+
 NOTION_TIMEOUT_SECONDS = 15
 
 #: Variável de ambiente lida por padrão quando nenhum token é passado explicitamente.

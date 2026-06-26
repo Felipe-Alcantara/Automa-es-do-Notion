@@ -29,6 +29,7 @@ from mcp_server import (
     create_task,
     delete_block,
     edit_block,
+    list_database_rows,
     list_tasks,
     main,
     mcp,
@@ -113,6 +114,11 @@ class TestAnotacoesMCP:
         assert ann.readOnlyHint is True
         assert ann.destructiveHint is False
 
+    def test_list_database_rows_e_read_only(self):
+        ann = self._tools()["notion.list_database_rows"].annotations
+        assert ann.readOnlyHint is True
+        assert ann.destructiveHint is False
+
     def test_append_content_e_write(self):
         ann = self._tools()["notion.append_content"].annotations
         assert ann.readOnlyHint is False
@@ -143,6 +149,7 @@ class TestAnotacoesMCP:
             "notion.append_content",
             "notion.edit_block",
             "notion.delete_block",
+            "notion.list_database_rows",
         }
 
 
@@ -562,3 +569,84 @@ class TestConteudo:
         assert itens == [
             {"id": "p1", "tipo": "page", "titulo": "Nota", "url": "https://notion.so/p1"}
         ]
+
+
+# ---------------------------------------------------------------------------
+# Data sources (databases do modelo novo)
+# ---------------------------------------------------------------------------
+
+
+class TestDataSources:
+    """Verifica a leitura de linhas de database e o aviso de database."""
+
+    def _patch_cliente(self):
+        return mock.patch(
+            "mcp_server._criar_notion_client",
+            return_value=NotionClient(token=TOKEN),
+        )
+
+    @responses.activate
+    def test_list_database_rows_resolve_fontes(self):
+        responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/databases/db1",
+            json={"data_sources": [{"id": "ds1", "name": "Principal"}]},
+            status=200,
+        )
+        responses.add(
+            responses.POST,
+            f"{NOTION_BASE_URL}/data_sources/ds1/query",
+            json={
+                "results": [
+                    {
+                        "id": "r1",
+                        "url": "https://notion.so/r1",
+                        "properties": {
+                            "Name": {"type": "title", "title": [{"plain_text": "Linha 1"}]}
+                        },
+                    }
+                ],
+                "has_more": False,
+            },
+            status=200,
+        )
+        with self._patch_cliente():
+            resultado = list_database_rows(database_id="db1")
+        assert resultado["id"] == "db1"
+        assert resultado["linhas"][0]["titulo"] == "Linha 1"
+
+    @responses.activate
+    def test_read_page_content_avisa_quando_e_database(self):
+        responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/blocks/db1/children",
+            json={"results": [], "has_more": False},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/databases/db1",
+            json={"data_sources": [{"id": "ds1", "name": "Principal"}]},
+            status=200,
+        )
+        responses.add(
+            responses.POST,
+            f"{NOTION_BASE_URL}/data_sources/ds1/query",
+            json={
+                "results": [
+                    {
+                        "id": "r1",
+                        "url": "https://notion.so/r1",
+                        "properties": {
+                            "Name": {"type": "title", "title": [{"plain_text": "Linha 1"}]}
+                        },
+                    }
+                ],
+                "has_more": False,
+            },
+            status=200,
+        )
+        with self._patch_cliente():
+            resultado = read_page_content(page_id="db1")
+        assert resultado["tipo"] == "database"
+        assert resultado["linhas"][0]["id"] == "r1"

@@ -120,3 +120,43 @@ def test_buscar_normaliza_paginas_e_databases():
         "url": "https://notion.so/p1",
     }
     assert itens[1]["titulo"] == "Tarefas"
+
+
+@responses.activate
+def test_listar_linhas_resolve_data_sources():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/db1",
+        json={"data_sources": [{"id": "ds1", "name": "Principal"}]},
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/data_sources/ds1/query",
+        json={
+            "results": [
+                {
+                    "id": "r1",
+                    "url": "https://notion.so/r1",
+                    "properties": {
+                        "Name": {"type": "title", "title": [{"plain_text": "Linha 1"}]}
+                    },
+                }
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
+    linhas = svc.listar_linhas("db1", cliente=_cliente())
+    assert linhas == [{"id": "r1", "titulo": "Linha 1", "url": "https://notion.so/r1"}]
+
+
+@responses.activate
+def test_listar_linhas_sem_data_source_acessivel_retorna_vazio():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/db1",
+        json={"data_sources": []},
+        status=200,
+    )
+    assert svc.listar_linhas("db1", cliente=_cliente()) == []
