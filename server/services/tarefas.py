@@ -12,6 +12,8 @@ puras e testáveis sem token nem rede real.
 
 from __future__ import annotations
 
+from typing import Any
+
 from notion_starter import Tarefa, TaskList
 
 
@@ -42,12 +44,46 @@ def criar_tarefa(
     nome: str,
     status: str | None = None,
     prazo: str | None = None,
+    duracao: str | None = None,
+    areas: list[str] | None = None,
     *,
     tasklist: TaskList | None = None,
 ) -> Tarefa:
-    """Cria uma tarefa nova (``status`` e ``prazo`` opcionais)."""
+    """Cria uma tarefa nova (todos os campos exceto ``nome`` são opcionais)."""
 
-    return (tasklist or _tasklist_padrao()).criar(nome, status=status, prazo=prazo)
+    return (tasklist or _tasklist_padrao()).criar(
+        nome, status=status, prazo=prazo, duracao=duracao, areas=areas
+    )
+
+
+def editar_tarefa(
+    task_id: str,
+    *,
+    nome: str | None = None,
+    status: str | None = None,
+    prazo: str | None = None,
+    duracao: str | None = None,
+    areas: list[str] | None = None,
+    tasklist: TaskList | None = None,
+) -> Tarefa:
+    """Edita uma tarefa existente (um ou mais campos).
+
+    Retrocompatível: ``editar_tarefa(id, status=...)`` faz o mesmo que o antigo
+    ``mover_status``.
+    """
+
+    return (tasklist or _tasklist_padrao()).editar(
+        task_id, nome=nome, status=status, prazo=prazo, duracao=duracao, areas=areas
+    )
+
+
+def listar_opcoes(
+    *,
+    tasklist: TaskList | None = None,
+) -> dict[str, Any]:
+    """Retorna os valores possíveis para seletores (status, duração, áreas)."""
+
+    return (tasklist or _tasklist_padrao()).opcoes()
 
 
 def mover_status(
