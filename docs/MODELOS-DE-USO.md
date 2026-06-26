@@ -18,7 +18,7 @@
 
 ---
 
-## 🧩 As cinco camadas de uso
+## 🧩 As camadas de uso
 
 O projeto é uma pilha: cada camada usa a de baixo e nenhuma obriga a de cima. Você pode
 parar em qualquer degrau.
@@ -26,12 +26,17 @@ parar em qualquer degrau.
 | # | Camada | Como se usa | Quando faz sentido |
 |---|---|---|---|
 | 1 | **Biblioteca** | `from notion_starter import NotionClient, TaskList` | Já existe um script/app seu e você só quer falar com o Notion de forma tipada |
-| 2 | **Menu / CLI** | `python start_app.py` | Quer rodar exemplos, mapear o workspace ou configurar o token sem decorar comando |
-| 3 | **Servidor + front web** | sobe o Django, abre o navegador | Quer ver e editar suas tarefas reais numa interface própria |
-| 4 | **IA assistida** | a IA sugere, você confirma | Quer ajuda para priorizar, resumir, criar tarefas em linguagem natural |
-| 5 | **Agentes via MCP** | o Felixo-AI-Core orquestra | Quer só ler e adicionar tarefas enquanto agentes executam e registram |
+| 2 | **Menu de entrada** | `python start_app.py` | Quer instalar, configurar o token, escolher database, mapear o workspace ou subir o app sem decorar comando |
+| 3 | **Servidor + front web** | sobe o Django (API) e a SPA **React + Tailwind + Vite** | Quer ver, filtrar e editar suas tarefas reais numa interface própria (grade/lista/kanban) |
+| 4 | **CLI para IA** | comandos em `cli/`, borda fina sobre `services/` | Quer que uma IA local ou um script leiam/editem/movam tarefas, com saída JSON estável |
+| 5 | **IA assistida** | a IA sugere, você confirma | Quer ajuda para priorizar, resumir, criar tarefas em linguagem natural |
+| 6 | **Agentes via MCP** | o Felixo-AI-Core orquestra | Quer só ler e adicionar tarefas enquanto agentes executam e registram |
 
-> As camadas 3–5 são o roadmap (ver [PLANO.md](PLANO.md)); as camadas 1–2 já existem.
+> **CLI (4) e MCP (6) são bordas finas sobre os mesmos `services/`** — CLI para uso
+> direto/IA local, MCP para os agentes do Felixo-AI-Core; sem duplicar regra.
+>
+> As camadas 1–2 e a API/servidor já existem; o **front React** e a **CLI para IA** são o
+> [Ciclo 2](PLANO.md) (em construção). As camadas 5–6 seguem como roadmap aberto.
 
 ---
 
@@ -79,10 +84,11 @@ Uma ordem natural de crescer, sem pular degraus:
 
 ```text
 1. Biblioteca / menu  →  já dá valor (ler e escrever no Notion de forma tipada)
-2. Servidor + front   →  o momento aha: ver e editar tarefas reais no navegador
-3. IA assistida       →  a IA sugere; você confirma cada escrita
-4. Fontes de dados    →  arquivos locais e GitHub viram páginas/tarefas
-5. Agentes via MCP    →  o cérebro (Felixo-AI-Core) assume a execução
+2. Servidor + front   →  o momento aha: ver, filtrar e editar tarefas reais (SPA React)
+3. CLI para IA        →  uma IA local/script opera o todolist por linha de comando
+4. IA assistida       →  a IA sugere; você confirma cada escrita
+5. Fontes de dados    →  arquivos locais e GitHub viram páginas/tarefas
+6. Agentes via MCP    →  o cérebro (Felixo-AI-Core) assume a execução
 ```
 
 Cada degrau é útil sozinho. A graça do projeto é que você colhe valor desde o primeiro,
