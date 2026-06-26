@@ -166,7 +166,9 @@ No menu você escolhe:
   Streamable HTTP para depuração local.
 - **Mapear workspace** — coleta o `mapa.json` e gera o `mapa.html` navegável do seu Notion.
 - **Instalar / Setup** — instala o pacote com as deps de dev e cria o `.env`.
-- **Configurar** — aponta o token do Notion (gravado no `.env`, fora do git).
+- **Configurar** — aponta o token do Notion ou escolhe o database de tarefas
+  (ambos gravados no `.env`, fora do git). Use "Escolher database de tarefas"
+  para trocar depois sem editar o `.env` na mão.
 - **Status / Sair** — mostra o estado real (Python, pacote, `.env`, token) e sai.
 
 Cada opção abre um **terminal dedicado**. O menu principal continua disponível

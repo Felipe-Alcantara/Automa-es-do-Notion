@@ -286,12 +286,34 @@ def acao_instalar(console) -> None:
 
 
 def acao_configurar(console) -> None:
-    """Configurar: orienta como apontar o token do Notion (sem editar à mão)."""
+    """Configurar: submenu para apontar o token e o database (sem editar à mão)."""
+
+    import questionary
+
+    console.rule("[bold]Configurar")
+    escolha = questionary.select(
+        "O que você quer configurar?",
+        choices=[
+            questionary.Choice("🔑  Token do Notion — credencial da integração", value="token"),
+            questionary.Choice(
+                "🗂️  Database de tarefas — qual database alimenta a lista", value="database"
+            ),
+            questionary.Choice("← Voltar", value=None),
+        ],
+    ).ask()
+    if escolha == "token":
+        _configurar_token(console)
+    elif escolha == "database":
+        _selecionar_database_tarefas(console)
+
+
+def _configurar_token(console) -> None:
+    """Orienta como apontar o token do Notion (sem editar à mão)."""
 
     import questionary
     from rich.panel import Panel
 
-    console.rule("[bold]Configurar")
+    console.rule("[bold]Configurar token")
     configurado, origem = _token_configurado()
     console.print(f"Token atual: [bold]{origem}[/bold].")
     console.print(
@@ -410,14 +432,30 @@ def _buscar_databases_compativeis(token: str) -> list[tuple[str, str]]:
 
 
 def _garantir_database_tarefas(console) -> bool:
-    """Seleciona e persiste o database de tarefas na primeira execução."""
+    """Garante um database de tarefas: reusa o salvo ou seleciona na primeira vez.
 
-    import questionary
+    Usado pelo "Iniciar tudo" — se ``NOTION_DATABASE_ID`` já existe, reusa em
+    silêncio para não interromper o fluxo de um clique. Para trocar depois, use
+    a opção [bold]Configurar → Escolher database de tarefas[/bold]
+    (:func:`_selecionar_database_tarefas`).
+    """
 
     database_id = _valor_configurado(DATABASE_ENV)
     if database_id:
         os.environ.setdefault(DATABASE_ENV, database_id)
         return True
+
+    return _selecionar_database_tarefas(console)
+
+
+def _selecionar_database_tarefas(console) -> bool:
+    """Busca, escolhe e persiste o database de tarefas no ``.env``.
+
+    Sempre re-consulta o Notion e regrava ``NOTION_DATABASE_ID`` — é o caminho
+    para definir o database na primeira vez e para trocá-lo depois pelo menu.
+    """
+
+    import questionary
 
     token = _valor_configurado(TOKEN_ENV)
     if not token or not token.startswith(TOKEN_PREFIXO):
@@ -445,13 +483,17 @@ def _garantir_database_tarefas(console) -> bool:
         )
         return False
 
-    if len(databases) == 1:
+    atual = _valor_configurado(DATABASE_ENV)
+    if len(databases) == 1 and not atual:
         titulo, database_id = databases[0]
         console.print(f"Usando o database compatível encontrado: [bold]{titulo}[/bold].")
     else:
         escolhas = [
-            questionary.Choice(f"{titulo} · {database_id[:8]}…", value=database_id)
-            for titulo, database_id in databases
+            questionary.Choice(
+                f"{titulo} · {db_id[:8]}…" + ("  [atual]" if db_id == atual else ""),
+                value=db_id,
+            )
+            for titulo, db_id in databases
         ]
         escolhas.append(questionary.Choice("Cancelar", value=None))
         database_id = questionary.select(
