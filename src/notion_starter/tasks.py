@@ -74,6 +74,21 @@ def _ler_nome_status(prop: dict[str, Any]) -> str | None:
     return None
 
 
+def _extrair_opcoes_status(prop_schema: dict[str, Any]) -> list[str]:
+    """Extrai os nomes das opções de uma propriedade ``status`` no schema do database."""
+    status_obj = prop_schema.get("status") or prop_schema.get("select") or {}
+    opcoes = status_obj.get("options", [])
+    return [opt.get("name", "") for opt in opcoes if opt.get("name")]
+
+
+def _texto_title_de_pagina(pagina: dict[str, Any]) -> str:
+    """Extrai o texto do título da primeira propriedade ``title`` de uma página."""
+    for prop in (pagina.get("properties") or {}).values():
+        if prop.get("type") == "title":
+            return _texto_title(prop)
+    return ""
+
+
 def tarefa_de_pagina(pagina: dict[str, Any], campos: CamposTarefa) -> Tarefa:
     """Converte o JSON cru de uma página do Notion em :class:`Tarefa`.
 
@@ -134,6 +149,9 @@ class TaskList:
         self._client = client
         self._database_id = database_id
         self._campos = campos or CamposTarefa()
+        self._cache_areas: dict[str, str] = {}  # {area_id: nome}
+
+    # -- Leitura ---------------------------------------------------------------
 
     def listar(
         self,
@@ -142,12 +160,15 @@ class TaskList:
     ) -> list[Tarefa]:
         """Lista as tarefas, opcionalmente filtrando por status.
 
+        Enriquece cada tarefa com os nomes das áreas relacionadas
+        (``areas_nomes``), resolvidos via cache em memória.
+
         Args:
             status: Quando informado, retorna só as tarefas nesse status.
             buscar_todos: Percorre toda a paginação (padrão).
 
         Returns:
-            As tarefas normalizadas.
+            As tarefas normalizadas e enriquecidas.
         """
 
         filtro = None
@@ -159,13 +180,48 @@ class TaskList:
         paginas = self._client.consultar_database(
             self._database_id, buscar_todos=buscar_todos, filtro=filtro
         )
-        return [tarefa_de_pagina(pg, self._campos) for pg in paginas]
+        tarefas = [tarefa_de_pagina(pg, self._campos) for pg in paginas]
+        self._enriquecer_areas(tarefas)
+        return tarefas
+
+    def opcoes(self) -> dict[str, Any]:
+        """Lê os valores possíveis para seletores (status, duração, áreas).
+
+        Usa o schema do database para status/duração e consulta o database
+        relacionado para áreas.
+
+        Returns:
+            ``{"status": [...], "duracao": [...], "areas": [{"id": ..., "nome": ...}]}``.
+        """
+
+        schema = self._client.get_database(self._database_id)
+        props = schema.get("properties", {})
+
+        status_opcoes = _extrair_opcoes_status(props.get(self._campos.status, {}))
+        duracao_opcoes = _extrair_opcoes_status(props.get(self._campos.duracao, {}))
+
+        areas: list[dict[str, str]] = []
+        areas_prop = props.get(self._campos.areas, {})
+        areas_db_id = (areas_prop.get("relation") or {}).get("database_id")
+        if areas_db_id:
+            paginas = self._client.consultar_database(areas_db_id, buscar_todos=True)
+            for pg in paginas:
+                nome = _texto_title_de_pagina(pg)
+                if nome:
+                    areas.append({"id": pg["id"], "nome": nome})
+                    self._cache_areas[pg["id"]] = nome
+
+        return {"status": status_opcoes, "duracao": duracao_opcoes, "areas": areas}
+
+    # -- Escrita ---------------------------------------------------------------
 
     def criar(
         self,
         nome: str,
         status: str | None = None,
         prazo: str | None = None,
+        duracao: str | None = None,
+        areas: list[str] | None = None,
     ) -> Tarefa:
         """Cria uma tarefa nova no database.
 
@@ -173,6 +229,8 @@ class TaskList:
             nome: Título da tarefa.
             status: Status inicial (deve existir no database).
             prazo: Data do prazo (ISO, ex.: ``"2026-07-01"``).
+            duracao: Nome da duração/esforço (deve existir no database).
+            areas: IDs das páginas de "Áreas-da-Vida" a relacionar.
 
         Returns:
             A tarefa criada.
@@ -183,36 +241,111 @@ class TaskList:
             propriedades[self._campos.status] = p.status(status)
         if prazo is not None:
             propriedades[self._campos.prazo] = p.date(prazo)
+        if duracao is not None:
+            propriedades[self._campos.duracao] = p.status(duracao)
+        if areas is not None:
+            propriedades[self._campos.areas] = p.relation(areas)
 
         pagina = self._client.criar_pagina(self._database_id, propriedades)
+        return tarefa_de_pagina(pagina, self._campos)
+
+    def editar(
+        self,
+        task_id: str,
+        *,
+        nome: str | None = None,
+        status: str | None = None,
+        prazo: str | None = None,
+        duracao: str | None = None,
+        areas: list[str] | None = None,
+    ) -> Tarefa:
+        """Edita uma tarefa existente (um ou mais campos).
+
+        Aceita qualquer subconjunto dos campos; ao menos um deve ser informado.
+        Mover/concluir continua sendo mudar ``status``.
+
+        Args:
+            task_id: ID da página (a tarefa).
+            nome: Novo título.
+            status: Novo status.
+            prazo: Nova data de prazo (ISO).
+            duracao: Nova duração/esforço.
+            areas: Novos IDs de áreas relacionadas.
+
+        Returns:
+            A tarefa atualizada.
+
+        Raises:
+            ValueError: Se nenhum campo for informado.
+        """
+
+        propriedades: dict[str, Any] = {}
+        if nome is not None:
+            propriedades[self._campos.nome] = p.title(nome)
+        if status is not None:
+            propriedades[self._campos.status] = p.status(status)
+        if prazo is not None:
+            propriedades[self._campos.prazo] = p.date(prazo)
+        if duracao is not None:
+            propriedades[self._campos.duracao] = p.status(duracao)
+        if areas is not None:
+            propriedades[self._campos.areas] = p.relation(areas)
+
+        if not propriedades:
+            raise ValueError("Ao menos um campo deve ser informado para editar.")
+
+        pagina = self._client.atualizar_pagina(task_id, propriedades)
         return tarefa_de_pagina(pagina, self._campos)
 
     def atualizar_status(self, task_id: str, status: str) -> Tarefa:
         """Muda o status de uma tarefa existente.
 
-        Args:
-            task_id: ID da página (a tarefa).
-            status: Novo status (deve existir no database).
-
-        Returns:
-            A tarefa atualizada.
+        Atalho para ``editar(task_id, status=status)``.
         """
 
-        pagina = self._client.atualizar_pagina(
-            task_id, {self._campos.status: p.status(status)}
-        )
-        return tarefa_de_pagina(pagina, self._campos)
+        return self.editar(task_id, status=status)
 
     def concluir(self, task_id: str, status_concluido: str) -> Tarefa:
-        """Marca uma tarefa como concluída usando o status de conclusão do workspace.
-
-        Args:
-            task_id: ID da tarefa.
-            status_concluido: Nome do status que representa "feito"
-                (ex.: ``"06. Feito"``), específico do seu database.
-
-        Returns:
-            A tarefa atualizada.
-        """
+        """Marca uma tarefa como concluída usando o status de conclusão do workspace."""
 
         return self.atualizar_status(task_id, status_concluido)
+
+    # -- Internos --------------------------------------------------------------
+
+    def _enriquecer_areas(self, tarefas: list[Tarefa]) -> None:
+        """Preenche ``areas_nomes`` das tarefas usando o cache de áreas.
+
+        IDs que não estão no cache são consultados no Notion em lote.
+        """
+
+        ids_desconhecidos: set[str] = set()
+        for t in tarefas:
+            for aid in t.areas:
+                if aid and aid not in self._cache_areas:
+                    ids_desconhecidos.add(aid)
+
+        if ids_desconhecidos:
+            self._popular_cache_areas(ids_desconhecidos)
+
+        for t in tarefas:
+            t.areas_nomes = [self._cache_areas.get(aid, "") for aid in t.areas]
+
+    def _popular_cache_areas(self, ids: set[str]) -> None:
+        """Consulta o database de áreas e popula o cache.
+
+        Busca o database relacionado (via schema) e carrega todas as páginas
+        de uma vez — mais eficiente do que consultar página a página.
+        """
+
+        schema = self._client.get_database(self._database_id)
+        props = schema.get("properties", {})
+        areas_prop = props.get(self._campos.areas, {})
+        areas_db_id = (areas_prop.get("relation") or {}).get("database_id")
+        if not areas_db_id:
+            return
+        paginas = self._client.consultar_database(areas_db_id, buscar_todos=True)
+        for pg in paginas:
+            pid = pg.get("id", "")
+            nome = _texto_title_de_pagina(pg)
+            if pid:
+                self._cache_areas[pid] = nome
