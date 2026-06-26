@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Boilerplate](https://img.shields.io/badge/tipo-boilerplate-8A2BE2?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-252%20passing-success?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-285%20passing-success?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Ponto de partida tipado para construir projetos sobre a API do Notion — clone, adapte e construa em cima.**
@@ -96,6 +96,7 @@ notion-starter-boilerplate/
 │   ├── templates/                # Front web (template Django para tarefas)
 │   └── static/                   # CSS e JS do front (vanilla, sem framework)
 │
+├── 📁 cli/                       # CLI para IA/scripts sobre os mesmos services
 ├── 📁 tests/                     # Testes (HTTP mockado + Django test client)
 ├── 📁 examples/                  # Scripts de exemplo executáveis (ponto de partida)
 ├── 📁 docs/                      # Visão e estratégia: roadmap, SaaS, escala, otimização
@@ -133,6 +134,9 @@ notion-starter-boilerplate/
   JS vanilla consumindo a API REST, sem framework.
 - **IA copiloto** — camada de IA plugável (OpenRouter) para linguagem natural →
   operações de tasklist. Sugere ações, pessoa confirma antes de escrever.
+- **CLI para IA** — `python -m cli` lista, lê, cria, edita, move, conclui,
+  mapeia e escolhe database usando os mesmos `services/` da API/MCP. Use
+  `--json` para saída estruturada estável.
 - **Servidor MCP** — expõe `notion.list_tasks`, `notion.create_task`,
   `notion.move_status`, `notion.conclude_task` e `notion.update_project_page` como
   invólucros dos casos de uso. Escritas são anotadas para confirmação; a política
@@ -167,6 +171,7 @@ No menu você escolhe:
 - **Subir servidor** — instala o Django (se necessário), aplica migrações e sobe a API REST local (`/api/health`, `/api/tarefas`).
 - **Subir servidor MCP** — instala o SDK MCP e inicia a ponte em `stdio` ou
   Streamable HTTP para depuração local.
+- **CLI para IA** — mostra os comandos disponíveis e exemplos de saída JSON.
 - **Mapear workspace** — coleta o `mapa.json` e gera o `mapa.html` navegável do seu Notion.
 - **Instalar / Setup** — instala o pacote com as deps de dev e cria o `.env`.
 - **Configurar** — aponta o token do Notion ou escolhe o database de tarefas
@@ -185,6 +190,30 @@ Na primeira execução, se as bibliotecas do menu (`questionary`, `rich`) não
 estiverem instaladas, o script se oferece para instalá-las. Funciona em Windows,
 Linux e macOS, e nenhum segredo é guardado no script — o token continua só em
 variável de ambiente ou no `.env`.
+
+## ⌘ CLI para IA
+
+A CLI em `cli/` é a borda de linha de comando sobre os mesmos `services/` usados
+pela API REST e pelo MCP. Ela serve para scripts e IAs locais consumirem uma saída
+estável, sem conhecer o JSON cru do Notion.
+
+```bash
+python -m cli listar
+python -m cli --json listar --status "00. Inbox"
+python -m cli --json criar "Estudar a API do Notion" --status "00. Inbox" --duracao "Dias"
+python -m cli --json editar <task_id> --status "02. Fazendo" --area <area_id>
+python -m cli --json mover <task_id> "06. Feito"
+python -m cli --json concluir <task_id> "06. Feito"
+python -m cli --json opcoes
+python -m cli --json databases
+python -m cli --json escolher-database <database_id>
+python -m cli --json mapear
+```
+
+O envelope JSON é sempre `{ "ok": true, "dados": ... }` em sucesso e
+`{ "ok": false, "erro": { "mensagem": ... } }` em erro. A CLI lê `NOTION_TOKEN`
+e `NOTION_DATABASE_ID` do ambiente ou do `.env`; `escolher-database` grava o
+database escolhido no `.env`.
 
 ---
 
