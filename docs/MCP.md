@@ -48,11 +48,23 @@ ferramentas; o Felixo-AI-Core decide qual agente usa qual ferramenta.
 | `notion.move_status` | write | sim | Move uma tarefa para outro status |
 | `notion.conclude_task` | write | sim | Conclui uma tarefa com o status informado |
 | `notion.update_project_page` | write | sim | Atualiza metadados de uma página de projeto |
+| `notion.search` | read | não | Pesquisa páginas e databases visíveis à integração |
+| `notion.read_page_content` | read | não | Lê o conteúdo (corpo) de uma página como Markdown |
+| `notion.append_content` | write | sim | Anexa conteúdo (Markdown) ao final de uma página |
+| `notion.edit_block` | write | sim | Substitui o texto de um bloco existente |
+| `notion.delete_block` | **delete** | **sim** | Apaga (arquiva) um bloco — **destrutivo** |
+
+As ferramentas de tarefas/projetos cobrem as **propriedades**; as de conteúdo
+(`search`, `read_page_content`, `append_content`, `edit_block`, `delete_block`)
+dão acesso ao **corpo** das páginas — qualquer página visível à integração, não
+só os databases configurados. Assim a IA pesquisa, lê notas, escreve e edita
+conteúdo, e — com confirmação — apaga blocos.
 
 Cada ferramenta é um invólucro fino sobre os casos de uso de
-`server/services/tarefas.py` e `server/services/projetos.py` — não reimplementa
-regra de negócio. Entradas textuais obrigatórias são validadas na borda MCP e
-erros internos/upstream são sanitizados.
+`server/services/tarefas.py`, `server/services/projetos.py` e
+`server/services/conteudo.py` — não reimplementa regra de negócio. Entradas
+textuais obrigatórias são validadas na borda MCP e erros internos/upstream são
+sanitizados.
 
 ### Anotações MCP
 
@@ -62,10 +74,17 @@ As ferramentas declaram anotações MCP:
   `openWorldHint=True`
 - **create** (`notion.create_task`): `readOnlyHint=False`, `destructiveHint=False`,
   `idempotentHint=False`, `openWorldHint=True`
-- **update** (`notion.move_status`, `notion.conclude_task` e
-  `notion.update_project_page`):
+- **update** (`notion.move_status`, `notion.conclude_task`,
+  `notion.update_project_page` e `notion.edit_block`):
   `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=True`,
   `openWorldHint=True`
+- **read** (`notion.search`, `notion.read_page_content`): `readOnlyHint=True`,
+  `destructiveHint=False`, `openWorldHint=True`
+- **create** (`notion.append_content`): `readOnlyHint=False`,
+  `destructiveHint=False`, `idempotentHint=False`, `openWorldHint=True`
+- **delete** (`notion.delete_block`): `readOnlyHint=False`,
+  **`destructiveHint=True`**, `idempotentHint=True`, `openWorldHint=True` — o
+  host deve sempre confirmar antes de executar
 
 Essas anotações são apenas **hints do protocolo**. A confirmação obrigatória é
 responsabilidade do host: o catálogo do Felixo-AI-Core deve registrar toda ferramenta

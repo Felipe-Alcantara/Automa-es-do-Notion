@@ -69,6 +69,12 @@ _UPDATE = ToolAnnotations(
     idempotentHint=True,
     openWorldHint=True,
 )
+_DELETE = ToolAnnotations(
+    readOnlyHint=False,
+    destructiveHint=True,
+    idempotentHint=True,
+    openWorldHint=True,
+)
 
 _T = TypeVar("_T")
 Transport = Literal["stdio", "streamable-http"]
@@ -80,11 +86,13 @@ Transport = Literal["stdio", "streamable-http"]
 mcp = FastMCP(
     "notion",
     instructions=(
-        "Ferramentas para gerenciar tarefas no Notion. "
-        "Ferramentas de escrita (notion.create_task, notion.move_status e "
-        "notion.conclude_task) e atualizacao de projetos "
-        "(notion.update_project_page) requerem confirmacao: o cliente so deve "
-        "executa-las depois que o usuario confirmar a operacao."
+        "Ferramentas para gerenciar tarefas e conteudo no Notion. "
+        "Ferramentas de escrita (notion.create_task, notion.move_status, "
+        "notion.conclude_task, notion.append_content, notion.edit_block) e "
+        "atualizacao de projetos (notion.update_project_page) requerem "
+        "confirmacao: o cliente so deve executa-las depois que o usuario "
+        "confirmar a operacao. A ferramenta destrutiva notion.delete_block "
+        "(destructiveHint) apaga conteudo e exige confirmacao explicita."
     ),
 )
 
@@ -355,6 +363,128 @@ def update_project_page(
         return _projeto_dict(projeto)
 
     return _executar(_atualizar)
+
+
+@mcp.tool(name="notion.search", annotations=_READ)
+def search(query: str | None = None) -> list[dict[str, str]]:
+    """Pesquisa paginas e databases visiveis a integracao no Notion.
+
+    Ferramenta de leitura (read) — nao modifica dados.
+
+    Args:
+        query: Texto para casar com o titulo. Se omitido, lista tudo o que e
+               visivel a integracao.
+
+    Returns:
+        Lista de itens com id, tipo (page/database), titulo e url.
+    """
+
+    from services import conteudo as svc
+
+    def _buscar() -> list[dict[str, str]]:
+        return svc.buscar(_texto_opcional(query), cliente=_criar_notion_client())
+
+    return _executar(_buscar)
+
+
+@mcp.tool(name="notion.read_page_content", annotations=_READ)
+def read_page_content(page_id: str) -> dict[str, str]:
+    """Le o conteudo (corpo) de uma pagina do Notion como Markdown.
+
+    Ferramenta de leitura (read) — nao modifica dados. Complementa
+    notion.list_tasks, que so traz as propriedades; aqui vem o texto da nota.
+
+    Args:
+        page_id: ID da pagina cujo conteudo sera lido.
+
+    Returns:
+        Um dict com ``id`` e ``markdown`` (vazio se a pagina nao tiver corpo).
+    """
+
+    from services import conteudo as svc
+
+    def _ler() -> dict[str, str]:
+        page_id_normalizado = _texto_obrigatorio(page_id, "page_id")
+        markdown = svc.ler_conteudo(page_id_normalizado, cliente=_criar_notion_client())
+        return {"id": page_id_normalizado, "markdown": markdown}
+
+    return _executar(_ler)
+
+
+@mcp.tool(name="notion.append_content", annotations=_CREATE)
+def append_content(page_id: str, markdown: str) -> dict[str, Any]:
+    """Anexa conteudo (em Markdown) ao final de uma pagina do Notion.
+
+    Ferramenta de escrita (write) — requer confirmacao do usuario.
+
+    Args:
+        page_id: ID da pagina que recebera o conteudo.
+        markdown: Texto em Markdown a anexar (titulos, listas, codigo, etc.).
+
+    Returns:
+        Um dict com ``id`` e ``blocos_anexados`` (quantidade de blocos criados).
+    """
+
+    from services import conteudo as svc
+
+    def _anexar() -> dict[str, Any]:
+        page_id_normalizado = _texto_obrigatorio(page_id, "page_id")
+        conteudo = _texto_obrigatorio(markdown, "markdown")
+        total = svc.escrever_conteudo(
+            page_id_normalizado, conteudo, cliente=_criar_notion_client()
+        )
+        return {"id": page_id_normalizado, "blocos_anexados": total}
+
+    return _executar(_anexar)
+
+
+@mcp.tool(name="notion.edit_block", annotations=_UPDATE)
+def edit_block(block_id: str, markdown: str) -> dict[str, Any]:
+    """Substitui o texto de um bloco existente por uma linha de Markdown.
+
+    Ferramenta de escrita idempotente — requer confirmacao do usuario.
+
+    Args:
+        block_id: ID do bloco a editar.
+        markdown: Nova linha de conteudo, em Markdown.
+
+    Returns:
+        Um dict com ``id`` e ``editado`` (True).
+    """
+
+    from services import conteudo as svc
+
+    def _editar() -> dict[str, Any]:
+        block_id_normalizado = _texto_obrigatorio(block_id, "block_id")
+        conteudo = _texto_obrigatorio(markdown, "markdown")
+        svc.editar_bloco(block_id_normalizado, conteudo, cliente=_criar_notion_client())
+        return {"id": block_id_normalizado, "editado": True}
+
+    return _executar(_editar)
+
+
+@mcp.tool(name="notion.delete_block", annotations=_DELETE)
+def delete_block(block_id: str) -> dict[str, Any]:
+    """Apaga (arquiva) um bloco do Notion. DESTRUTIVO — requer confirmacao.
+
+    A anotacao ``destructiveHint`` sinaliza ao cliente que esta operacao remove
+    conteudo; o cliente so deve executa-la apos confirmacao explicita do usuario.
+
+    Args:
+        block_id: ID do bloco a apagar.
+
+    Returns:
+        Um dict com ``id`` e ``apagado`` (True).
+    """
+
+    from services import conteudo as svc
+
+    def _apagar() -> dict[str, Any]:
+        block_id_normalizado = _texto_obrigatorio(block_id, "block_id")
+        svc.excluir_bloco(block_id_normalizado, cliente=_criar_notion_client())
+        return {"id": block_id_normalizado, "apagado": True}
+
+    return _executar(_apagar)
 
 
 # ---------------------------------------------------------------------------

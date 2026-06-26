@@ -20,6 +20,7 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from core.config import carregar_env_file  # noqa: E402
+from services import conteudo as svc_conteudo  # noqa: E402
 from services import tarefas as svc  # noqa: E402
 
 from notion_starter import (  # noqa: E402
@@ -465,6 +466,10 @@ def _formatar_humano(comando: str, dados: Any) -> str:
         return _json(dados)
     if comando == "databases":
         return "\n".join(_linhas_tabela(dados, ("id", "titulo", "url")))
+    if comando == "buscar":
+        return "\n".join(_linhas_tabela(dados, ("id", "tipo", "titulo", "url")))
+    if comando == "conteudo":
+        return dados["markdown"] or "(página sem conteúdo)"
     if comando == "database-atual":
         return f"Database atual: {dados['database_id'] or '(não configurado)'}"
     if comando == "normalizar-nomes":
@@ -619,6 +624,41 @@ def cmd_mapear(args: argparse.Namespace, *, client_factory: ClientFactory) -> An
     }
 
 
+def cmd_conteudo(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
+    page_id = _texto_obrigatorio(args.page_id, "page_id")
+    markdown = svc_conteudo.ler_conteudo(page_id, cliente=client_factory())
+    return {"id": page_id, "markdown": markdown}
+
+
+def cmd_escrever(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
+    page_id = _texto_obrigatorio(args.page_id, "page_id")
+    conteudo = _texto_obrigatorio(args.conteudo, "conteudo")
+    total = svc_conteudo.escrever_conteudo(page_id, conteudo, cliente=client_factory())
+    return {"id": page_id, "blocos_anexados": total}
+
+
+def cmd_editar_bloco(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
+    block_id = _texto_obrigatorio(args.block_id, "block_id")
+    conteudo = _texto_obrigatorio(args.conteudo, "conteudo")
+    svc_conteudo.editar_bloco(block_id, conteudo, cliente=client_factory())
+    return {"id": block_id, "editado": True}
+
+
+def cmd_apagar_bloco(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
+    block_id = _texto_obrigatorio(args.block_id, "block_id")
+    # Operação destrutiva: exige confirmação explícita, nunca apaga "no susto".
+    if not args.sim:
+        raise CLIError(
+            "Apagar é destrutivo. Repita com --sim para confirmar a exclusão do bloco."
+        )
+    svc_conteudo.excluir_bloco(block_id, cliente=client_factory())
+    return {"id": block_id, "apagado": True}
+
+
+def cmd_buscar(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
+    return svc_conteudo.buscar(_normalizar_texto(args.query), cliente=client_factory())
+
+
 def construir_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m cli",
@@ -683,6 +723,24 @@ def construir_parser() -> argparse.ArgumentParser:
     mapear.add_argument("--query")
     mapear.add_argument("--page-size", type=int, default=100)
     mapear.add_argument("--limite-duplicatas", type=int, default=10)
+
+    conteudo = sub.add_parser("conteudo", help="lê o conteúdo de uma página como Markdown")
+    conteudo.add_argument("page_id")
+
+    escrever = sub.add_parser("escrever", help="anexa conteúdo (Markdown) a uma página")
+    escrever.add_argument("page_id")
+    escrever.add_argument("conteudo", help="texto em Markdown a anexar")
+
+    editar_bloco = sub.add_parser("editar-bloco", help="substitui o texto de um bloco")
+    editar_bloco.add_argument("block_id")
+    editar_bloco.add_argument("conteudo", help="nova linha em Markdown")
+
+    apagar_bloco = sub.add_parser("apagar-bloco", help="apaga (arquiva) um bloco — destrutivo")
+    apagar_bloco.add_argument("block_id")
+    apagar_bloco.add_argument("--sim", action="store_true", help="confirma a exclusão")
+
+    buscar = sub.add_parser("buscar", help="pesquisa páginas e databases visíveis")
+    buscar.add_argument("query", nargs="?", help="texto do título; vazio lista tudo")
     return parser
 
 
@@ -720,6 +778,16 @@ def executar(
             dados = cmd_normalizar_nomes(args, client_factory=client_factory)
         elif comando == "mapear":
             dados = cmd_mapear(args, client_factory=client_factory)
+        elif comando == "conteudo":
+            dados = cmd_conteudo(args, client_factory=client_factory)
+        elif comando == "escrever":
+            dados = cmd_escrever(args, client_factory=client_factory)
+        elif comando == "editar-bloco":
+            dados = cmd_editar_bloco(args, client_factory=client_factory)
+        elif comando == "apagar-bloco":
+            dados = cmd_apagar_bloco(args, client_factory=client_factory)
+        elif comando == "buscar":
+            dados = cmd_buscar(args, client_factory=client_factory)
         else:
             raise CLIError(f"Comando desconhecido: {comando}")
         return 0, _envelope(True, dados=dados) if args.json else _formatar_humano(comando, dados)

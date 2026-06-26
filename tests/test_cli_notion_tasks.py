@@ -211,6 +211,22 @@ class FakeClient:
         self.chamadas.append(("atualizar_pagina", (page_id, propriedades)))
         return {"id": page_id, "properties": propriedades}
 
+    def ler_blocos(self, block_id, page_size=100, buscar_todos=False):
+        self.chamadas.append(("ler_blocos", block_id))
+        return [{"type": "paragraph", "paragraph": {"rich_text": [{"plain_text": "oi"}]}}]
+
+    def anexar_blocos(self, block_id, blocos):
+        self.chamadas.append(("anexar_blocos", (block_id, blocos)))
+        return {"results": blocos}
+
+    def atualizar_bloco(self, block_id, conteudo):
+        self.chamadas.append(("atualizar_bloco", (block_id, conteudo)))
+        return {"id": block_id}
+
+    def excluir_bloco(self, block_id):
+        self.chamadas.append(("excluir_bloco", block_id))
+        return {"id": block_id, "archived": True}
+
 
 def _executar(args, fake: FakeTaskList | None = None, client=None):
     tasklist = fake or FakeTaskList()
@@ -370,3 +386,56 @@ def test_main_imprime_json(capsys):
         codigo = cli.main(["--json", "listar"])
     assert codigo == 0
     assert json.loads(capsys.readouterr().out) == {"ok": True, "dados": []}
+
+
+# -- Conteúdo (blocos) -----------------------------------------------------
+
+
+def test_conteudo_le_pagina_como_markdown():
+    client = FakeClient()
+    codigo, saida = _executar(["--json", "conteudo", "page1"], client=client)
+    assert codigo == 0
+    assert saida["dados"]["markdown"] == "oi"
+    assert ("ler_blocos", "page1") in client.chamadas
+
+
+def test_escrever_anexa_blocos():
+    client = FakeClient()
+    codigo, saida = _executar(
+        ["--json", "escrever", "page1", "linha um\nlinha dois"], client=client
+    )
+    assert codigo == 0
+    assert saida["dados"]["blocos_anexados"] == 2
+    assert any(c[0] == "anexar_blocos" for c in client.chamadas)
+
+
+def test_editar_bloco_atualiza():
+    client = FakeClient()
+    codigo, saida = _executar(["--json", "editar-bloco", "b1", "## Novo"], client=client)
+    assert codigo == 0
+    assert saida["dados"]["editado"] is True
+    assert any(c[0] == "atualizar_bloco" for c in client.chamadas)
+
+
+def test_apagar_bloco_sem_sim_nao_apaga():
+    client = FakeClient()
+    codigo, saida = _executar(["--json", "apagar-bloco", "b1"], client=client)
+    assert codigo == 2
+    assert saida["ok"] is False
+    assert not any(c[0] == "excluir_bloco" for c in client.chamadas)
+
+
+def test_apagar_bloco_com_sim_apaga():
+    client = FakeClient()
+    codigo, saida = _executar(["--json", "apagar-bloco", "b1", "--sim"], client=client)
+    assert codigo == 0
+    assert saida["dados"]["apagado"] is True
+    assert ("excluir_bloco", "b1") in client.chamadas
+
+
+def test_buscar_normaliza_itens():
+    client = FakeClient()
+    codigo, saida = _executar(["--json", "buscar", "x"], client=client)
+    assert codigo == 0
+    ids = {item["id"] for item in saida["dados"]}
+    assert ids == {"p1", "db1"}
