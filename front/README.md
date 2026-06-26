@@ -26,6 +26,8 @@ VITE_MOCK_API=true npm run dev
 - Busca, filtros persistentes por etapa/esforço/área e ordenação. Os valores
   de etapa/esforço/área vêm do Notion e são enviados de volta sem tradução
   local.
+- **Clicar numa tarefa abre a página dela no Notion** (a nota, em nova aba), usando
+  a `url` do contrato. A edição fica no **botão de lápis** de cada tarefa.
 - Modal de criação/edição usando `POST /api/tarefas`, `PATCH /api/tarefas/{id}` e
   `GET /api/opcoes`.
 - Estados de carregamento, vazio e erro com feedback acessível.

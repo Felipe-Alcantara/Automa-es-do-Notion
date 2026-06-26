@@ -1,5 +1,7 @@
 import { StatusBadge, Badge } from '../ui/badge'
-import { Calendar, Clock } from 'lucide-react'
+import { Button } from '../ui/button'
+import { Calendar, Clock, Pencil, ExternalLink } from 'lucide-react'
+import { abrirNoNotion } from '../../utils/abrir-no-notion'
 
 export function ViewLista({ tarefas, onEdit }) {
   return (
@@ -12,20 +14,26 @@ export function ViewLista({ tarefas, onEdit }) {
             <th className="p-4 font-medium hidden md:table-cell">Esforço</th>
             <th className="p-4 font-medium hidden md:table-cell">Áreas da vida</th>
             <th className="p-4 font-medium hidden lg:table-cell">Prazo</th>
+            <th className="p-4 font-medium text-right">Ações</th>
           </tr>
         </thead>
         <tbody>
-          {tarefas.map((t) => (
+          {tarefas.map((t) => {
+            const temUrl = Boolean(t.url)
+            return (
             <tr
               key={t.id}
-              className="border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors"
-              onClick={() => onEdit(t)}
-              tabIndex={0}
+              className={`border-b border-white/5 hover:bg-white/5 transition-colors ${temUrl ? 'cursor-pointer' : ''}`}
+              onClick={temUrl ? () => abrirNoNotion(t) : undefined}
+              tabIndex={temUrl ? 0 : undefined}
               role="row"
-              aria-label={`Editar tarefa: ${t.nome}`}
-              onKeyDown={(e) => { if (e.key === 'Enter') onEdit(t) }}
+              aria-label={temUrl ? `Abrir no Notion: ${t.nome}` : undefined}
+              onKeyDown={temUrl ? (e) => { if (e.key === 'Enter') abrirNoNotion(t) } : undefined}
             >
-              <td className="p-4 text-white font-medium">{t.nome}</td>
+              <td className="p-4 text-white font-medium">
+                {t.nome}
+                {temUrl && <ExternalLink size={12} className="inline ml-1.5 text-zinc-500" aria-hidden="true" />}
+              </td>
               <td className="p-4 hidden sm:table-cell">
                 <StatusBadge status={t.status} />
               </td>
@@ -48,8 +56,20 @@ export function ViewLista({ tarefas, onEdit }) {
                   </span>
                 ) : '—'}
               </td>
+              <td className="p-4 text-right">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-zinc-400 hover:text-white"
+                  aria-label={`Editar tarefa: ${t.nome}`}
+                  onClick={(e) => { e.stopPropagation(); onEdit(t) }}
+                >
+                  <Pencil size={14} />
+                </Button>
+              </td>
             </tr>
-          ))}
+            )
+          })}
         </tbody>
       </table>
     </div>
