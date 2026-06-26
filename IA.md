@@ -173,6 +173,14 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   Validação: 34 testes do escopo A verdes no `.venv` (`test_api_tarefas`, `test_tasks`,
   `test_services_tarefas`), `ruff check` do escopo limpo e
   `DJANGO_DEBUG=1 .venv/bin/python server/manage.py check` sem issues.
+- [2026-06-26] ✅ **Agente B (Front React)** — SPA do Ciclo 2 entregue em `front/`
+  (`bd35500`): Vite + React 18 + Tailwind, componentes em `components/ui`,
+  visualizações grade/lista/kanban, busca, filtros persistentes por status/duração/área,
+  ordenação, modais de criar/editar e estados de carregando/vazio/erro. O client consome
+  `GET /api/tarefas`, `POST /api/tarefas`, `PATCH /api/tarefas/{id}` e `GET /api/opcoes`
+  conforme `docs/CONTRATOS.md`, com fallback mockado enquanto a API v2 da Frente A não
+  fecha. Documentação viva em `front/README.md`; validação: `npm run lint`,
+  `npm run build` e smoke HTTP do Vite em `http://127.0.0.1:5174/`.
 - [2026-06-26] ✅ **Agente C (CLI para IA)** — CLI em `cli/` entregue como borda fina
   sobre `server/services/tarefas.py`, irmã do MCP: `python -m cli` suporta
   `listar`, `ler`, `criar`, `editar`, `mover`, `concluir`, `opcoes`, `databases`,
@@ -296,8 +304,9 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   cobrindo envelope JSON, listar/ler/criar/editar/mover/concluir/opções, listagem e
   escolha de database, resumo de mapeamento e `main()` sem rede real.
 - [2026-06-26] ✅ Suíte completa do working tree compartilhado:
-  **285 testes passando**; `ruff check` limpo; `ruff format --check` consistente no
-  escopo da CLI/menu; `manage.py check` sem problemas.
+  **285 testes passando**; `ruff check .`, `ruff format --check .`,
+  `DJANGO_DEBUG=1 .venv/bin/python server/manage.py check`, `npm run lint`
+  e `npm run build` limpos.
 
 ---
 
@@ -341,12 +350,12 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 
 ## 📝 NOTAS GERAIS
 
+- [2026-06-24] A pasta `Padrão de qualidade - Felixo System Design/` é referência de
+  padrões e está no `.gitignore`; não faz parte do pacote distribuído.
 - [2026-06-26] `mapa.json` e `mapa.html` são artefatos gerados localmente pelos
   exemplos de mapeamento do workspace. Não devem ser versionados, porque podem conter
   URLs/títulos reais de páginas do Notion; gere novamente com `python start_app.py` ou
   pelos scripts em `examples/`.
-- [2026-06-24] A pasta `Padrão de qualidade - Felixo System Design/` é referência de
-  padrões e está no `.gitignore`; não faz parte do pacote distribuído.
 - [2026-06-24] O projeto tem exemplos executáveis, então o `start_app.py` se aplica
   (o padrão exige menu de entrada para todo programa rodável, incluindo CLI/automação).
   O menu instala, configura o token, mostra status e roda os exemplos. Não é empacotado
