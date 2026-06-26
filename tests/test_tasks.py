@@ -15,13 +15,20 @@ def criar_tasklist() -> TaskList:
     return TaskList(NotionClient(token=TOKEN), DB)
 
 
-def pagina_tarefa(id_, nome, status=None, prazo=None):
+def pagina_tarefa(id_, nome, status=None, prazo=None, duracao=None, areas=None):
     """Monta o JSON cru de uma página de tarefa como vem do Notion."""
     props = {"Nome": {"type": "title", "title": [{"plain_text": nome}]}}
     if status is not None:
         props["Status"] = {"type": "status", "status": {"name": status}}
     if prazo is not None:
         props["Próximo prazo"] = {"type": "date", "date": {"start": prazo}}
+    if duracao is not None:
+        props["Duração"] = {"type": "status", "status": {"name": duracao}}
+    if areas is not None:
+        props["Áreas-da-Vida"] = {
+            "type": "relation",
+            "relation": [{"id": aid} for aid in areas],
+        }
     return {"id": id_, "url": f"https://notion.so/{id_}", "properties": props}
 
 
@@ -30,18 +37,27 @@ def pagina_tarefa(id_, nome, status=None, prazo=None):
 
 def test_tarefa_de_pagina_extrai_campos():
     t = tarefa_de_pagina(
-        pagina_tarefa("t1", "Estudar", "00. Inbox", "2026-07-01"), CamposTarefa()
+        pagina_tarefa(
+            "t1", "Estudar", "00. Inbox", "2026-07-01",
+            duracao="Dias", areas=["area-1"],
+        ),
+        CamposTarefa(),
     )
     assert t.id == "t1"
     assert t.nome == "Estudar"
     assert t.status == "00. Inbox"
     assert t.prazo == "2026-07-01"
+    assert t.duracao == "Dias"
+    assert t.areas == ["area-1"]
+    assert t.areas_nomes == []  # puro, sem enriquecimento
 
 
 def test_tarefa_de_pagina_lida_com_campos_ausentes():
     t = tarefa_de_pagina(pagina_tarefa("t1", "Sem status"), CamposTarefa())
     assert t.status is None
     assert t.prazo is None
+    assert t.duracao is None
+    assert t.areas == []
 
 
 def test_campos_configuraveis():

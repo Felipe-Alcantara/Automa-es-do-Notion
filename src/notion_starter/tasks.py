@@ -29,6 +29,8 @@ class CamposTarefa:
     nome: str = "Nome"
     status: str = "Status"
     prazo: str = "Próximo prazo"
+    duracao: str = "Duração"
+    areas: str = "Áreas-da-Vida"
 
 
 @dataclass
@@ -40,6 +42,10 @@ class Tarefa:
         nome: Texto do título.
         status: Nome do status atual (ou ``None`` se não definido).
         prazo: Data do prazo em ISO (ou ``None``).
+        duracao: Nome do status de duração/esforço (ou ``None``).
+        areas: IDs das páginas relacionadas em "Áreas-da-Vida".
+        areas_nomes: Nomes das áreas, resolvidos pela ``TaskList`` (vazio até
+            o enriquecimento; ``tarefa_de_pagina`` é pura).
         url: Link da tarefa no Notion.
         bruto: O JSON original, para quem precisar de campos não mapeados.
     """
@@ -48,6 +54,9 @@ class Tarefa:
     nome: str
     status: str | None = None
     prazo: str | None = None
+    duracao: str | None = None
+    areas: list[str] = field(default_factory=list)
+    areas_nomes: list[str] = field(default_factory=list)
     url: str | None = None
     bruto: dict[str, Any] = field(default_factory=dict, repr=False)
 
@@ -55,6 +64,14 @@ class Tarefa:
 def _texto_title(prop: dict[str, Any]) -> str:
     partes = prop.get("title", [])
     return "".join(t.get("plain_text", t.get("text", {}).get("content", "")) for t in partes)
+
+
+def _ler_nome_status(prop: dict[str, Any]) -> str | None:
+    """Extrai o nome de uma propriedade do tipo ``status`` (ou similar com ``name``)."""
+    valor = prop.get(prop.get("type", ""))
+    if isinstance(valor, dict):
+        return valor.get("name")
+    return None
 
 
 def tarefa_de_pagina(pagina: dict[str, Any], campos: CamposTarefa) -> Tarefa:
@@ -74,22 +91,26 @@ def tarefa_de_pagina(pagina: dict[str, Any], campos: CamposTarefa) -> Tarefa:
     if campos.nome in props:
         nome = _texto_title(props[campos.nome])
 
-    status = None
-    prop_status = props.get(campos.status, {})
-    valor_status = prop_status.get(prop_status.get("type", ""))
-    if isinstance(valor_status, dict):
-        status = valor_status.get("name")
+    status = _ler_nome_status(props.get(campos.status, {}))
+    duracao = _ler_nome_status(props.get(campos.duracao, {}))
 
     prazo = None
     prop_prazo = props.get(campos.prazo, {})
     if prop_prazo.get("type") == "date" and isinstance(prop_prazo.get("date"), dict):
         prazo = prop_prazo["date"].get("start")
 
+    areas: list[str] = []
+    prop_areas = props.get(campos.areas, {})
+    if isinstance(prop_areas.get("relation"), list):
+        areas = [r.get("id", "") for r in prop_areas["relation"]]
+
     return Tarefa(
         id=pagina.get("id", ""),
         nome=nome,
         status=status,
         prazo=prazo,
+        duracao=duracao,
+        areas=areas,
         url=pagina.get("url"),
         bruto=pagina,
     )
