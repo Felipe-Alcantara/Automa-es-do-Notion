@@ -15,7 +15,7 @@ export function ViewKanban({ tarefas, statusList, onEdit }) {
   }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4" role="region" aria-label="Quadro kanban">
+    <div className="flex gap-4 overflow-x-auto pb-4" role="region" aria-label="Quadro por etapa">
       {colunas.map((col) => (
         <div
           key={col.status ?? '__sem_status'}
@@ -26,7 +26,7 @@ export function ViewKanban({ tarefas, statusList, onEdit }) {
               className={`inline-block w-2 h-2 rounded-full ${statusDotColor(col.status)}`}
             />
             <h3 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-              {col.status ?? 'Sem status'}
+              {col.status ?? 'Sem etapa'}
             </h3>
             <span className="text-xs text-zinc-500">{col.itens.length}</span>
           </div>

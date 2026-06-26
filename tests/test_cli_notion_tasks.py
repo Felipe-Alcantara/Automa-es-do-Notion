@@ -24,7 +24,7 @@ class FakeTaskList:
             Tarefa(
                 id="t1",
                 nome="Estudar",
-                status=status or "00. Inbox",
+                status=status or "Entrada",
                 prazo="2026-07-01",
                 duracao=duracao or "Dias",
                 areas=areas or ["a1"],
@@ -73,13 +73,79 @@ class FakeTaskList:
     def opcoes(self):
         self.chamadas.append(("opcoes", None))
         return {
-            "status": ["00. Inbox", "06. Feito"],
+            "status": ["Entrada", "Concluída"],
             "duracao": ["Dias"],
             "areas": [{"id": "a1", "nome": "Estudos"}],
         }
 
 
 class FakeClient:
+    def __init__(self) -> None:
+        self.chamadas: list[tuple[str, object]] = []
+        self.database = {
+            "id": "db1",
+            "title": [{"plain_text": "Tarefas"}],
+            "properties": {
+                "Nome": {"type": "title", "title": {}},
+                "Status": {
+                    "type": "status",
+                    "status": {
+                        "options": [
+                            {"id": "old-status", "name": "00. Inbox", "color": "default"},
+                            {"id": "done-status", "name": "06. Feito", "color": "green"},
+                        ],
+                        "groups": [
+                            {
+                                "name": "In progress",
+                                "option_ids": ["old-status"],
+                            },
+                            {
+                                "name": "Complete",
+                                "option_ids": ["done-status"],
+                            },
+                        ],
+                    },
+                },
+                "Duração": {
+                    "type": "status",
+                    "status": {
+                        "options": [
+                            {"id": "fast", "name": "Mais rápido possível", "color": "red"},
+                            {"id": "days", "name": "Dias", "color": "yellow"},
+                        ],
+                        "groups": [{"name": "To-do", "option_ids": ["fast", "days"]}],
+                    },
+                },
+                "Áreas-da-Vida": {
+                    "type": "relation",
+                    "relation": {"database_id": "areas-db"},
+                },
+            },
+        }
+        self.areas_database = {
+            "id": "areas-db",
+            "title": [{"plain_text": "Áreas-da-Vida"}],
+            "properties": {"Name": {"type": "title", "title": {}}},
+        }
+        self.paginas = [
+            {
+                "id": "t1",
+                "properties": {
+                    "Status": {"type": "status", "status": {"name": "00. Inbox"}},
+                    "Duração": {
+                        "type": "status",
+                        "status": {"name": "Mais rápido possível"},
+                    },
+                },
+            }
+        ]
+        self.areas = [
+            {
+                "id": "a1",
+                "properties": {"Name": {"type": "title", "title": [{"plain_text": "Money"}]}},
+            }
+        ]
+
     def buscar(self, query=None, page_size=100, buscar_todos=False, filtro=None):
         if filtro == {"property": "object", "value": "database"}:
             return [
@@ -105,15 +171,60 @@ class FakeClient:
             },
         ]
 
+    def get_database(self, database_id):
+        if database_id == "areas-db":
+            return self.areas_database
+        return self.database
 
-def _executar(args, fake: FakeTaskList | None = None):
+    def consultar_database(self, database_id, buscar_todos=False):
+        return self.areas if database_id == "areas-db" else self.paginas
+
+    def atualizar_database(self, database_id, *, titulo=None, propriedades=None):
+        self.chamadas.append(("atualizar_database", (database_id, titulo, propriedades)))
+        if database_id == "areas-db":
+            alvo = self.areas_database
+        else:
+            alvo = self.database
+        if titulo:
+            alvo["title"] = [{"plain_text": titulo}]
+        for nome, mudanca in (propriedades or {}).items():
+            if "name" in mudanca and nome in alvo["properties"]:
+                alvo["properties"][mudanca["name"]] = alvo["properties"].pop(nome)
+            elif nome in alvo["properties"] and "status" in mudanca:
+                atuais = {op["name"]: op for op in alvo["properties"][nome]["status"]["options"]}
+                novas = []
+                for op in mudanca["status"]["options"]:
+                    if "id" in op:
+                        novas.extend(item for item in atuais.values() if item.get("id") == op["id"])
+                    else:
+                        novas.append(
+                            {
+                                "id": op["name"].casefold().replace(" ", "-"),
+                                "name": op["name"],
+                                "color": op.get("color", "default"),
+                            }
+                        )
+                alvo["properties"][nome]["status"]["options"] = novas
+        return alvo
+
+    def atualizar_pagina(self, page_id, propriedades):
+        self.chamadas.append(("atualizar_pagina", (page_id, propriedades)))
+        return {"id": page_id, "properties": propriedades}
+
+
+def _executar(args, fake: FakeTaskList | None = None, client=None):
     tasklist = fake or FakeTaskList()
-    return cli.executar(args, tasklist_factory=lambda: tasklist, client_factory=FakeClient)
+    notion_client = client or FakeClient()
+    return cli.executar(
+        args,
+        tasklist_factory=lambda: tasklist,
+        client_factory=lambda: notion_client,
+    )
 
 
 def test_listar_json_emite_envelope_estavel():
     codigo, saida = _executar(
-        ["--json", "listar", "--status", "00. Inbox", "--duracao", "Dias", "--area", "a1"]
+        ["--json", "listar", "--status", "Entrada", "--duracao", "Dias", "--area", "a1"]
     )
     assert codigo == 0
     assert saida["ok"] is True
@@ -124,12 +235,12 @@ def test_listar_json_emite_envelope_estavel():
 def test_listar_delega_filtros_para_services():
     fake = FakeTaskList()
     codigo, _ = _executar(
-        ["--json", "listar", "--status", "00. Inbox", "--duracao", "Dias", "--area", "a1,a2"],
+        ["--json", "listar", "--status", "Entrada", "--duracao", "Dias", "--area", "a1,a2"],
         fake,
     )
 
     assert codigo == 0
-    assert fake.chamadas == [("listar", ("00. Inbox", "Dias", ["a1", "a2"]))]
+    assert fake.chamadas == [("listar", ("Entrada", "Dias", ["a1", "a2"]))]
 
 
 def test_criar_delega_campos_amplos_para_services():
@@ -140,7 +251,7 @@ def test_criar_delega_campos_amplos_para_services():
             "criar",
             "Nova tarefa",
             "--status",
-            "00. Inbox",
+            "Entrada",
             "--duracao",
             "Dias",
             "--area",
@@ -149,7 +260,7 @@ def test_criar_delega_campos_amplos_para_services():
         fake,
     )
     assert codigo == 0
-    assert fake.chamadas == [("criar", ("Nova tarefa", "00. Inbox", None, "Dias", ["a1", "a2"]))]
+    assert fake.chamadas == [("criar", ("Nova tarefa", "Entrada", None, "Dias", ["a1", "a2"]))]
     assert saida["dados"]["areas"] == ["a1", "a2"]
 
 
@@ -164,13 +275,13 @@ def test_editar_exige_ao_menos_um_campo():
 
 def test_mover_e_concluir_delegam_para_tasklist():
     fake = FakeTaskList()
-    codigo_mover, _ = _executar(["mover", "t1", "02. Fazendo"], fake)
-    codigo_concluir, _ = _executar(["concluir", "t1", "06. Feito"], fake)
+    codigo_mover, _ = _executar(["mover", "t1", "Assim que possível"], fake)
+    codigo_concluir, _ = _executar(["concluir", "t1", "Concluída"], fake)
     assert codigo_mover == 0
     assert codigo_concluir == 0
     assert fake.chamadas == [
-        ("atualizar_status", ("t1", "02. Fazendo")),
-        ("concluir", ("t1", "06. Feito")),
+        ("atualizar_status", ("t1", "Assim que possível")),
+        ("concluir", ("t1", "Concluída")),
     ]
 
 
@@ -189,7 +300,7 @@ def test_ler_retorna_erro_quando_nao_encontra():
 def test_opcoes_retorna_json_dos_seletores():
     codigo, saida = _executar(["--json", "opcoes"])
     assert codigo == 0
-    assert saida["dados"]["status"] == ["00. Inbox", "06. Feito"]
+    assert saida["dados"]["status"] == ["Entrada", "Concluída"]
 
 
 def test_databases_lista_databases_visiveis():
@@ -221,6 +332,37 @@ def test_escolher_database_grava_env_file(tmp_path: Path):
     assert codigo == 0
     assert env_file.read_text(encoding="utf-8") == "NOTION_DATABASE_ID=db_novo\n"
     assert saida["dados"]["database_id"] == "db_novo"
+
+
+def test_normalizar_nomes_dry_run_nao_escreve_no_notion(monkeypatch):
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db1")
+    client = FakeClient()
+
+    codigo, saida = _executar(["--json", "normalizar-nomes", "--dry-run"], client=client)
+
+    assert codigo == 0
+    assert saida["dados"]["aplicado"] is False
+    assert saida["dados"]["paginas_alteradas"] == 1
+    assert saida["dados"]["opcoes_adicionadas"]["status"] == [
+        {"de": "00. Inbox", "para": "Entrada"},
+        {"de": "06. Feito", "para": "Concluída"},
+    ]
+    assert client.chamadas == []
+
+
+def test_normalizar_nomes_aplica_migracao_na_fonte(monkeypatch):
+    monkeypatch.setenv("NOTION_DATABASE_ID", "db1")
+    client = FakeClient()
+
+    codigo, saida = _executar(["--json", "normalizar-nomes"], client=client)
+
+    assert codigo == 0
+    assert saida["dados"]["aplicado"] is True
+    assert ("atualizar_pagina", ("t1", mock.ANY)) in client.chamadas
+    assert any(chamada[0] == "atualizar_database" for chamada in client.chamadas)
+    assert "Etapa" in client.database["properties"]
+    assert "Tarefa" in client.database["properties"]
+    assert "Área" in client.areas_database["properties"]
 
 
 def test_main_imprime_json(capsys):

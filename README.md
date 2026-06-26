@@ -201,14 +201,15 @@ estável, sem conhecer o JSON cru do Notion.
 
 ```bash
 python -m cli listar
-python -m cli --json listar --status "00. Inbox" --duracao "Dias" --area <area_id>
-python -m cli --json criar "Estudar a API do Notion" --status "00. Inbox" --duracao "Dias"
-python -m cli --json editar <task_id> --status "02. Fazendo" --area <area_id>
-python -m cli --json mover <task_id> "06. Feito"
-python -m cli --json concluir <task_id> "06. Feito"
+python -m cli --json listar --status "Entrada" --duracao "Dias" --area <area_id>
+python -m cli --json criar "Estudar a API do Notion" --status "Entrada" --duracao "Dias"
+python -m cli --json editar <task_id> --status "Assim que possível" --area <area_id>
+python -m cli --json mover <task_id> "Concluída"
+python -m cli --json concluir <task_id> "Concluída"
 python -m cli --json opcoes
 python -m cli --json databases
 python -m cli --json escolher-database <database_id>
+python -m cli --json normalizar-nomes --dry-run
 python -m cli --json mapear
 ```
 
@@ -332,11 +333,11 @@ from notion_starter import NotionClient, TaskList
 
 tl = TaskList(NotionClient(), "seu_database_id")
 
-for t in tl.listar(status="00. Inbox"):
+for t in tl.listar(status="Entrada"):
     print(t.nome, "->", t.status)
 
-tl.criar("Revisar PR", status="02. ASAP", prazo="2026-07-01")
-tl.atualizar_status("id_da_tarefa", "06. Feito")
+tl.criar("Revisar PR", status="Assim que possível", prazo="2026-07-01")
+tl.atualizar_status("id_da_tarefa", "Concluída")
 ```
 
 ## 🔄 GitHub e Ingestão

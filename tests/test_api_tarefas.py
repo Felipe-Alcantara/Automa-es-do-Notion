@@ -48,15 +48,15 @@ def client():
 
 
 def _pagina(id_, nome, status=None, prazo=None, duracao=None, areas=None):
-    props = {"Nome": {"type": "title", "title": [{"plain_text": nome}]}}
+    props = {"Tarefa": {"type": "title", "title": [{"plain_text": nome}]}}
     if status is not None:
-        props["Status"] = {"type": "status", "status": {"name": status}}
+        props["Etapa"] = {"type": "status", "status": {"name": status}}
     if prazo is not None:
-        props["Próximo prazo"] = {"type": "date", "date": {"start": prazo}}
+        props["Prazo"] = {"type": "date", "date": {"start": prazo}}
     if duracao is not None:
-        props["Duração"] = {"type": "status", "status": {"name": duracao}}
+        props["Esforço"] = {"type": "status", "status": {"name": duracao}}
     if areas is not None:
-        props["Áreas-da-Vida"] = {
+        props["Áreas da vida"] = {
             "type": "relation",
             "relation": [{"id": area_id} for area_id in areas],
         }
@@ -68,7 +68,7 @@ def test_get_tarefas_lista(client):
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/databases/{DB}/query",
-        json={"results": [_pagina("t1", "A", "00. Inbox")], "has_more": False},
+        json={"results": [_pagina("t1", "A", "Entrada")], "has_more": False},
         status=200,
     )
     resp = client.get("/api/tarefas")
@@ -86,9 +86,9 @@ def test_get_tarefas_filtra_por_status(client):
         json={"results": [], "has_more": False},
         status=200,
     )
-    client.get("/api/tarefas", {"status": "00. Inbox"})
+    client.get("/api/tarefas", {"status": "Entrada"})
     corpo = json.loads(responses.calls[0].request.body)
-    assert corpo["filter"] == {"property": "Status", "status": {"equals": "00. Inbox"}}
+    assert corpo["filter"] == {"property": "Etapa", "status": {"equals": "Entrada"}}
 
 
 @responses.activate
@@ -99,13 +99,13 @@ def test_get_tarefas_filtra_por_status_duracao_e_area(client):
         json={"results": [], "has_more": False},
         status=200,
     )
-    client.get("/api/tarefas", {"status": "00. Inbox", "duracao": "Dias", "area": "a1"})
+    client.get("/api/tarefas", {"status": "Entrada", "duracao": "Dias", "area": "a1"})
     corpo = json.loads(responses.calls[0].request.body)
     assert corpo["filter"] == {
         "and": [
-            {"property": "Status", "status": {"equals": "00. Inbox"}},
-            {"property": "Duração", "status": {"equals": "Dias"}},
-            {"property": "Áreas-da-Vida", "relation": {"contains": "a1"}},
+            {"property": "Etapa", "status": {"equals": "Entrada"}},
+            {"property": "Esforço", "status": {"equals": "Dias"}},
+            {"property": "Áreas da vida", "relation": {"contains": "a1"}},
         ]
     }
 
@@ -115,7 +115,7 @@ def test_post_tarefa_cria(client):
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/pages",
-        json=_pagina("novo", "Nova", "00. Inbox", duracao="Dias", areas=["a1"]),
+        json=_pagina("novo", "Nova", "Entrada", duracao="Dias", areas=["a1"]),
         status=200,
     )
     resp = client.post(
@@ -123,7 +123,7 @@ def test_post_tarefa_cria(client):
         data=json.dumps(
             {
                 "nome": "Nova",
-                "status": "00. Inbox",
+                "status": "Entrada",
                 "duracao": "Dias",
                 "areas": ["a1"],
             }
@@ -137,14 +137,14 @@ def test_post_tarefa_cria(client):
     assert corpo["areas"] == ["a1"]
 
     request = json.loads(responses.calls[0].request.body)
-    assert request["properties"]["Duração"]["status"]["name"] == "Dias"
-    assert request["properties"]["Áreas-da-Vida"]["relation"] == [{"id": "a1"}]
+    assert request["properties"]["Esforço"]["status"]["name"] == "Dias"
+    assert request["properties"]["Áreas da vida"]["relation"] == [{"id": "a1"}]
 
 
 def test_post_tarefa_sem_nome_e_400(client):
     resp = client.post(
         "/api/tarefas",
-        data=json.dumps({"status": "00. Inbox"}),
+        data=json.dumps({"status": "Entrada"}),
         content_type="application/json",
     )
     assert resp.status_code == 400
@@ -156,16 +156,16 @@ def test_patch_tarefa_move_status(client):
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=_pagina("t1", "A", "02. Fazendo"),
+        json=_pagina("t1", "A", "Assim que possível"),
         status=200,
     )
     resp = client.patch(
         "/api/tarefas/t1",
-        data=json.dumps({"status": "02. Fazendo"}),
+        data=json.dumps({"status": "Assim que possível"}),
         content_type="application/json",
     )
     assert resp.status_code == 200
-    assert resp.json()["status"] == "02. Fazendo"
+    assert resp.json()["status"] == "Assim que possível"
 
 
 @responses.activate
@@ -173,7 +173,7 @@ def test_patch_tarefa_edita_campos_amplos(client):
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=_pagina("t1", "Renomeada", "02. Fazendo", duracao="Poucas horas", areas=["a1"]),
+        json=_pagina("t1", "Renomeada", "Assim que possível", duracao="Poucas horas", areas=["a1"]),
         status=200,
     )
     resp = client.patch(
@@ -181,7 +181,7 @@ def test_patch_tarefa_edita_campos_amplos(client):
         data=json.dumps(
             {
                 "nome": "Renomeada",
-                "status": "02. Fazendo",
+                "status": "Assim que possível",
                 "duracao": "Poucas horas",
                 "areas": ["a1"],
             }
@@ -195,9 +195,9 @@ def test_patch_tarefa_edita_campos_amplos(client):
     assert corpo["areas"] == ["a1"]
 
     request = json.loads(responses.calls[0].request.body)
-    assert request["properties"]["Nome"]["title"][0]["text"]["content"] == "Renomeada"
-    assert request["properties"]["Duração"]["status"]["name"] == "Poucas horas"
-    assert request["properties"]["Áreas-da-Vida"]["relation"] == [{"id": "a1"}]
+    assert request["properties"]["Tarefa"]["title"][0]["text"]["content"] == "Renomeada"
+    assert request["properties"]["Esforço"]["status"]["name"] == "Poucas horas"
+    assert request["properties"]["Áreas da vida"]["relation"] == [{"id": "a1"}]
 
 
 def test_patch_tarefa_sem_campos_e_400(client):
@@ -230,7 +230,7 @@ def test_patch_tarefa_inexistente_e_404(client):
     )
     resp = client.patch(
         "/api/tarefas/inexistente",
-        data=json.dumps({"status": "06. Feito"}),
+        data=json.dumps({"status": "Concluída"}),
         content_type="application/json",
     )
     assert resp.status_code == 404
@@ -279,15 +279,15 @@ def test_get_opcoes_lista_status_duracao_areas(client):
         f"{NOTION_BASE_URL}/databases/{DB}",
         json={
             "properties": {
-                "Status": {
+                "Etapa": {
                     "type": "status",
-                    "status": {"options": [{"name": "00. Inbox"}, {"name": "06. Feito"}]},
+                    "status": {"options": [{"name": "Entrada"}, {"name": "Concluída"}]},
                 },
-                "Duração": {
+                "Esforço": {
                     "type": "status",
                     "status": {"options": [{"name": "Minutos"}, {"name": "Dias"}]},
                 },
-                "Áreas-da-Vida": {
+                "Áreas da vida": {
                     "type": "relation",
                     "relation": {"database_id": "db_areas"},
                 },
@@ -303,7 +303,7 @@ def test_get_opcoes_lista_status_duracao_areas(client):
                 {
                     "id": "a1",
                     "properties": {
-                        "Nome": {
+                        "Tarefa": {
                             "type": "title",
                             "title": [{"plain_text": "Estudos"}],
                         }
@@ -317,7 +317,7 @@ def test_get_opcoes_lista_status_duracao_areas(client):
     resp = client.get("/api/opcoes")
     assert resp.status_code == 200
     assert resp.json() == {
-        "status": ["00. Inbox", "06. Feito"],
+        "status": ["Entrada", "Concluída"],
         "duracao": ["Minutos", "Dias"],
         "areas": [{"id": "a1", "nome": "Estudos"}],
     }

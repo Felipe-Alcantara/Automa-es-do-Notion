@@ -45,11 +45,11 @@ def _tasklist() -> TaskList:
 
 
 def _pagina(id_: str, nome: str, status: str | None = None, prazo: str | None = None):
-    props: dict = {"Nome": {"type": "title", "title": [{"plain_text": nome}]}}
+    props: dict = {"Tarefa": {"type": "title", "title": [{"plain_text": nome}]}}
     if status is not None:
-        props["Status"] = {"type": "status", "status": {"name": status}}
+        props["Etapa"] = {"type": "status", "status": {"name": status}}
     if prazo is not None:
-        props["Próximo prazo"] = {"type": "date", "date": {"start": prazo}}
+        props["Prazo"] = {"type": "date", "date": {"start": prazo}}
     return {"id": id_, "url": f"https://notion.so/{id_}", "properties": props}
 
 
@@ -336,12 +336,12 @@ class TestConcludeTask:
         responses.add(
             responses.PATCH,
             f"{NOTION_BASE_URL}/pages/t1",
-            json=_pagina("t1", "A", "06. Feito"),
+            json=_pagina("t1", "A", "Concluída"),
             status=200,
         )
         with mock.patch("mcp_server._criar_tasklist", return_value=_tasklist()):
-            resultado = conclude_task(task_id="t1", status_concluido="06. Feito")
-        assert resultado["status"] == "06. Feito"
+            resultado = conclude_task(task_id="t1", status_concluido="Concluída")
+        assert resultado["status"] == "Concluída"
 
 
 class TestUpdateProjectPage:

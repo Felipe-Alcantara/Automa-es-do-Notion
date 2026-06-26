@@ -7,10 +7,10 @@ export function ViewLista({ tarefas, onEdit }) {
       <table className="w-full text-sm" role="grid">
         <thead>
           <tr className="border-b border-white/5 text-left text-xs text-zinc-400 uppercase tracking-wider">
-            <th className="p-4 font-medium">Nome</th>
-            <th className="p-4 font-medium hidden sm:table-cell">Status</th>
-            <th className="p-4 font-medium hidden md:table-cell">Duracao</th>
-            <th className="p-4 font-medium hidden md:table-cell">Areas</th>
+            <th className="p-4 font-medium">Tarefa</th>
+            <th className="p-4 font-medium hidden sm:table-cell">Etapa</th>
+            <th className="p-4 font-medium hidden md:table-cell">Esforço</th>
+            <th className="p-4 font-medium hidden md:table-cell">Áreas da vida</th>
             <th className="p-4 font-medium hidden lg:table-cell">Prazo</th>
           </tr>
         </thead>

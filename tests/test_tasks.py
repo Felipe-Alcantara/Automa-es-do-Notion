@@ -17,15 +17,15 @@ def criar_tasklist() -> TaskList:
 
 def pagina_tarefa(id_, nome, status=None, prazo=None, duracao=None, areas=None):
     """Monta o JSON cru de uma página de tarefa como vem do Notion."""
-    props = {"Nome": {"type": "title", "title": [{"plain_text": nome}]}}
+    props = {"Tarefa": {"type": "title", "title": [{"plain_text": nome}]}}
     if status is not None:
-        props["Status"] = {"type": "status", "status": {"name": status}}
+        props["Etapa"] = {"type": "status", "status": {"name": status}}
     if prazo is not None:
-        props["Próximo prazo"] = {"type": "date", "date": {"start": prazo}}
+        props["Prazo"] = {"type": "date", "date": {"start": prazo}}
     if duracao is not None:
-        props["Duração"] = {"type": "status", "status": {"name": duracao}}
+        props["Esforço"] = {"type": "status", "status": {"name": duracao}}
     if areas is not None:
-        props["Áreas-da-Vida"] = {
+        props["Áreas da vida"] = {
             "type": "relation",
             "relation": [{"id": aid} for aid in areas],
         }
@@ -40,7 +40,7 @@ def test_tarefa_de_pagina_extrai_campos():
         pagina_tarefa(
             "t1",
             "Estudar",
-            "00. Inbox",
+            "Entrada",
             "2026-07-01",
             duracao="Dias",
             areas=["area-1"],
@@ -49,7 +49,7 @@ def test_tarefa_de_pagina_extrai_campos():
     )
     assert t.id == "t1"
     assert t.nome == "Estudar"
-    assert t.status == "00. Inbox"
+    assert t.status == "Entrada"
     assert t.prazo == "2026-07-01"
     assert t.duracao == "Dias"
     assert t.areas == ["area-1"]
@@ -81,7 +81,7 @@ def test_listar_retorna_tarefas():
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/databases/{DB}/query",
-        json={"results": [pagina_tarefa("t1", "A", "00. Inbox")], "has_more": False},
+        json={"results": [pagina_tarefa("t1", "A", "Entrada")], "has_more": False},
         status=200,
     )
     tarefas = criar_tasklist().listar()
@@ -96,11 +96,11 @@ def test_listar_por_status_envia_filtro():
         json={"results": [], "has_more": False},
         status=200,
     )
-    criar_tasklist().listar(status="00. Inbox")
+    criar_tasklist().listar(status="Entrada")
     corpo = json.loads(responses.calls[0].request.body)
     assert corpo["filter"] == {
-        "property": "Status",
-        "status": {"equals": "00. Inbox"},
+        "property": "Etapa",
+        "status": {"equals": "Entrada"},
     }
 
 
@@ -112,13 +112,13 @@ def test_listar_por_status_duracao_e_area_envia_filtro_composto():
         json={"results": [], "has_more": False},
         status=200,
     )
-    criar_tasklist().listar(status="00. Inbox", duracao="Dias", areas=["area-1"])
+    criar_tasklist().listar(status="Entrada", duracao="Dias", areas=["area-1"])
     corpo = json.loads(responses.calls[0].request.body)
     assert corpo["filter"] == {
         "and": [
-            {"property": "Status", "status": {"equals": "00. Inbox"}},
-            {"property": "Duração", "status": {"equals": "Dias"}},
-            {"property": "Áreas-da-Vida", "relation": {"contains": "area-1"}},
+            {"property": "Etapa", "status": {"equals": "Entrada"}},
+            {"property": "Esforço", "status": {"equals": "Dias"}},
+            {"property": "Áreas da vida", "relation": {"contains": "area-1"}},
         ]
     }
 
@@ -131,15 +131,15 @@ def test_criar_envia_propriedades():
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/pages",
-        json=pagina_tarefa("novo", "Nova tarefa", "00. Inbox"),
+        json=pagina_tarefa("novo", "Nova tarefa", "Entrada"),
         status=200,
     )
-    t = criar_tasklist().criar("Nova tarefa", status="00. Inbox", prazo="2026-07-01")
+    t = criar_tasklist().criar("Nova tarefa", status="Entrada", prazo="2026-07-01")
     corpo = json.loads(responses.calls[0].request.body)
     assert corpo["parent"]["database_id"] == DB
-    assert corpo["properties"]["Nome"]["title"][0]["text"]["content"] == "Nova tarefa"
-    assert corpo["properties"]["Status"]["status"]["name"] == "00. Inbox"
-    assert corpo["properties"]["Próximo prazo"]["date"]["start"] == "2026-07-01"
+    assert corpo["properties"]["Tarefa"]["title"][0]["text"]["content"] == "Nova tarefa"
+    assert corpo["properties"]["Etapa"]["status"]["name"] == "Entrada"
+    assert corpo["properties"]["Prazo"]["date"]["start"] == "2026-07-01"
     assert t.id == "novo"
 
 
@@ -151,13 +151,13 @@ def test_atualizar_status_faz_patch():
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=pagina_tarefa("t1", "A", "06. Feito"),
+        json=pagina_tarefa("t1", "A", "Concluída"),
         status=200,
     )
-    t = criar_tasklist().atualizar_status("t1", "06. Feito")
+    t = criar_tasklist().atualizar_status("t1", "Concluída")
     corpo = json.loads(responses.calls[0].request.body)
-    assert corpo["properties"]["Status"]["status"]["name"] == "06. Feito"
-    assert t.status == "06. Feito"
+    assert corpo["properties"]["Etapa"]["status"]["name"] == "Concluída"
+    assert t.status == "Concluída"
 
 
 @responses.activate
@@ -165,11 +165,11 @@ def test_concluir_usa_status_informado():
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=pagina_tarefa("t1", "A", "06. Feito"),
+        json=pagina_tarefa("t1", "A", "Concluída"),
         status=200,
     )
-    t = criar_tasklist().concluir("t1", "06. Feito")
-    assert t.status == "06. Feito"
+    t = criar_tasklist().concluir("t1", "Concluída")
+    assert t.status == "Concluída"
 
 
 # -- Criar com duracao/areas ------------------------------------------------
@@ -185,8 +185,8 @@ def test_criar_com_duracao_e_areas():
     )
     t = criar_tasklist().criar("Tarefa", duracao="Dias", areas=["a1"])
     corpo = json.loads(responses.calls[0].request.body)
-    assert corpo["properties"]["Duração"]["status"]["name"] == "Dias"
-    assert corpo["properties"]["Áreas-da-Vida"]["relation"] == [{"id": "a1"}]
+    assert corpo["properties"]["Esforço"]["status"]["name"] == "Dias"
+    assert corpo["properties"]["Áreas da vida"]["relation"] == [{"id": "a1"}]
     assert t.duracao == "Dias"
     assert t.areas == ["a1"]
 
@@ -199,14 +199,19 @@ def test_editar_envia_campos_parciais():
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=pagina_tarefa("t1", "Renomeada", "02. ASAP", duracao="Poucas horas"),
+        json=pagina_tarefa("t1", "Renomeada", "Assim que possível", duracao="Poucas horas"),
         status=200,
     )
-    t = criar_tasklist().editar("t1", nome="Renomeada", status="02. ASAP", duracao="Poucas horas")
+    t = criar_tasklist().editar(
+        "t1",
+        nome="Renomeada",
+        status="Assim que possível",
+        duracao="Poucas horas",
+    )
     corpo = json.loads(responses.calls[0].request.body)
-    assert corpo["properties"]["Nome"]["title"][0]["text"]["content"] == "Renomeada"
-    assert corpo["properties"]["Status"]["status"]["name"] == "02. ASAP"
-    assert corpo["properties"]["Duração"]["status"]["name"] == "Poucas horas"
+    assert corpo["properties"]["Tarefa"]["title"][0]["text"]["content"] == "Renomeada"
+    assert corpo["properties"]["Etapa"]["status"]["name"] == "Assim que possível"
+    assert corpo["properties"]["Esforço"]["status"]["name"] == "Poucas horas"
     assert t.nome == "Renomeada"
 
 
@@ -220,7 +225,7 @@ def test_editar_aceita_areas():
     )
     criar_tasklist().editar("t1", areas=["a1", "a2"])
     corpo = json.loads(responses.calls[0].request.body)
-    assert corpo["properties"]["Áreas-da-Vida"]["relation"] == [
+    assert corpo["properties"]["Áreas da vida"]["relation"] == [
         {"id": "a1"},
         {"id": "a2"},
     ]
@@ -239,17 +244,17 @@ AREAS_DB = "db_areas"
 
 SCHEMA_TAREFAS = {
     "properties": {
-        "Nome": {"type": "title", "title": {}},
-        "Status": {
+        "Tarefa": {"type": "title", "title": {}},
+        "Etapa": {
             "type": "status",
             "status": {
                 "options": [
-                    {"name": "00. Inbox", "color": "default"},
-                    {"name": "06. Feito", "color": "green"},
+                    {"name": "Entrada", "color": "default"},
+                    {"name": "Concluída", "color": "green"},
                 ],
             },
         },
-        "Duração": {
+        "Esforço": {
             "type": "status",
             "status": {
                 "options": [
@@ -258,7 +263,7 @@ SCHEMA_TAREFAS = {
                 ],
             },
         },
-        "Áreas-da-Vida": {
+        "Áreas da vida": {
             "type": "relation",
             "relation": {"database_id": AREAS_DB},
         },
@@ -269,7 +274,7 @@ SCHEMA_TAREFAS = {
 def pagina_area(id_, nome):
     return {
         "id": id_,
-        "properties": {"Nome": {"type": "title", "title": [{"plain_text": nome}]}},
+        "properties": {"Tarefa": {"type": "title", "title": [{"plain_text": nome}]}},
     }
 
 
@@ -291,7 +296,7 @@ def test_opcoes_retorna_status_duracao_areas():
         status=200,
     )
     opcoes = criar_tasklist().opcoes()
-    assert opcoes["status"] == ["00. Inbox", "06. Feito"]
+    assert opcoes["status"] == ["Entrada", "Concluída"]
     assert opcoes["duracao"] == ["Minutos", "Dias"]
     assert opcoes["areas"] == [
         {"id": "a1", "nome": "Estudos"},

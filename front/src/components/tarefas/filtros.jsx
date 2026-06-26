@@ -31,7 +31,7 @@ export function Filtros({
           <Input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar tarefas..."
+            placeholder="Buscar por tarefa, etapa ou área..."
             className="pl-9"
             aria-label="Buscar tarefas"
           />
@@ -40,7 +40,7 @@ export function Filtros({
         <div
           className="grid grid-cols-3 overflow-hidden rounded-xl border border-white/10"
           role="radiogroup"
-          aria-label="Tipo de visualizacao"
+          aria-label="Tipo de visualização"
         >
           {VIEWS.map((v) => (
             <button
@@ -69,9 +69,9 @@ export function Filtros({
           value={statusFiltro}
           onChange={(e) => setStatusFiltro(e.target.value)}
           className="w-auto min-w-[160px]"
-          aria-label="Filtrar por status"
+          aria-label="Filtrar por etapa"
         >
-          <option value="">Todos os status</option>
+          <option value="">Todas as etapas</option>
           {opcoes?.status?.map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
@@ -81,9 +81,9 @@ export function Filtros({
           value={duracaoFiltro}
           onChange={(e) => setDuracaoFiltro(e.target.value)}
           className="w-auto min-w-[150px]"
-          aria-label="Filtrar por duracao"
+          aria-label="Filtrar por esforço"
         >
-          <option value="">Todas as duracoes</option>
+          <option value="">Qualquer esforço</option>
           {opcoes?.duracao?.map((d) => (
             <option key={d} value={d}>{d}</option>
           ))}
@@ -93,9 +93,9 @@ export function Filtros({
           value={areaFiltro}
           onChange={(e) => setAreaFiltro(e.target.value)}
           className="w-auto min-w-[140px]"
-          aria-label="Filtrar por area"
+          aria-label="Filtrar por área da vida"
         >
-          <option value="">Todas as areas</option>
+          <option value="">Todas as áreas</option>
           {opcoes?.areas?.map((a) => (
             <option key={a.id} value={a.id}>{a.nome}</option>
           ))}
@@ -107,10 +107,10 @@ export function Filtros({
           className="w-auto min-w-[140px]"
           aria-label="Ordenar por"
         >
-          <option value="nome">Nome A-Z</option>
-          <option value="nome-desc">Nome Z-A</option>
+          <option value="nome">Tarefa A-Z</option>
+          <option value="nome-desc">Tarefa Z-A</option>
           <option value="prazo">Prazo (mais perto)</option>
-          <option value="status">Status</option>
+          <option value="status">Etapa</option>
         </Select>
 
         <Button type="button" variant="ghost" onClick={onClear}>

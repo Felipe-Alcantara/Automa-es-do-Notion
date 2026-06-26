@@ -41,10 +41,11 @@ parar em qualquer degrau.
 Exemplos de CLI para consumo por IA/script:
 
 ```bash
-python -m cli --json listar --status "00. Inbox" --duracao "Dias" --area <area_id>
-python -m cli --json criar "Nova tarefa" --status "00. Inbox" --duracao "Dias"
-python -m cli --json editar <task_id> --status "02. Fazendo" --area <area_id>
+python -m cli --json listar --status "Entrada" --duracao "Dias" --area <area_id>
+python -m cli --json criar "Nova tarefa" --status "Entrada" --duracao "Dias"
+python -m cli --json editar <task_id> --status "Assim que possível" --area <area_id>
 python -m cli --json opcoes
+python -m cli --json normalizar-nomes --dry-run
 python -m cli --json mapear
 ```
 

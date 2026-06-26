@@ -84,6 +84,46 @@ def test_criar_pagina_envia_payload_esperado():
 
 
 @responses.activate
+def test_atualizar_database_envia_payload_e_invalida_cache():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/db123",
+        json={"id": "db123", "properties": {"Status": {"type": "status"}}},
+        status=200,
+    )
+    responses.add(
+        responses.PATCH,
+        f"{NOTION_BASE_URL}/databases/db123",
+        json={"id": "db123", "title": [{"plain_text": "Tarefas"}]},
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/db123",
+        json={"id": "db123", "properties": {"Etapa": {"type": "status"}}},
+        status=200,
+    )
+
+    client = NotionClient(token=TOKEN)
+    assert "Status" in client.get_database("db123")["properties"]
+    client.atualizar_database(
+        "db123",
+        titulo="Tarefas",
+        propriedades={"Status": {"name": "Etapa"}},
+    )
+    assert "Etapa" in client.get_database("db123")["properties"]
+
+    body = responses.calls[1].request.body
+    assert b'"title":' in body
+    assert b'"Status": {"name": "Etapa"}' in body
+
+
+def test_atualizar_database_exige_campo():
+    with pytest.raises(ValueError, match="titulo ou propriedades"):
+        criar_client().atualizar_database("db123")
+
+
+@responses.activate
 def test_erro_http_levanta_notion_http_error():
     responses.add(
         responses.GET,

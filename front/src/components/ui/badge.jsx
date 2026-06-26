@@ -18,7 +18,7 @@ export function Badge({ className, children, ...props }) {
 export function StatusBadge({ status }) {
   return (
     <Badge className={statusColor(status)}>
-      {status ?? 'Sem status'}
+      {status ?? 'Sem etapa'}
     </Badge>
   )
 }

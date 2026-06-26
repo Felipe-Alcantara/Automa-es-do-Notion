@@ -410,9 +410,9 @@ confirmação, mantendo a fronteira entre os dois projetos.
 
 > **Status:** ✅ entregue no Ciclo 2.
 
-O front e a CLI passam a refletir o **uso real**: o database principal preenche `Status`,
-`Duração` (status) e `Áreas-da-Vida` (relation) em 100% das tarefas, enquanto
-`Prazo`/`Priority`/`Projeto`/`Subitens` ficam vazios. Estende `Tarefa`/`CamposTarefa`
+O front e a CLI passam a refletir o **uso real**: o database principal preenche `Etapa`,
+`Esforço` (status) e `Áreas da vida` (relation) em 100% das tarefas, enquanto
+`Prazo`/`Prioridade`/`Projeto`/`Subitens` ficam vazios. Estende `Tarefa`/`CamposTarefa`
 (`duracao`, `areas`), adiciona o **writer `properties.relation`** (já existe o reader), a
 edição ampla no `PATCH /api/tarefas/{id}` e a rota `GET /api/opcoes`. Contrato em
 [CONTRATOS.md](CONTRATOS.md) §1–2.
@@ -444,7 +444,7 @@ tabelas: `CamposTarefa` torna o mapeamento de colunas configurável e a seleçã
 já é genérica (`start_app.py` → grava `NOTION_DATABASE_ID`). Generalizar para qualquer
 database arbitrário fica como ponto de extensão aberto à comunidade.
 
-**Pronto quando**: o front mostra/edita Status+Duração+Área com múltiplas visualizações e
+**Pronto quando**: o front mostra/edita etapa+esforço+área com múltiplas visualizações e
 filtros; a CLI cobre todas as operações sobre os `services`; tudo coberto por testes (HTTP
 mockado) e alinhado ao contrato. Em 2026-06-26, A/B/C fecharam e D concluiu a revisão
 transversal final do ciclo.

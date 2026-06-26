@@ -83,8 +83,8 @@ saída JSON estável sem subir servidor MCP:
 
 ```bash
 python -m cli --json listar
-python -m cli --json criar "Nova tarefa" --status "00. Inbox"
-python -m cli --json editar <task_id> --status "02. Fazendo"
+python -m cli --json criar "Nova tarefa" --status "Entrada"
+python -m cli --json editar <task_id> --status "Assim que possível"
 python -m cli --json opcoes
 python -m cli --json mapear
 ```

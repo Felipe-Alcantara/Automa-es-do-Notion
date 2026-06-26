@@ -3,7 +3,7 @@
 Traduz entre o JSON cru do Notion e um objeto :class:`Tarefa` simples — a forma
 que um front ou um sistema de IA consome sem precisar conhecer o formato da API.
 Fica acima de :class:`NotionClient`: lê, cria e atualiza tarefas, mapeando as
-colunas comuns (Nome, Status, prazo) de um database de tasklist.
+colunas comuns (Tarefa, Etapa, Prazo) de um database de tasklist.
 
 Os nomes das colunas são configuráveis porque variam entre workspaces; os
 padrões batem com um database de tarefas típico do Notion.
@@ -26,11 +26,11 @@ class CamposTarefa:
     diferente, sem mudar a lógica.
     """
 
-    nome: str = "Nome"
-    status: str = "Status"
-    prazo: str = "Próximo prazo"
-    duracao: str = "Duração"
-    areas: str = "Áreas-da-Vida"
+    nome: str = "Tarefa"
+    status: str = "Etapa"
+    prazo: str = "Prazo"
+    duracao: str = "Esforço"
+    areas: str = "Áreas da vida"
 
 
 @dataclass
@@ -43,7 +43,7 @@ class Tarefa:
         status: Nome do status atual (ou ``None`` se não definido).
         prazo: Data do prazo em ISO (ou ``None``).
         duracao: Nome do status de duração/esforço (ou ``None``).
-        areas: IDs das páginas relacionadas em "Áreas-da-Vida".
+        areas: IDs das páginas relacionadas em "Áreas da vida".
         areas_nomes: Nomes das áreas, resolvidos pela ``TaskList`` (vazio até
             o enriquecimento; ``tarefa_de_pagina`` é pura).
         url: Link da tarefa no Notion.
@@ -245,10 +245,10 @@ class TaskList:
 
         Args:
             nome: Título da tarefa.
-            status: Status inicial (deve existir no database).
+            status: Etapa inicial (deve existir no database).
             prazo: Data do prazo (ISO, ex.: ``"2026-07-01"``).
             duracao: Nome da duração/esforço (deve existir no database).
-            areas: IDs das páginas de "Áreas-da-Vida" a relacionar.
+            areas: IDs das páginas de "Áreas da vida" a relacionar.
 
         Returns:
             A tarefa criada.

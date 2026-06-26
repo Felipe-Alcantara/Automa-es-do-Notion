@@ -45,13 +45,13 @@
       <h2 id="titulo-form-criar">Nova tarefa</h2>
       <form id="form-tarefa">
         <div class="campo">
-          <label for="input-nome">Nome <span class="obrigatorio">*</span></label>
+          <label for="input-nome">Tarefa <span class="obrigatorio">*</span></label>
           <input type="text" id="input-nome" required placeholder="Ex.: Estudar a API do Notion">
         </div>
         <div class="campo-row">
           <div class="campo">
-            <label for="input-status">Status</label>
-            <input type="text" id="input-status" placeholder="Ex.: 00. Inbox">
+            <label for="input-status">Etapa</label>
+            <input type="text" id="input-status" placeholder="Ex.: Entrada">
           </div>
           <div class="campo">
             <label for="input-prazo">Prazo</label>
@@ -90,7 +90,7 @@
     <ul id="lista-tarefas" class="lista-tarefas"></ul>
   </main>
 
-  <!-- Modal de mover status -->
+  <!-- Modal de mover etapa -->
   <div
     id="modal-status"
     class="modal-overlay"
@@ -104,12 +104,12 @@
       <h2 id="titulo-modal-status">Mover ou concluir tarefa</h2>
       <p id="modal-tarefa-nome"></p>
       <div class="campo">
-        <label for="modal-novo-status">Novo status</label>
+        <label for="modal-novo-status">Nova etapa</label>
         <input
           type="text"
           id="modal-novo-status"
           required
-          placeholder="Ex.: 06. Feito"
+          placeholder="Ex.: Concluída"
         >
       </div>
       <div class="form-acoes">

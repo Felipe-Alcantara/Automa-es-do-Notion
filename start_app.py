@@ -51,9 +51,9 @@ APP_URL = FRONT_URL
 APP_HEALTH_URL = API_HEALTH_URL
 NODE_VERSAO_MINIMA = "20.19+ ou 22.12+"
 SCHEMA_TAREFAS = {
-    "Nome": "title",
-    "Status": "status",
-    "Próximo prazo": "date",
+    "Tarefa": "title",
+    "Etapa": "status",
+    "Prazo": "date",
 }
 
 # As deps de TUI são do próprio menu; o passo de Instalar/Setup garante que
@@ -1198,7 +1198,7 @@ def acao_cli(console) -> None:
     console.print(
         "\n[dim]Exemplo JSON:[/dim]\n"
         f"  {sys.executable} -m cli --json listar\n"
-        f'  {sys.executable} -m cli --json criar "Nova tarefa" --status "00. Inbox"'
+        f'  {sys.executable} -m cli --json criar "Nova tarefa" --status "Entrada"'
     )
 
 
