@@ -142,6 +142,18 @@ def test_menu_oferece_iniciar_tudo_como_primeira_opcao():
     assert acoes["tudo"][1] is start_app.acao_iniciar_tudo
 
 
+def test_categorias_cobrem_todas_as_acoes_sem_orfas():
+    acoes = set(start_app._acoes_menu())
+    nas_categorias: set[str] = set()
+    for _titulo, chaves in start_app._categorias_menu():
+        for chave in chaves:
+            # Toda chave de categoria existe em _acoes_menu (sem typo/órfã).
+            assert chave in acoes
+            nas_categorias.add(chave)
+    # 'status' fica fora das subtelas (atalho direto); o resto é coberto.
+    assert nas_categorias | {"status"} == acoes
+
+
 def test_instala_extra_servidor_quando_necessario(monkeypatch):
     chamadas = []
     monkeypatch.setattr(start_app, "_django_disponivel", lambda: True)

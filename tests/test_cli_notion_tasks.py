@@ -492,3 +492,20 @@ def test_linhas_lista_linhas_do_database():
     codigo, saida = _executar(["--json", "linhas", "db1"], client=FakeDatabaseClient())
     assert codigo == 0
     assert saida["dados"]["linhas"][0]["id"] == "r1"
+
+
+def test_guia_lista_todos_os_comandos():
+    codigo, saida = _executar(["--json", "guia"])
+    assert codigo == 0
+    comandos = {c["comando"] for c in saida["dados"]["comandos"]}
+    # Cobre tarefas, conteúdo e o próprio guia — reflete o parser.
+    assert {"listar", "conteudo", "linhas", "apagar-bloco", "guia"} <= comandos
+    # Cada comando traz ao menos um exemplo.
+    assert all(c["exemplos"] for c in saida["dados"]["comandos"])
+
+
+def test_guia_humano_tem_dica_de_uso():
+    codigo, saida = _executar(["guia"])
+    assert codigo == 0
+    assert "--json" in saida
+    assert "python -m cli" in saida
