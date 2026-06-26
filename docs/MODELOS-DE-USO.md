@@ -28,15 +28,25 @@ parar em qualquer degrau.
 | 1 | **Biblioteca** | `from notion_starter import NotionClient, TaskList` | Já existe um script/app seu e você só quer falar com o Notion de forma tipada |
 | 2 | **Menu de entrada** | `python start_app.py` | Quer instalar, configurar o token, escolher database, mapear o workspace ou subir o app sem decorar comando |
 | 3 | **Servidor + front web** | sobe o Django (API) e a SPA **React + Tailwind + Vite** | Quer ver, filtrar e editar suas tarefas reais numa interface própria (grade/lista/kanban) |
-| 4 | **CLI para IA** | comandos em `cli/`, borda fina sobre `services/` | Quer que uma IA local ou um script leiam/editem/movam tarefas, com saída JSON estável |
+| 4 | **CLI para IA** | `python -m cli`, borda fina sobre `services/` | Quer que uma IA local ou um script leia/edite/mova tarefas, escolha database e receba JSON estável |
 | 5 | **IA assistida** | a IA sugere, você confirma | Quer ajuda para priorizar, resumir, criar tarefas em linguagem natural |
 | 6 | **Agentes via MCP** | o Felixo-AI-Core orquestra | Quer só ler e adicionar tarefas enquanto agentes executam e registram |
 
 > **CLI (4) e MCP (6) são bordas finas sobre os mesmos `services/`** — CLI para uso
 > direto/IA local, MCP para os agentes do Felixo-AI-Core; sem duplicar regra.
 >
-> As camadas 1–2 e a API/servidor já existem; o **front React** e a **CLI para IA** são o
-> [Ciclo 2](PLANO.md) (em construção). As camadas 5–6 seguem como roadmap aberto.
+> As camadas 1–2, a API/servidor e a **CLI para IA** já existem; o **front React** é o
+> [Ciclo 2](PLANO.md) em construção. As camadas 5–6 seguem como roadmap aberto.
+
+Exemplos de CLI para consumo por IA/script:
+
+```bash
+python -m cli --json listar --status "00. Inbox"
+python -m cli --json criar "Nova tarefa" --status "00. Inbox" --duracao "Dias"
+python -m cli --json editar <task_id> --status "02. Fazendo" --area <area_id>
+python -m cli --json opcoes
+python -m cli --json mapear
+```
 
 ---
 

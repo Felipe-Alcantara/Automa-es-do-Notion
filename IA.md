@@ -173,6 +173,13 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   Validação: 34 testes do escopo A verdes no `.venv` (`test_api_tarefas`, `test_tasks`,
   `test_services_tarefas`), `ruff check` do escopo limpo e
   `DJANGO_DEBUG=1 .venv/bin/python server/manage.py check` sem issues.
+- [2026-06-26] ✅ **Agente C (CLI para IA)** — CLI em `cli/` entregue como borda fina
+  sobre `server/services/tarefas.py`, irmã do MCP: `python -m cli` suporta
+  `listar`, `ler`, `criar`, `editar`, `mover`, `concluir`, `opcoes`, `databases`,
+  `escolher-database` e `mapear`; `--json` emite envelope estável
+  `{ok,dados}` / `{ok,erro}` para IA/script. `start_app.py` ganhou ação "CLI para IA"
+  para mostrar ajuda e exemplos. Docs vivas atualizadas (`README`, `docs/MCP.md`,
+  `docs/MODELOS-DE-USO.md`).
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
@@ -240,6 +247,11 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   `server/services/tarefas.py`. Os nomes públicos incluem o namespace `notion.*`;
   anotações MCP são hints, enquanto `requiresConfirmation` pertence ao catálogo
   confiável do host Felixo-AI-Core.
+- [2026-06-26] A CLI para IA (`cli/`) segue a mesma fronteira da borda MCP: valida
+  argumentos, formata saída humana/JSON e delega a `server/services/tarefas.py`.
+  Não monta payload cru do Notion. Operações de database (`databases`,
+  `escolher-database`) ficam na borda operacional porque só listam/gravam a escolha
+  de `NOTION_DATABASE_ID`, sem regra de domínio.
 
 ---
 
@@ -280,9 +292,12 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   cancelar mantém o atual e sobe, primeira escolha grava, lista todos com marca
   `✓`/`⚠`, confirma ao escolher incompatível, sem-nenhum-compartilhado falha e
   troca pelo menu Configurar (atual marcado `[atual]`).
+- [2026-06-26] ✅ `tests/test_cli_notion_tasks.py` — CLI por injeção de doubles,
+  cobrindo envelope JSON, listar/ler/criar/editar/mover/concluir/opções, listagem e
+  escolha de database, resumo de mapeamento e `main()` sem rede real.
 - [2026-06-26] ✅ Suíte completa do working tree compartilhado:
-  **262 testes passando**; `ruff check` limpo e `ruff format` consistente no
-  `start_app.py`; `manage.py check` sem problemas.
+  **285 testes passando**; `ruff check` limpo; `ruff format --check` consistente no
+  escopo da CLI/menu; `manage.py check` sem problemas.
 
 ---
 

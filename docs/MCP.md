@@ -75,6 +75,32 @@ responsabilidade do host: o catálogo do Felixo-AI-Core deve registrar toda ferr
 
 ## Como rodar
 
+### CLI irmã
+
+A CLI do Ciclo 2 fica em `cli/` e usa os mesmos casos de uso de
+`server/services/tarefas.py`. Ela é útil quando uma IA local ou script quer uma
+saída JSON estável sem subir servidor MCP:
+
+```bash
+python -m cli --json listar
+python -m cli --json criar "Nova tarefa" --status "00. Inbox"
+python -m cli --json editar <task_id> --status "02. Fazendo"
+python -m cli --json opcoes
+python -m cli --json mapear
+```
+
+Contrato de saída:
+
+```json
+{ "ok": true, "dados": {} }
+```
+
+Em erro:
+
+```json
+{ "ok": false, "erro": { "mensagem": "..." } }
+```
+
 ### Pré-requisitos
 
 ```bash
@@ -212,7 +238,7 @@ do Felixo-AI-Core; até lá, o servidor deste projeto pode ser validado diretame
 ## Testes
 
 ```bash
-python -m pytest tests/test_mcp_server.py tests/test_services_projetos.py -v
+python -m pytest tests/test_mcp_server.py tests/test_services_projetos.py tests/test_cli_notion_tasks.py -v
 ```
 
 Os testes cobrem:

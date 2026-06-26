@@ -921,6 +921,22 @@ def acao_mcp(console) -> None:
         console.print("\n[dim]Servidor MCP encerrado.[/dim]")
 
 
+def acao_cli(console) -> None:
+    """Mostra a ajuda da CLI para IA."""
+
+    console.rule("[bold]CLI para IA")
+    console.print(
+        "A CLI usa os mesmos services da API/MCP e pode emitir JSON estável para "
+        "scripts ou IAs locais.\n"
+    )
+    subprocess.run([sys.executable, "-m", "cli", "--help"], cwd=RAIZ, check=False)
+    console.print(
+        "\n[dim]Exemplo JSON:[/dim]\n"
+        f"  {sys.executable} -m cli --json listar\n"
+        f'  {sys.executable} -m cli --json criar "Nova tarefa" --status "00. Inbox"'
+    )
+
+
 def acao_mapear(console) -> None:
     """Mapear workspace: coleta o mapa e gera o relatório HTML navegável."""
 
@@ -1020,6 +1036,7 @@ def _acoes_menu():
         "rodar": ("▶  Iniciar / Rodar — executa um exemplo da biblioteca", acao_rodar),
         "servidor": ("🌐  Subir servidor — sobe a API web (Django) local", acao_servidor),
         "mcp": ("🔗  Subir servidor MCP — ponte para o Felixo-AI-Core", acao_mcp),
+        "cli": ("⌘  CLI para IA — mostra comandos e saída JSON", acao_cli),
         "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),
         "instalar": ("⬇  Instalar / Setup — instala deps e cria o .env", acao_instalar),
         "configurar": ("⚙  Configurar — aponta o token do Notion", acao_configurar),
