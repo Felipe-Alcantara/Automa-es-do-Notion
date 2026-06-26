@@ -158,8 +158,11 @@ No menu você escolhe:
 
 - **Iniciar tudo** — opção principal: prepara e sobe front + API em
   `http://127.0.0.1:8000/` e abre o navegador automaticamente. Sempre pergunta
-  qual database de tarefas usar (com o atual já pré-selecionado — basta dar Enter
-  para manter), e grava a escolha no `.env` (`NOTION_DATABASE_ID`).
+  qual database usar (com o atual já pré-selecionado — basta dar Enter para
+  manter), listando **todos** os databases compartilhados com a integração: os
+  que já têm o schema de tarefas aparecem com `✓` no topo, os demais com `⚠`
+  (dá para escolhê-los, mas o menu avisa quais colunas faltam e pede confirmação).
+  A escolha é gravada no `.env` (`NOTION_DATABASE_ID`).
 - **Iniciar / Rodar** — executa um exemplo (`export_rows`, `check_schema`, `sync_from_csv`, `gerenciar_tarefas`).
 - **Subir servidor** — instala o Django (se necessário), aplica migrações e sobe a API REST local (`/api/health`, `/api/tarefas`).
 - **Subir servidor MCP** — instala o SDK MCP e inicia a ponte em `stdio` ou

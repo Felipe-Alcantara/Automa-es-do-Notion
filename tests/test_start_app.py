@@ -194,8 +194,8 @@ def test_garantir_database_sempre_pergunta_ao_subir(monkeypatch, tmp_path):
     monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
     monkeypatch.setattr(
         start_app,
-        "_buscar_databases_compativeis",
-        lambda token: [("Atual", "db-atual"), ("Outro", "db-trocado")],
+        "_buscar_databases",
+        lambda token: [("Atual", "db-atual", True, []), ("Outro", "db-trocado", True, [])],
     )
     monkeypatch.setattr(questionary, "select", fake_select)
     console = Console(file=io.StringIO(), force_terminal=False)
@@ -221,8 +221,8 @@ def test_garantir_database_cancelar_mantem_o_atual_e_sobe(monkeypatch, tmp_path)
     monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
     monkeypatch.setattr(
         start_app,
-        "_buscar_databases_compativeis",
-        lambda token: [("Atual", "db-atual"), ("Outro", "db-outro")],
+        "_buscar_databases",
+        lambda token: [("Atual", "db-atual", True, []), ("Outro", "db-outro", True, [])],
     )
     monkeypatch.setattr(questionary, "select", lambda *args, **kwargs: Pergunta())
     console = Console(file=io.StringIO(), force_terminal=False)
@@ -251,8 +251,8 @@ def test_garantir_database_pergunta_e_salva_na_primeira_vez(monkeypatch, tmp_pat
     monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
     monkeypatch.setattr(
         start_app,
-        "_buscar_databases_compativeis",
-        lambda token: [("Tarefas", "database-selecionado")],
+        "_buscar_databases",
+        lambda token: [("Tarefas", "database-selecionado", True, [])],
     )
     monkeypatch.setattr(questionary, "select", lambda *args, **kwargs: Pergunta())
     console = Console(file=io.StringIO(), force_terminal=False)
@@ -279,8 +279,8 @@ def test_garantir_database_pede_escolha_quando_ha_mais_de_um(monkeypatch, tmp_pa
     monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
     monkeypatch.setattr(
         start_app,
-        "_buscar_databases_compativeis",
-        lambda token: [("Tarefas", "db-1"), ("Tarefas (1)", "db-2")],
+        "_buscar_databases",
+        lambda token: [("Tarefas", "db-1", True, []), ("Tarefas (1)", "db-2", True, [])],
     )
     monkeypatch.setattr(questionary, "select", lambda *args, **kwargs: Pergunta())
     console = Console(file=io.StringIO(), force_terminal=False)
@@ -289,18 +289,19 @@ def test_garantir_database_pede_escolha_quando_ha_mais_de_um(monkeypatch, tmp_pa
     assert start_app.os.environ[start_app.DATABASE_ENV] == "db-2"
 
 
-def test_garantir_database_falha_sem_compativel(monkeypatch, tmp_path):
+def test_garantir_database_falha_sem_nenhum_compartilhado(monkeypatch, tmp_path):
+    # Nenhum database compartilhado com a integração → não há o que escolher.
     env_file = tmp_path / ".env"
     env_file.write_text("NOTION_TOKEN=ntn_teste\n", encoding="utf-8")
     monkeypatch.setattr(start_app, "ENV_FILE", env_file)
     monkeypatch.delenv(start_app.DATABASE_ENV, raising=False)
     monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
-    monkeypatch.setattr(start_app, "_buscar_databases_compativeis", lambda token: [])
+    monkeypatch.setattr(start_app, "_buscar_databases", lambda token: [])
     saida = io.StringIO()
     console = Console(file=saida, force_terminal=False)
 
     assert start_app._garantir_database_tarefas(console) is False
-    assert "Nenhum database compatível" in saida.getvalue()
+    assert "Nenhum database compartilhado" in saida.getvalue()
 
 
 def test_selecionar_database_pergunta_para_trocar_o_atual(monkeypatch, tmp_path):
@@ -326,8 +327,11 @@ def test_selecionar_database_pergunta_para_trocar_o_atual(monkeypatch, tmp_path)
     monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
     monkeypatch.setattr(
         start_app,
-        "_buscar_databases_compativeis",
-        lambda token: [("Tarefas (atual)", "db-antigo"), ("Tarefas nova", "db-novo")],
+        "_buscar_databases",
+        lambda token: [
+            ("Tarefas (atual)", "db-antigo", True, []),
+            ("Tarefas nova", "db-novo", True, []),
+        ],
     )
     monkeypatch.setattr(questionary, "select", fake_select)
     console = Console(file=io.StringIO(), force_terminal=False)
@@ -337,6 +341,87 @@ def test_selecionar_database_pergunta_para_trocar_o_atual(monkeypatch, tmp_path)
     assert "NOTION_DATABASE_ID=db-novo" in env_file.read_text()
     # O database atualmente em uso aparece marcado para o usuário se orientar.
     assert any("[atual]" in str(c.title) for c in capturado["choices"])
+
+
+def test_selecionar_database_lista_todos_com_marca(monkeypatch, tmp_path):
+    # Todos os databases aparecem (compatível ✓ e incompatível ⚠), não só os
+    # que batem o schema.
+    import questionary
+
+    capturado = {}
+
+    class Pergunta:
+        def ask(self):
+            return "db-ok"
+
+    def fake_select(mensagem, choices, *args, **kwargs):
+        capturado["titulos"] = [str(c.title) for c in choices]
+        return Pergunta()
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("NOTION_TOKEN=ntn_teste\n", encoding="utf-8")
+    monkeypatch.setattr(start_app, "ENV_FILE", env_file)
+    monkeypatch.setenv(start_app.DATABASE_ENV, "")
+    monkeypatch.delenv(start_app.DATABASE_ENV, raising=False)
+    monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
+    monkeypatch.setattr(
+        start_app,
+        "_buscar_databases",
+        lambda token: [
+            ("Tarefas", "db-ok", True, []),
+            ("Budget", "db-x", False, ["Nome (espera title, tem ausente)"]),
+        ],
+    )
+    monkeypatch.setattr(questionary, "select", fake_select)
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    assert start_app._selecionar_database_tarefas(console) is True
+    assert any("✓" in t and "Tarefas" in t for t in capturado["titulos"])
+    assert any("⚠" in t and "Budget" in t for t in capturado["titulos"])
+
+
+def test_selecionar_database_incompativel_pede_confirmacao(monkeypatch, tmp_path):
+    # Escolher um database sem o schema avisa as colunas que faltam e só grava
+    # se a pessoa confirmar.
+    import questionary
+
+    class Selecao:
+        def ask(self):
+            return "db-incompat"
+
+    class Confirma:
+        def __init__(self, resposta):
+            self.resposta = resposta
+
+        def ask(self):
+            return self.resposta
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("NOTION_TOKEN=ntn_teste\n", encoding="utf-8")
+    monkeypatch.setattr(start_app, "ENV_FILE", env_file)
+    monkeypatch.setenv(start_app.DATABASE_ENV, "")
+    monkeypatch.delenv(start_app.DATABASE_ENV, raising=False)
+    monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
+    monkeypatch.setattr(
+        start_app,
+        "_buscar_databases",
+        lambda token: [("Budget", "db-incompat", False, ["Status (espera status, tem ausente)"])],
+    )
+    monkeypatch.setattr(questionary, "select", lambda *a, **k: Selecao())
+
+    # 1) confirma=False → não grava
+    monkeypatch.setattr(questionary, "confirm", lambda *a, **k: Confirma(False))
+    saida = io.StringIO()
+    console = Console(file=saida, force_terminal=False)
+    assert start_app._selecionar_database_tarefas(console) is False
+    assert "Status (espera status" in saida.getvalue()
+    assert "NOTION_DATABASE_ID=db-incompat" not in env_file.read_text()
+
+    # 2) confirma=True → grava mesmo incompatível
+    monkeypatch.setattr(questionary, "confirm", lambda *a, **k: Confirma(True))
+    console = Console(file=io.StringIO(), force_terminal=False)
+    assert start_app._selecionar_database_tarefas(console) is True
+    assert "NOTION_DATABASE_ID=db-incompat" in env_file.read_text()
 
 
 def test_app_web_ativo_valida_health_do_projeto(monkeypatch):
