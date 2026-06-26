@@ -276,6 +276,11 @@ hora de montar o canvas — o orquestrador também pode ajustar conforme custo/c
 
 ### Agente Front-end
 
+> **Histórico (Ciclo 1).** Este agente entregou o front mínimo em templates/JS vanilla
+> servido pelo Django. O front atual é reescrito como SPA React no
+> **[Agente B do Ciclo 2](#agente-b--front-react--tailwind--vite)** — veja lá para o
+> trabalho ativo.
+
 - **Objetivo**: o "momento aha" — uma interface web que **lista e edita as tarefas reais**.
 - **Lê também**: [MODELOS-DE-USO.md](MODELOS-DE-USO.md) e [PLANO.md](PLANO.md) (Fase 2).
   Segue os padrões visuais do design system de front do projeto, quando aplicável.

@@ -102,7 +102,9 @@ Checklist mínimo de produção:
 - [ ] `NOTION_TOKEN` (e `NOTION_DATABASE_ID`, se usado) no ambiente do servidor.
 - [ ] Servir via `gunicorn config.wsgi` (ou um ASGI como `uvicorn config.asgi`),
       a partir de `server/`, atrás de um proxy reverso (TLS).
-- [ ] `python manage.py migrate` no deploy; `collectstatic` se houver front estático.
+- [ ] `python manage.py migrate` no deploy. Para o front do Ciclo 2 (SPA React + Vite),
+      o build é `vite build` em `front/`, servindo o `dist/` por um proxy/CDN ou
+      estático do servidor (não é `collectstatic` de template Django).
 - [ ] `OPERATIONAL_DB_PATH` apontando para um volume persistente (o SQLite não some
       a cada deploy).
 
