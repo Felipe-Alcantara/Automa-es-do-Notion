@@ -152,6 +152,19 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   marca `✓`/`⚠` e, ao escolher um incompatível, avisa as colunas faltantes
   (`_colunas_faltantes`) e pede confirmação antes de gravar. O front é de tarefas,
   mas nada impede apontar `NOTION_DATABASE_ID` para outra tabela do projeto.
+- [2026-06-26] 📐 **Ciclo 2 planejado nas docs (multiagente)**: as Fases 0–6 estão
+  entregues; abriu-se um novo ciclo de evolução, documentado em `docs/` para
+  desenvolvimento multiagente. Quatro frentes **independentes o bastante para andar em
+  paralelo** (escopos de pasta distintos, mesmo contrato escrito): **A** Núcleo & API v2
+  (campos `duracao`/`areas`, `properties.relation`, `PATCH` amplo, `GET /api/opcoes`);
+  **B** front **SPA React + Tailwind + Vite** (em `front/`, grade/lista/kanban, busca,
+  filtros persistentes — substitui o front vanilla, alinhado ao design system do padrão de
+  qualidade); **C** **CLI completa para IA** (em `cli/`, borda fina sobre `services/`, par
+  do MCP); **D** Qualidade transversal. Contrato v2 fixado em `docs/CONTRATOS.md`; frentes
+  em `docs/PLANO.md` (*Ciclo 2*); agentes em `docs/AGENTES.md`. Decisão de origem:
+  diagnóstico leu 15 linhas do database real → só Status/Duração/Áreas-da-Vida são usados
+  (Prazo/Priority/Projeto/Subitens ficam vazios); o site reflete o uso real. Implementação
+  ainda **não** começou — este passo é só a documentação/faseamento.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados

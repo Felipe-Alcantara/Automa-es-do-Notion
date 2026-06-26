@@ -31,6 +31,8 @@
 ## 🧭 Como ler, por objetivo
 
 - **Quero entender a visão** → [PLANO.md](PLANO.md) → [MODELOS-DE-USO.md](MODELOS-DE-USO.md)
+- **Vou implementar uma frente do Ciclo 2 (front React, CLI, API v2)** →
+  [CONTRATOS.md](CONTRATOS.md) (o contrato) → [AGENTES.md](AGENTES.md) → [PLANO.md](PLANO.md) (*Ciclo 2*)
 - **Quero reaproveitar o projeto** → [PORTABILIDADE.md](PORTABILIDADE.md)
 - **Quero pensar em produto** → [SAAS.md](SAAS.md) → [ESCALA.md](ESCALA.md)
 - **Quero entender a camada de IA** → [IA-CAMADA.md](IA-CAMADA.md)

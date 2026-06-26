@@ -397,7 +397,11 @@ Notion — está documentado em [`docs/`](docs/README.md):
 [portabilidade](docs/PORTABILIDADE.md) e os caminhos de evolução
 ([SaaS](docs/SAAS.md), [escala](docs/ESCALA.md), [otimização](docs/OTIMIZACAO.md) e
 [ideias extras](docs/IDEIAS-EXTRAS.md)). A ponte com o Felixo-AI-Core está em
-[`docs/MCP.md`](docs/MCP.md). São documentos de direção, abertos à contribuição.
+[`docs/MCP.md`](docs/MCP.md). O ciclo atual de evolução — front **SPA React + Tailwind +
+Vite**, **CLI completa para IA** e mapeamento das colunas reais (multi-tabela) — está
+detalhado em [`docs/PLANO.md`](docs/PLANO.md) (*Ciclo 2*), com as frentes separadas por
+agente em [`docs/AGENTES.md`](docs/AGENTES.md) e o contrato em
+[`docs/CONTRATOS.md`](docs/CONTRATOS.md). São documentos de direção, abertos à contribuição.
 
 ## 🧪 Desenvolvimento
 

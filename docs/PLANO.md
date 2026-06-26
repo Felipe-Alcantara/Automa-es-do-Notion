@@ -76,12 +76,15 @@ A peça-chave da visão é **não concentrar tudo num lugar só**:
                 │ MCP (camada de ferramentas "notion")
 ┌───────────────▼──────────────────────────────────────────────┐
 │  Servidor Django (este repositório)                           │
-│   • api/           rotas REST + (futuro) servidor MCP         │
+│   • api/           rotas REST                                  │
 │   • services/      casos de uso (orquestra tasklist, ingestão)│
 │   • integrations/  notion_starter (cliente), github, openrouter│
 │   • core/          config, logging, token                     │
 │   • SQLite         estado operacional (jobs, locks)           │
-│  Front web (templates/HTMX ou estático servido pelo Django)   │
+│  Bordas finas sobre services/ (não reimplementam regra):      │
+│   • cli/           CLI completa para IA (ler/editar/mover/…)  │
+│   • mcp_server     ferramentas notion.* (Felixo-AI-Core)      │
+│  Front: SPA React + Tailwind + Vite (consome a API REST)      │
 └───────────────┬──────────────────────────────────────────────┘
                 │ API do Notion
 ┌───────────────▼──────────────────────────────────────────────┐
@@ -204,6 +207,11 @@ retry seguro de rate limit e proteção contra repetição ambígua de criação
 > erro padronizado e 14 testes (Backend — `d60d428`); **front web** servido em `/`
 > (templates/estáticos Django, JS vanilla consumindo a API REST, acessibilidade e
 > 4 testes de integração — Agente 4, Onda 3).
+>
+> **Atualização [2026-06-26]:** a API REST e os casos de uso permanecem a base; o **front
+> vanilla é substituído por uma SPA React + Tailwind + Vite** no Ciclo 2 (ver abaixo),
+> alinhada ao design system do padrão de qualidade. O contrato das rotas evoluiu
+> (campos `duracao`/`areas`, rota `GET /api/opcoes`) — ver [CONTRATOS.md](CONTRATOS.md).
 
 **Objetivo**: abrir o navegador e ver/editar as tarefas reais do Notion num front
 próprio.
@@ -379,6 +387,55 @@ registram no Notion, e a pessoa só lê e adiciona tarefas.
 
 **Pronto quando**: as ferramentas `notion` respondem pelo seam MCP e escritas pedem
 confirmação, mantendo a fronteira entre os dois projetos.
+
+---
+
+## 🔄 Ciclo 2 — front rico, CLI para IA e multi-tabela
+
+> As Fases 0–6 entregaram a base (cliente, robustez, API + front mínimo, ingestão, GitHub,
+> IA e MCP). O **Ciclo 2** aprofunda a experiência sem descartar nada: o `notion_starter`,
+> os `services` e a API continuam a fundação. As frentes abaixo são **independentes o
+> bastante para andar em paralelo** (escopos de pasta distintos), lendo o mesmo contrato
+> em [CONTRATOS.md](CONTRATOS.md). O detalhamento por agente está em [AGENTES.md](AGENTES.md).
+>
+> Tom: próximos passos abertos à comunidade — cada frente pode ser pegada de forma
+> independente.
+
+### Frente A — Mapear as colunas que se usam de verdade (núcleo + API)
+
+O front e a CLI passam a refletir o **uso real**: o database principal preenche `Status`,
+`Duração` (status) e `Áreas-da-Vida` (relation) em 100% das tarefas, enquanto
+`Prazo`/`Priority`/`Projeto`/`Subitens` ficam vazios. Estende `Tarefa`/`CamposTarefa`
+(`duracao`, `areas`), adiciona o **writer `properties.relation`** (já existe o reader), a
+edição ampla no `PATCH /api/tarefas/{id}` e a rota `GET /api/opcoes`. Contrato em
+[CONTRATOS.md](CONTRATOS.md) §1–2.
+
+### Frente B — Front SPA React + Tailwind + Vite (design system)
+
+Substitui o front vanilla por uma SPA em `front/`, seguindo o **design system de front do
+padrão de qualidade** (React 18 + Tailwind + Framer Motion + Vite). Várias **visualizações**
+(grade / lista / kanban por status), **busca**, **filtros persistentes** (por status,
+duração, área), ordenação e modais de criar/editar — espelhando os padrões de um dashboard
+rico. Consome a API REST; sem regra de negócio no front.
+
+### Frente C — CLI completa para IA
+
+Uma CLI em `cli/` com **todas as funções** (listar, ler, criar, editar, mover, concluir,
+mapear, escolher database), **borda fina sobre os mesmos `services`** que a API usa — para
+uma IA local ou um script operar o todolist por linha de comando. A CLI e o **MCP**
+(`server/mcp_server.py`) são duas cascas finas sobre `services/`: MCP para os agentes do
+Felixo-AI-Core, CLI para uso direto/IA local — sem duplicar regra.
+
+### Multi-tabela / multi-caso-de-uso
+
+O todolist da home é o caso **principal hoje**, mas a arquitetura nasce pronta para outras
+tabelas: `CamposTarefa` torna o mapeamento de colunas configurável e a seleção de database
+já é genérica (`start_app.py` → grava `NOTION_DATABASE_ID`). Generalizar para qualquer
+database arbitrário fica como ponto de extensão aberto à comunidade.
+
+**Pronto quando**: o front mostra/edita Status+Duração+Área com múltiplas visualizações e
+filtros; a CLI cobre todas as operações sobre os `services`; tudo coberto por testes (HTTP
+mockado) e alinhado ao contrato.
 
 ---
 

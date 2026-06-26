@@ -30,9 +30,9 @@ Os objetos de domínio são **simples e estáveis**: a forma que front, IA e int
 consomem, sem conhecer o JSON cru do Notion. A tradução entre o Notion e estes objetos é
 responsabilidade da camada `integrations` (`notion_starter`), nunca da API nem do front.
 
-### `Tarefa` (já existe em [`tasks.py`](../src/notion_starter/tasks.py))
+### `Tarefa` (em [`tasks.py`](../src/notion_starter/tasks.py))
 
-A unidade central. **Este é o contrato — não redefinir os campos.**
+A unidade central. **Este é o contrato — não redefinir os campos existentes; só estender.**
 
 | Campo | Tipo | Significado |
 |---|---|---|
@@ -40,8 +40,16 @@ A unidade central. **Este é o contrato — não redefinir os campos.**
 | `nome` | `str` | Texto do título. |
 | `status` | `str \| None` | Nome do status atual (ou `None`). |
 | `prazo` | `str \| None` | Data do prazo em ISO 8601 (ou `None`). |
+| `duracao` | `str \| None` | Nome do status de duração/esforço (ou `None`). |
+| `areas` | `list[str]` | IDs das páginas relacionadas em "Áreas-da-Vida". |
+| `areas_nomes` | `list[str]` | Nomes dessas áreas, resolvidos pela `TaskList` (vazio até o enriquecimento; `tarefa_de_pagina` é pura). |
 | `url` | `str \| None` | Link da tarefa no Notion. |
 | `bruto` | `dict` | JSON original, para campos não mapeados (não serializar na API). |
+
+> **Contexto (ciclo 2):** `duracao` e `areas` foram acrescentados porque o uso real do
+> database principal preenche `Status`, `Duração` e `Áreas-da-Vida` em 100% das tarefas,
+> enquanto `Prazo`/`Priority`/`Projeto`/`Subitens` ficam vazios. O front e a CLI mapeiam
+> o que de fato se usa. Campos novos são **aditivos** — clientes antigos continuam válidos.
 
 **Serialização na API** (o que sai/entra em JSON nas rotas) — o subconjunto público de
 `Tarefa`, **sem** `bruto`:
@@ -52,9 +60,22 @@ A unidade central. **Este é o contrato — não redefinir os campos.**
   "nome": "Estudar a API do Notion",
   "status": "00. Inbox",
   "prazo": "2026-07-01",
+  "duracao": "Dias",
+  "areas": ["area-id-1"],
+  "areas_nomes": ["Estudos"],
   "url": "https://notion.so/abc123"
 }
 ```
+
+### Mapeamento de colunas e multi-tabela (`CamposTarefa`)
+
+Os nomes das colunas são **configuráveis por database** via `CamposTarefa`
+(`nome`/`status`/`prazo`/`duracao`/`areas`), porque variam entre workspaces. O caso
+principal hoje é o todolist da home (database "Tarefas — HOME (principal)"), mas a mesma
+`TaskList` atende **outras tabelas** ao receber outro `database_id` + `CamposTarefa`. A
+seleção de qual database alimentar a lista vive no `start_app.py` (grava
+`NOTION_DATABASE_ID` no `.env`). Generalizar para qualquer database arbitrário é um ponto
+de extensão futuro — o contrato já nasce configurável para não travar isso.
 
 ### Objeto de valores simples de uma página
 
@@ -97,27 +118,43 @@ Cria uma tarefa nova.
 - **Request body**:
 
 ```json
-{ "nome": "Estudar a API do Notion", "status": "00. Inbox", "prazo": "2026-07-01" }
+{ "nome": "Estudar a API do Notion", "status": "00. Inbox", "duracao": "Dias", "areas": ["area-id-1"], "prazo": "2026-07-01" }
 ```
 
-  - `nome` (obrigatório), `status` (opcional), `prazo` (opcional, ISO 8601).
+  - `nome` (obrigatório); `status`, `duracao`, `areas` (lista de IDs) e `prazo`
+    (ISO 8601) são opcionais.
 - **201 Created**: o objeto `Tarefa` serializado (§1).
 - **400**: `nome` ausente/vazio.
 
-### `PATCH /api/tarefas/{id}` — mover status / concluir
+### `PATCH /api/tarefas/{id}` — editar
 
-Atualiza o status de uma tarefa existente (mover ou concluir são o mesmo verbo: mudar o
-status para o nome desejado).
+Atualiza uma tarefa existente. Aceita um ou mais campos; mover/concluir continua sendo
+mudar `status`. **Retrocompatível**: `{ "status": … }` sozinho continua válido.
 
 - **Path**: `id` — ID da página da tarefa.
-- **Request body**:
+- **Request body** (todos os campos opcionais, ao menos um obrigatório):
 
 ```json
-{ "status": "06. Feito" }
+{ "nome": "…", "status": "06. Feito", "duracao": "Minutos", "areas": ["area-id-1"], "prazo": "2026-07-01" }
 ```
 
 - **200 OK**: o objeto `Tarefa` serializado (§1).
-- **400**: `status` ausente. **404**: tarefa inexistente.
+- **400**: corpo vazio / sem campos. **404**: tarefa inexistente.
+
+### `GET /api/opcoes` — opções para os seletores
+
+Devolve os valores possíveis para o front/CLI montarem seletores em vez de texto livre.
+Lidas do schema do database (Status/Duração) e do database de áreas (relations).
+
+- **200 OK**:
+
+```json
+{
+  "status": ["00. Inbox", "02. ASAP", "06. Feito", "..."],
+  "duracao": ["Minutos", "Poucas horas", "Dias", "..."],
+  "areas": [{ "id": "area-id-1", "nome": "Estudos" }, { "id": "area-id-2", "nome": "Trabalho" }]
+}
+```
 
 > **Confirmação antes de escrever**: criação e mudança de status são operações de
 > **escrita**. Quando acionadas por IA/MCP (Fases 5–6), exigem confirmação humana antes de
@@ -159,10 +196,17 @@ server/
 ├── integrations/   adaptadores externos isolados (notion_starter, github, openrouter)
 ├── core/           config por ambiente, logging, token — sem HTTP
 └── operations/     estado operacional em SQLite (Job, Lock) — não é conteúdo
+
+cli/                CLI para IA: borda fina sobre services/ (ler/editar/mover/…)
+front/              SPA React + Tailwind + Vite (consome a API REST) — ciclo 2
 ```
 
 - **`api`** depende de `services`; **`services`** depende de `integrations` e `core`;
   `integrations` e `core` não dependem de `api`. Sem dependência circular.
+- **`cli/` e a camada MCP** (`server/mcp_server.py`) são **bordas finas** sobre os
+  mesmos `services` — não reimplementam regra. MCP serve os agentes do Felixo-AI-Core;
+  a CLI serve uso direto/scripts e uma IA local. O **front React** (`front/`) consome a
+  mesma API REST; sem regra de negócio no front.
 - O **conteúdo** (tarefas, páginas) é a fonte da verdade no Notion; o **SQLite** guarda só
   estado de execução (jobs, locks), nunca conteúdo.
 
