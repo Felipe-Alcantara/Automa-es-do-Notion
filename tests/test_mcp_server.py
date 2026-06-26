@@ -24,12 +24,17 @@ from mcp_server import (
     _criar_tasklist,
     _resolver_transporte,
     _tarefa_dict,
+    append_content,
     conclude_task,
     create_task,
+    delete_block,
+    edit_block,
     list_tasks,
     main,
     mcp,
     move_status,
+    read_page_content,
+    search,
     update_project_page,
 )
 
@@ -98,6 +103,34 @@ class TestAnotacoesMCP:
         assert ann.idempotentHint is True
         assert ann.openWorldHint is True
 
+    def test_search_e_read_only(self):
+        ann = self._tools()["notion.search"].annotations
+        assert ann.readOnlyHint is True
+        assert ann.destructiveHint is False
+
+    def test_read_page_content_e_read_only(self):
+        ann = self._tools()["notion.read_page_content"].annotations
+        assert ann.readOnlyHint is True
+        assert ann.destructiveHint is False
+
+    def test_append_content_e_write(self):
+        ann = self._tools()["notion.append_content"].annotations
+        assert ann.readOnlyHint is False
+        assert ann.destructiveHint is False
+        assert ann.idempotentHint is False
+
+    def test_edit_block_e_write(self):
+        ann = self._tools()["notion.edit_block"].annotations
+        assert ann.readOnlyHint is False
+        assert ann.destructiveHint is False
+        assert ann.idempotentHint is True
+
+    def test_delete_block_e_destrutivo(self):
+        ann = self._tools()["notion.delete_block"].annotations
+        assert ann.readOnlyHint is False
+        assert ann.destructiveHint is True
+        assert ann.openWorldHint is True
+
     def test_superficie_publica_tem_namespace_notion(self):
         assert set(self._tools()) == {
             "notion.list_tasks",
@@ -105,6 +138,11 @@ class TestAnotacoesMCP:
             "notion.move_status",
             "notion.conclude_task",
             "notion.update_project_page",
+            "notion.search",
+            "notion.read_page_content",
+            "notion.append_content",
+            "notion.edit_block",
+            "notion.delete_block",
         }
 
 
@@ -424,3 +462,103 @@ class TestCLI:
         with mock.patch.object(mcp, "run") as run:
             main(["--transport", "streamable-http"])
         run.assert_called_once_with(transport="streamable-http")
+
+
+# ---------------------------------------------------------------------------
+# Ferramentas de conteudo (Notion mockado)
+# ---------------------------------------------------------------------------
+
+
+class TestConteudo:
+    """Verifica as ferramentas de conteudo, incluindo o fluxo destrutivo."""
+
+    def _patch_cliente(self):
+        return mock.patch(
+            "mcp_server._criar_notion_client",
+            return_value=NotionClient(token=TOKEN),
+        )
+
+    @responses.activate
+    def test_read_page_content_devolve_markdown(self):
+        responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/blocks/page1/children",
+            json={
+                "results": [
+                    {"type": "paragraph", "paragraph": {"rich_text": [{"plain_text": "oi"}]}}
+                ],
+                "has_more": False,
+            },
+            status=200,
+        )
+        with self._patch_cliente():
+            resultado = read_page_content(page_id="page1")
+        assert resultado == {"id": "page1", "markdown": "oi"}
+
+    @responses.activate
+    def test_append_content_conta_blocos(self):
+        responses.add(
+            responses.PATCH,
+            f"{NOTION_BASE_URL}/blocks/page1/children",
+            json={"results": []},
+            status=200,
+        )
+        with self._patch_cliente():
+            resultado = append_content(page_id="page1", markdown="a\nb")
+        assert resultado == {"id": "page1", "blocos_anexados": 2}
+
+    @responses.activate
+    def test_edit_block_atualiza(self):
+        responses.add(
+            responses.PATCH,
+            f"{NOTION_BASE_URL}/blocks/b1",
+            json={"id": "b1"},
+            status=200,
+        )
+        with self._patch_cliente():
+            resultado = edit_block(block_id="b1", markdown="## Novo")
+        assert resultado == {"id": "b1", "editado": True}
+        assert "heading_2" in json.loads(responses.calls[0].request.body)
+
+    @responses.activate
+    def test_delete_block_arquiva(self):
+        responses.add(
+            responses.DELETE,
+            f"{NOTION_BASE_URL}/blocks/b1",
+            json={"id": "b1", "archived": True},
+            status=200,
+        )
+        with self._patch_cliente():
+            resultado = delete_block(block_id="b1")
+        assert resultado == {"id": "b1", "apagado": True}
+        assert responses.calls[0].request.method == "DELETE"
+
+    def test_append_content_rejeita_pagina_vazia(self):
+        with self._patch_cliente(), pytest.raises(ValueError, match="page_id"):
+            append_content(page_id="   ", markdown="oi")
+
+    @responses.activate
+    def test_search_normaliza_itens(self):
+        responses.add(
+            responses.POST,
+            f"{NOTION_BASE_URL}/search",
+            json={
+                "results": [
+                    {
+                        "object": "page",
+                        "id": "p1",
+                        "url": "https://notion.so/p1",
+                        "properties": {
+                            "Name": {"type": "title", "title": [{"plain_text": "Nota"}]}
+                        },
+                    }
+                ],
+                "has_more": False,
+            },
+            status=200,
+        )
+        with self._patch_cliente():
+            itens = search(query="x")
+        assert itens == [
+            {"id": "p1", "tipo": "page", "titulo": "Nota", "url": "https://notion.so/p1"}
+        ]
