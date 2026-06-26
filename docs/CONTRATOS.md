@@ -38,17 +38,17 @@ A unidade central. **Este é o contrato — não redefinir os campos existentes;
 |---|---|---|
 | `id` | `str` | ID da página (a tarefa) no Notion. |
 | `nome` | `str` | Texto do título. |
-| `status` | `str \| None` | Nome do status atual (ou `None`). |
+| `status` | `str \| None` | Nome da etapa atual (ou `None`). |
 | `prazo` | `str \| None` | Data do prazo em ISO 8601 (ou `None`). |
-| `duracao` | `str \| None` | Nome do status de duração/esforço (ou `None`). |
-| `areas` | `list[str]` | IDs das páginas relacionadas em "Áreas-da-Vida". |
+| `duracao` | `str \| None` | Nome da opção de esforço (ou `None`). |
+| `areas` | `list[str]` | IDs das páginas relacionadas em "Áreas da vida". |
 | `areas_nomes` | `list[str]` | Nomes dessas áreas, resolvidos pela `TaskList` (vazio até o enriquecimento; `tarefa_de_pagina` é pura). |
 | `url` | `str \| None` | Link da tarefa no Notion. |
 | `bruto` | `dict` | JSON original, para campos não mapeados (não serializar na API). |
 
 > **Contexto (ciclo 2):** `duracao` e `areas` foram acrescentados porque o uso real do
-> database principal preenche `Status`, `Duração` e `Áreas-da-Vida` em 100% das tarefas,
-> enquanto `Prazo`/`Priority`/`Projeto`/`Subitens` ficam vazios. O front e a CLI mapeiam
+> database principal preenche `Etapa`, `Esforço` e `Áreas da vida` em 100% das tarefas,
+> enquanto `Prazo`/`Prioridade`/`Projeto`/`Subitens` ficam vazios. O front e a CLI mapeiam
 > o que de fato se usa. Campos novos são **aditivos** — clientes antigos continuam válidos.
 
 **Serialização na API** (o que sai/entra em JSON nas rotas) — o subconjunto público de
@@ -58,7 +58,7 @@ A unidade central. **Este é o contrato — não redefinir os campos existentes;
 {
   "id": "abc123",
   "nome": "Estudar a API do Notion",
-  "status": "00. Inbox",
+  "status": "Entrada",
   "prazo": "2026-07-01",
   "duracao": "Dias",
   "areas": ["area-id-1"],
@@ -76,6 +76,11 @@ principal hoje é o todolist da home (database "Tarefas — HOME (principal)"), 
 seleção de qual database alimentar a lista vive no `start_app.py` (grava
 `NOTION_DATABASE_ID` no `.env`). Generalizar para qualquer database arbitrário é um ponto
 de extensão futuro — o contrato já nasce configurável para não travar isso.
+
+No database principal, o vocabulário canônico da fonte é: `Tarefa`, `Etapa`,
+`Esforço`, `Prazo` e `Áreas da vida`. As opções também vêm da fonte, sem tradução
+local no front: por exemplo `Entrada`, `Assim que possível`, `Concluída`, `Agora`
+e `Hoje`.
 
 ### Objeto de valores simples de uma página
 
@@ -109,7 +114,7 @@ front, para o database real continuar sendo a fonte de verdade.
   - `status` (opcional) — filtra por nome de status.
   - `duracao` (opcional) — filtra por nome da coluna de duração/esforço.
   - `area` (opcional, repetível ou CSV) — filtra por IDs relacionados em
-    `Áreas-da-Vida`.
+    `Áreas da vida`.
 - **200 OK**:
 
 ```json
@@ -123,7 +128,7 @@ Cria uma tarefa nova.
 - **Request body**:
 
 ```json
-{ "nome": "Estudar a API do Notion", "status": "00. Inbox", "duracao": "Dias", "areas": ["area-id-1"], "prazo": "2026-07-01" }
+{ "nome": "Estudar a API do Notion", "status": "Entrada", "duracao": "Dias", "areas": ["area-id-1"], "prazo": "2026-07-01" }
 ```
 
   - `nome` (obrigatório); `status`, `duracao`, `areas` (lista de IDs) e `prazo`
@@ -140,7 +145,7 @@ mudar `status`. **Retrocompatível**: `{ "status": … }` sozinho continua váli
 - **Request body** (todos os campos opcionais, ao menos um obrigatório):
 
 ```json
-{ "nome": "…", "status": "06. Feito", "duracao": "Minutos", "areas": ["area-id-1"], "prazo": "2026-07-01" }
+{ "nome": "…", "status": "Concluída", "duracao": "Minutos", "areas": ["area-id-1"], "prazo": "2026-07-01" }
 ```
 
 - **200 OK**: o objeto `Tarefa` serializado (§1).
@@ -149,13 +154,13 @@ mudar `status`. **Retrocompatível**: `{ "status": … }` sozinho continua váli
 ### `GET /api/opcoes` — opções para os seletores
 
 Devolve os valores possíveis para o front/CLI montarem seletores em vez de texto livre.
-Lidas do schema do database (Status/Duração) e do database de áreas (relations).
+Lidas do schema do database (Etapa/Esforço) e do database de áreas (relations).
 
 - **200 OK**:
 
 ```json
 {
-  "status": ["00. Inbox", "02. ASAP", "06. Feito", "..."],
+  "status": ["Entrada", "Assim que possível", "Concluída", "..."],
   "duracao": ["Minutos", "Poucas horas", "Dias", "..."],
   "areas": [{ "id": "area-id-1", "nome": "Estudos" }, { "id": "area-id-2", "nome": "Trabalho" }]
 }

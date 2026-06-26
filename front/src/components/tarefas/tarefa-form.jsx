@@ -27,7 +27,7 @@ export function TarefaFormModal({ open, onClose, onSubmit, tarefa, opcoes }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!nome.trim()) {
-      setErro('O nome e obrigatorio.')
+      setErro('O nome é obrigatório.')
       return
     }
     setSalvando(true)
@@ -57,7 +57,9 @@ export function TarefaFormModal({ open, onClose, onSubmit, tarefa, opcoes }) {
     <Modal open={open} onClose={onClose} title={isEdit ? 'Editar tarefa' : 'Nova tarefa'}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="tf-nome" className="block text-xs text-zinc-400 mb-1">Nome</label>
+          <label htmlFor="tf-nome" className="block text-xs text-zinc-400 mb-1">
+            Tarefa
+          </label>
           <Input
             id="tf-nome"
             value={nome}
@@ -69,18 +71,22 @@ export function TarefaFormModal({ open, onClose, onSubmit, tarefa, opcoes }) {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label htmlFor="tf-status" className="block text-xs text-zinc-400 mb-1">Status</label>
+            <label htmlFor="tf-status" className="block text-xs text-zinc-400 mb-1">
+              Etapa
+            </label>
             <Select id="tf-status" value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">Selecionar...</option>
+              <option value="">Selecionar etapa...</option>
               {opcoes?.status?.map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </Select>
           </div>
           <div>
-            <label htmlFor="tf-duracao" className="block text-xs text-zinc-400 mb-1">Duracao</label>
+            <label htmlFor="tf-duracao" className="block text-xs text-zinc-400 mb-1">
+              Esforço
+            </label>
             <Select id="tf-duracao" value={duracao} onChange={(e) => setDuracao(e.target.value)}>
-              <option value="">Selecionar...</option>
+              <option value="">Selecionar esforço...</option>
               {opcoes?.duracao?.map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
@@ -89,7 +95,9 @@ export function TarefaFormModal({ open, onClose, onSubmit, tarefa, opcoes }) {
         </div>
 
         <div>
-          <label htmlFor="tf-prazo" className="block text-xs text-zinc-400 mb-1">Prazo</label>
+          <label htmlFor="tf-prazo" className="block text-xs text-zinc-400 mb-1">
+            Prazo
+          </label>
           <Input
             id="tf-prazo"
             type="date"
@@ -99,7 +107,9 @@ export function TarefaFormModal({ open, onClose, onSubmit, tarefa, opcoes }) {
         </div>
 
         <div>
-          <span className="block text-xs text-zinc-400 mb-2" id="tf-areas-label">Areas</span>
+          <span className="block text-xs text-zinc-400 mb-2" id="tf-areas-label">
+            Áreas da vida
+          </span>
           <div className="flex flex-wrap gap-2" aria-labelledby="tf-areas-label">
             {opcoes?.areas?.map((a) => (
               <button
@@ -117,7 +127,7 @@ export function TarefaFormModal({ open, onClose, onSubmit, tarefa, opcoes }) {
               </button>
             ))}
             {!opcoes?.areas?.length && (
-              <span className="text-xs text-zinc-500">Nenhuma area disponivel.</span>
+              <span className="text-xs text-zinc-500">Nenhuma área disponível.</span>
             )}
           </div>
         </div>

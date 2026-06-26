@@ -161,14 +161,14 @@ def test_instala_extra_servidor_quando_necessario(monkeypatch):
 def test_database_compativel_exige_schema_completo():
     database = {
         "properties": {
-            "Nome": {"type": "title"},
-            "Status": {"type": "status"},
-            "Próximo prazo": {"type": "date"},
+            "Tarefa": {"type": "title"},
+            "Etapa": {"type": "status"},
+            "Prazo": {"type": "date"},
         }
     }
 
     assert start_app._database_compativel(database) is True
-    del database["properties"]["Próximo prazo"]
+    del database["properties"]["Prazo"]
     assert start_app._database_compativel(database) is False
 
 
@@ -369,7 +369,7 @@ def test_selecionar_database_lista_todos_com_marca(monkeypatch, tmp_path):
         "_buscar_databases",
         lambda token: [
             ("Tarefas", "db-ok", True, []),
-            ("Budget", "db-x", False, ["Nome (espera title, tem ausente)"]),
+            ("Budget", "db-x", False, ["Tarefa (espera title, tem ausente)"]),
         ],
     )
     monkeypatch.setattr(questionary, "select", fake_select)
@@ -405,7 +405,7 @@ def test_selecionar_database_incompativel_pede_confirmacao(monkeypatch, tmp_path
     monkeypatch.setattr(
         start_app,
         "_buscar_databases",
-        lambda token: [("Budget", "db-incompat", False, ["Status (espera status, tem ausente)"])],
+        lambda token: [("Budget", "db-incompat", False, ["Etapa (espera status, tem ausente)"])],
     )
     monkeypatch.setattr(questionary, "select", lambda *a, **k: Selecao())
 
@@ -414,7 +414,7 @@ def test_selecionar_database_incompativel_pede_confirmacao(monkeypatch, tmp_path
     saida = io.StringIO()
     console = Console(file=saida, force_terminal=False)
     assert start_app._selecionar_database_tarefas(console) is False
-    assert "Status (espera status" in saida.getvalue()
+    assert "Etapa (espera status" in saida.getvalue()
     assert "NOTION_DATABASE_ID=db-incompat" not in env_file.read_text()
 
     # 2) confirma=True → grava mesmo incompatível

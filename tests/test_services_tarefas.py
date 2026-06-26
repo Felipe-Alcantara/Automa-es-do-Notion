@@ -24,15 +24,15 @@ def _tasklist() -> TaskList:
 
 
 def _pagina(id_, nome, status=None, prazo=None, duracao=None, areas=None):
-    props = {"Nome": {"type": "title", "title": [{"plain_text": nome}]}}
+    props = {"Tarefa": {"type": "title", "title": [{"plain_text": nome}]}}
     if status is not None:
-        props["Status"] = {"type": "status", "status": {"name": status}}
+        props["Etapa"] = {"type": "status", "status": {"name": status}}
     if prazo is not None:
-        props["Próximo prazo"] = {"type": "date", "date": {"start": prazo}}
+        props["Prazo"] = {"type": "date", "date": {"start": prazo}}
     if duracao is not None:
-        props["Duração"] = {"type": "status", "status": {"name": duracao}}
+        props["Esforço"] = {"type": "status", "status": {"name": duracao}}
     if areas is not None:
-        props["Áreas-da-Vida"] = {
+        props["Áreas da vida"] = {
             "type": "relation",
             "relation": [{"id": area_id} for area_id in areas],
         }
@@ -44,7 +44,7 @@ def test_listar_tarefas_delega_para_tasklist():
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/databases/{DB}/query",
-        json={"results": [_pagina("t1", "A", "00. Inbox")], "has_more": False},
+        json={"results": [_pagina("t1", "A", "Entrada")], "has_more": False},
         status=200,
     )
     tarefas = svc.listar_tarefas(tasklist=_tasklist())
@@ -59,9 +59,9 @@ def test_listar_tarefas_filtra_por_status():
         json={"results": [], "has_more": False},
         status=200,
     )
-    svc.listar_tarefas(status="00. Inbox", tasklist=_tasklist())
+    svc.listar_tarefas(status="Entrada", tasklist=_tasklist())
     corpo = json.loads(responses.calls[0].request.body)
-    assert corpo["filter"] == {"property": "Status", "status": {"equals": "00. Inbox"}}
+    assert corpo["filter"] == {"property": "Etapa", "status": {"equals": "Entrada"}}
 
 
 @responses.activate
@@ -73,7 +73,7 @@ def test_listar_tarefas_repassa_filtros_amplos():
         status=200,
     )
     svc.listar_tarefas(
-        status="00. Inbox",
+        status="Entrada",
         duracao="Dias",
         areas=["a1"],
         tasklist=_tasklist(),
@@ -81,9 +81,9 @@ def test_listar_tarefas_repassa_filtros_amplos():
     corpo = json.loads(responses.calls[0].request.body)
     assert corpo["filter"] == {
         "and": [
-            {"property": "Status", "status": {"equals": "00. Inbox"}},
-            {"property": "Duração", "status": {"equals": "Dias"}},
-            {"property": "Áreas-da-Vida", "relation": {"contains": "a1"}},
+            {"property": "Etapa", "status": {"equals": "Entrada"}},
+            {"property": "Esforço", "status": {"equals": "Dias"}},
+            {"property": "Áreas da vida", "relation": {"contains": "a1"}},
         ]
     }
 
@@ -93,12 +93,12 @@ def test_criar_tarefa_devolve_tarefa_criada():
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/pages",
-        json=_pagina("novo", "Nova", "00. Inbox", duracao="Dias", areas=["a1"]),
+        json=_pagina("novo", "Nova", "Entrada", duracao="Dias", areas=["a1"]),
         status=200,
     )
     tarefa = svc.criar_tarefa(
         "Nova",
-        status="00. Inbox",
+        status="Entrada",
         duracao="Dias",
         areas=["a1"],
         tasklist=_tasklist(),
@@ -114,19 +114,19 @@ def test_editar_tarefa_delega_campos_amplos():
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=_pagina("t1", "Renomeada", "02. Fazendo", duracao="Poucas horas"),
+        json=_pagina("t1", "Renomeada", "Assim que possível", duracao="Poucas horas"),
         status=200,
     )
     tarefa = svc.editar_tarefa(
         "t1",
         nome="Renomeada",
-        status="02. Fazendo",
+        status="Assim que possível",
         duracao="Poucas horas",
         tasklist=_tasklist(),
     )
     corpo = json.loads(responses.calls[0].request.body)
-    assert corpo["properties"]["Nome"]["title"][0]["text"]["content"] == "Renomeada"
-    assert corpo["properties"]["Duração"]["status"]["name"] == "Poucas horas"
+    assert corpo["properties"]["Tarefa"]["title"][0]["text"]["content"] == "Renomeada"
+    assert corpo["properties"]["Esforço"]["status"]["name"] == "Poucas horas"
     assert tarefa.nome == "Renomeada"
 
 
@@ -135,11 +135,11 @@ def test_mover_status_faz_patch():
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=_pagina("t1", "A", "02. Fazendo"),
+        json=_pagina("t1", "A", "Assim que possível"),
         status=200,
     )
-    tarefa = svc.mover_status("t1", "02. Fazendo", tasklist=_tasklist())
-    assert tarefa.status == "02. Fazendo"
+    tarefa = svc.mover_status("t1", "Assim que possível", tasklist=_tasklist())
+    assert tarefa.status == "Assim que possível"
 
 
 @responses.activate
@@ -147,11 +147,11 @@ def test_concluir_tarefa_usa_status_informado():
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=_pagina("t1", "A", "06. Feito"),
+        json=_pagina("t1", "A", "Concluída"),
         status=200,
     )
-    tarefa = svc.concluir_tarefa("t1", "06. Feito", tasklist=_tasklist())
-    assert tarefa.status == "06. Feito"
+    tarefa = svc.concluir_tarefa("t1", "Concluída", tasklist=_tasklist())
+    assert tarefa.status == "Concluída"
 
 
 @responses.activate
@@ -161,15 +161,15 @@ def test_listar_opcoes_delega_para_tasklist():
         f"{NOTION_BASE_URL}/databases/{DB}",
         json={
             "properties": {
-                "Status": {
+                "Etapa": {
                     "type": "status",
-                    "status": {"options": [{"name": "00. Inbox"}]},
+                    "status": {"options": [{"name": "Entrada"}]},
                 },
-                "Duração": {
+                "Esforço": {
                     "type": "status",
                     "status": {"options": [{"name": "Dias"}]},
                 },
-                "Áreas-da-Vida": {
+                "Áreas da vida": {
                     "type": "relation",
                     "relation": {"database_id": "db_areas"},
                 },
@@ -185,7 +185,7 @@ def test_listar_opcoes_delega_para_tasklist():
                 {
                     "id": "a1",
                     "properties": {
-                        "Nome": {
+                        "Tarefa": {
                             "type": "title",
                             "title": [{"plain_text": "Estudos"}],
                         }
@@ -197,7 +197,7 @@ def test_listar_opcoes_delega_para_tasklist():
         status=200,
     )
     assert svc.listar_opcoes(tasklist=_tasklist()) == {
-        "status": ["00. Inbox"],
+        "status": ["Entrada"],
         "duracao": ["Dias"],
         "areas": [{"id": "a1", "nome": "Estudos"}],
     }

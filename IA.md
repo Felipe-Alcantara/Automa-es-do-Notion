@@ -124,7 +124,7 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
 
 - [2026-06-25] ✅ **"Iniciar tudo" → seleção do database de tarefas**: na primeira
   execução, `start_app.py` procura databases compartilhados com a integração que
-  atendem ao schema do front (`Nome`/title, `Status`/status, `Próximo prazo`/date),
+  atendem ao schema do front (`Tarefa`/title, `Etapa`/status, `Prazo`/date),
   escolhe automaticamente quando há só um, pergunta quando há vários e grava
   `NOTION_DATABASE_ID` no `.env` para reusar depois. Antes o app subia sem saber
   qual database alimentar a lista. Mensagem de erro `erro_interno` da API passou a
@@ -145,7 +145,7 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   continua com `Cancelar` = não altera nada).
 - [2026-06-26] ✅ **Lista todos os databases (sem filtro rígido)**: diagnóstico no
   workspace real mostrou 112 databases compartilhados, mas só 2 batiam o schema
-  exato (`Nome`/title, `Status`/status, `Próximo prazo`/date) — escondendo databases
+  exato (`Tarefa`/title, `Etapa`/status, `Prazo`/date) — escondendo databases
   de tarefas reais que só diferiam no nome de uma coluna (ex.: `Task Name`). A seleção
   passou a listar **todos** os databases: `_buscar_databases` devolve
   `(titulo, db_id, compativel, faltantes)` ordenando compatíveis primeiro; o menu
@@ -162,8 +162,8 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   qualidade); **C** **CLI completa para IA** (em `cli/`, borda fina sobre `services/`, par
   do MCP); **D** Qualidade transversal. Contrato v2 fixado em `docs/CONTRATOS.md`; frentes
   em `docs/PLANO.md` (*Ciclo 2*); agentes em `docs/AGENTES.md`. Decisão de origem:
-  diagnóstico leu 15 linhas do database real → só Status/Duração/Áreas-da-Vida são usados
-  (Prazo/Priority/Projeto/Subitens ficam vazios); o site reflete o uso real.
+  diagnóstico leu 15 linhas do database real → só Etapa/Esforço/Áreas da vida são usados
+  (Prazo/Prioridade/Projeto/Subitens ficam vazios); o site reflete o uso real.
 - [2026-06-26] ✅ **Agente A (Núcleo & API v2)** — contrato v2 de tarefas implementado:
   `properties.relation`, `Tarefa`/`CamposTarefa` com `duracao`/`areas`,
   `TaskList.editar`, resolução/cache de nomes de áreas, `TaskList.opcoes`,
@@ -190,6 +190,15 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   `{ok,dados}` / `{ok,erro}` para IA/script. `start_app.py` ganhou ação "CLI para IA"
   para mostrar ajuda e exemplos. Docs vivas atualizadas (`README`, `docs/MCP.md`,
   `docs/MODELOS-DE-USO.md`).
+- [2026-06-26] ✅ **Nomes intuitivos na fonte Notion** — a fonte de verdade foi
+  migrada pelo comando `python -m cli --json normalizar-nomes`: propriedades do
+  database principal viraram `Tarefa`, `Etapa`, `Esforço`, `Prazo`, `Áreas da vida`,
+  `Prioridade`, `Subtarefas`, `Subtarefas relacionadas` e `Tarefa principal`;
+  opções antigas como `00. Inbox`, `02. ASAP`, `06. Feito`,
+  `Mais rápido possível` e `Concluido` foram substituídas por `Entrada`,
+  `Assim que possível`, `Concluída`, `Agora` e `Hoje`; áreas `Money`, `Projects`
+  e `Shoppe` viraram `Finanças`, `Projetos` e `Compras`. O front não traduz mais
+  rótulos localmente — exibe o que vem de `GET /api/opcoes`.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados

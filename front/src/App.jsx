@@ -132,7 +132,7 @@ function App() {
   const resumo = {
     total: tarefas.length,
     visiveis: tarefasFiltradas.length,
-    abertas: tarefas.filter((tarefa) => tarefa.status !== '06. Feito').length,
+    abertas: tarefas.filter((tarefa) => tarefa.status !== 'Concluída').length,
   }
 
   return (
@@ -143,20 +143,20 @@ function App() {
         <section className="flex flex-col gap-4 border-b border-white/5 pb-6 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <p className="text-xs font-medium uppercase tracking-wider text-brand-300">
-              Notion tasklist
+              Painel Notion
             </p>
             <h1 className="text-2xl font-semibold leading-tight text-white sm:text-3xl">
               Tarefas
             </h1>
             <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">
-              Status, duracao e areas em uma interface rapida para operar o database real.
+              Etapas, esforço e áreas vêm direto do seu Notion.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <Metric label="Total" value={resumo.total} />
-            <Metric label="Visiveis" value={resumo.visiveis} />
-            <Metric label="Abertas" value={resumo.abertas} />
+            <Metric label="Visíveis" value={resumo.visiveis} />
+            <Metric label="Em aberto" value={resumo.abertas} />
             <Button type="button" variant="brand" onClick={abrirCriacao}>
               <Plus size={16} aria-hidden="true" />
               Nova tarefa
@@ -190,7 +190,7 @@ function App() {
           >
             <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" aria-hidden="true" />
             <div>
-              <p className="font-medium">Nao foi possivel carregar todos os dados.</p>
+              <p className="font-medium">Não foi possível carregar todos os dados.</p>
               <p className="mt-1 text-red-200/80">{erro ?? erroOpcoes}</p>
             </div>
           </div>
@@ -200,7 +200,7 @@ function App() {
           <div className="flex min-h-72 items-center justify-center rounded-2xl border border-white/10">
             <div className="flex items-center gap-3 text-sm text-zinc-400">
               <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-              Carregando tarefas
+              Carregando tarefas...
             </div>
           </div>
         ) : tarefasFiltradas.length === 0 ? (

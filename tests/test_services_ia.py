@@ -79,11 +79,11 @@ def _tasklist() -> TaskList:
 
 
 def _pagina(id_, nome, status=None, prazo=None):
-    props = {"Nome": {"type": "title", "title": [{"plain_text": nome}]}}
+    props = {"Tarefa": {"type": "title", "title": [{"plain_text": nome}]}}
     if status is not None:
-        props["Status"] = {"type": "status", "status": {"name": status}}
+        props["Etapa"] = {"type": "status", "status": {"name": status}}
     if prazo is not None:
-        props["Próximo prazo"] = {"type": "date", "date": {"start": prazo}}
+        props["Prazo"] = {"type": "date", "date": {"start": prazo}}
     return {"id": id_, "url": f"https://notion.so/{id_}", "properties": props}
 
 
@@ -105,20 +105,20 @@ def test_interpretar_criar_tarefa():
 
 
 def test_interpretar_listar_tarefas():
-    prov = _provedor_json("listar_tarefas", {"status": "00. Inbox"})
+    prov = _provedor_json("listar_tarefas", {"status": "Entrada"})
     acao = interpretar_comando("mostra as tarefas do inbox", provedor=prov)
     assert acao.operacao == "listar_tarefas"
-    assert acao.parametros["status"] == "00. Inbox"
+    assert acao.parametros["status"] == "Entrada"
 
 
 def test_interpretar_mover_status():
-    prov = _provedor_json("mover_status", {"task_id": "t1", "status": "02. Fazendo"})
+    prov = _provedor_json("mover_status", {"task_id": "t1", "status": "Assim que possível"})
     acao = interpretar_comando("mova t1 pra fazendo", provedor=prov)
     assert acao.operacao == "mover_status"
 
 
 def test_interpretar_concluir_tarefa():
-    prov = _provedor_json("concluir_tarefa", {"task_id": "t1", "status_concluido": "06. Feito"})
+    prov = _provedor_json("concluir_tarefa", {"task_id": "t1", "status_concluido": "Concluída"})
     acao = interpretar_comando("conclui t1", provedor=prov)
     assert acao.operacao == "concluir_tarefa"
 
@@ -176,7 +176,7 @@ def test_executar_listar_tarefas():
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/databases/{DB}/query",
-        json={"results": [_pagina("t1", "A", "00. Inbox")], "has_more": False},
+        json={"results": [_pagina("t1", "A", "Entrada")], "has_more": False},
         status=200,
     )
     acao = AcaoSugerida(operacao="listar_tarefas")
@@ -190,7 +190,7 @@ def test_executar_criar_tarefa():
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/pages",
-        json=_pagina("novo", "Estudar IA", "00. Inbox"),
+        json=_pagina("novo", "Estudar IA", "Entrada"),
         status=200,
     )
     acao = AcaoSugerida(operacao="criar_tarefa", parametros={"nome": "Estudar IA"})
@@ -204,15 +204,15 @@ def test_executar_mover_status():
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=_pagina("t1", "A", "02. Fazendo"),
+        json=_pagina("t1", "A", "Assim que possível"),
         status=200,
     )
     acao = AcaoSugerida(
         operacao="mover_status",
-        parametros={"task_id": "t1", "status": "02. Fazendo"},
+        parametros={"task_id": "t1", "status": "Assim que possível"},
     )
     resultado = executar_acao(acao, tasklist=_tasklist())
-    assert resultado.status == "02. Fazendo"
+    assert resultado.status == "Assim que possível"
 
 
 @responses.activate
@@ -220,15 +220,15 @@ def test_executar_concluir_tarefa():
     responses.add(
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
-        json=_pagina("t1", "A", "06. Feito"),
+        json=_pagina("t1", "A", "Concluída"),
         status=200,
     )
     acao = AcaoSugerida(
         operacao="concluir_tarefa",
-        parametros={"task_id": "t1", "status_concluido": "06. Feito"},
+        parametros={"task_id": "t1", "status_concluido": "Concluída"},
     )
     resultado = executar_acao(acao, tasklist=_tasklist())
-    assert resultado.status == "06. Feito"
+    assert resultado.status == "Concluída"
 
 
 def test_executar_operacao_desconhecida_levanta():
@@ -244,7 +244,7 @@ def test_executar_criar_sem_nome_levanta():
 
 
 def test_executar_mover_sem_task_id_levanta():
-    acao = AcaoSugerida(operacao="mover_status", parametros={"status": "02. Fazendo"})
+    acao = AcaoSugerida(operacao="mover_status", parametros={"status": "Assim que possível"})
     with pytest.raises(ValueError, match="task_id"):
         executar_acao(acao, tasklist=_tasklist())
 

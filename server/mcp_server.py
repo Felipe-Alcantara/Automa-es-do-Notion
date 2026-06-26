@@ -192,7 +192,7 @@ def list_tasks(status: str | None = None) -> list[dict[str, Any]]:
     Ferramenta de leitura (read) — nao modifica dados.
 
     Args:
-        status: Nome do status para filtrar (ex.: "00. Inbox").
+        status: Nome da etapa para filtrar (ex.: "Entrada").
                 Se omitido, lista todas.
 
     Returns:
@@ -221,7 +221,7 @@ def create_task(
 
     Args:
         nome: Titulo da tarefa (obrigatorio).
-        status: Status inicial (ex.: "00. Inbox"). Opcional.
+        status: Etapa inicial (ex.: "Entrada"). Opcional.
         prazo: Data no formato AAAA-MM-DD. Opcional.
 
     Returns:
@@ -252,7 +252,7 @@ def move_status(task_id: str, status: str) -> dict[str, Any]:
 
     Args:
         task_id: ID da tarefa no Notion.
-        status: Novo status (ex.: "02. Fazendo").
+        status: Nova etapa (ex.: "Assim que possível").
 
     Returns:
         A tarefa atualizada com id, nome, status, prazo e url.
@@ -282,8 +282,8 @@ def conclude_task(task_id: str, status_concluido: str) -> dict[str, Any]:
 
     Args:
         task_id: ID da tarefa no Notion.
-        status_concluido: Nome do status que representa conclusao
-                          (ex.: "06. Feito").
+        status_concluido: Nome da etapa que representa conclusão.
+                          (ex.: "Concluída").
 
     Returns:
         A tarefa concluida com id, nome, status, prazo e url.

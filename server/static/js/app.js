@@ -285,7 +285,7 @@ async function confirmarMoverStatus(ev) {
     await apiPatch(`/tarefas/${tarefaParaMover.id}`, { status: novoStatus });
     fecharModal();
     await carregarTarefas();
-    mostrarMensagem("Status atualizado com sucesso.");
+    mostrarMensagem("Etapa atualizada com sucesso.");
   } catch (err) {
     mostrarMensagem(`Erro ao atualizar status: ${err.message}`, "erro");
   } finally {

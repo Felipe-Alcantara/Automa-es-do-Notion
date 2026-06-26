@@ -65,6 +65,13 @@ class DatabaseCreatePayload(TypedDict):
     properties: dict[str, dict[str, object]]
 
 
+class DatabaseUpdatePayload(TypedDict):
+    """Payload para atualização de database."""
+
+    title: NotRequired[list[DatabaseTitleItemPayload]]
+    properties: NotRequired[dict[str, dict[str, object]]]
+
+
 class DatabaseQueryPayload(TypedDict):
     """Payload para consulta de database."""
 
@@ -466,6 +473,46 @@ class NotionClient:
             payload=payload,
             idempotente=False,
         )
+
+    def atualizar_database(
+        self,
+        database_id: str,
+        *,
+        titulo: str | None = None,
+        propriedades: dict[str, dict[str, object]] | None = None,
+    ) -> dict[str, Any]:
+        """Atualiza metadados e schema de um database.
+
+        Args:
+            database_id: ID do database.
+            titulo: Novo título do database, quando informado.
+            propriedades: Alterações de schema por propriedade.
+
+        Returns:
+            A resposta JSON do database atualizado.
+
+        Raises:
+            ValueError: Se nenhum campo for informado.
+        """
+
+        limpo = _validar_identificador(database_id, "database_id")
+        payload: DatabaseUpdatePayload = {}
+        if titulo is not None:
+            titulo_limpo = _validar_identificador(titulo, "titulo")
+            payload["title"] = [{"type": "text", "text": {"content": titulo_limpo}}]
+        if propriedades is not None:
+            payload["properties"] = propriedades
+        if not payload:
+            raise ValueError("Informe titulo ou propriedades para atualizar o database.")
+
+        resultado = self._request_json(
+            method="PATCH",
+            path=f"/databases/{limpo}",
+            payload=payload,
+            idempotente=True,
+        )
+        self.invalidar_cache(limpo)
+        return resultado
 
     def consultar_database(
         self,
