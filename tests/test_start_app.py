@@ -172,19 +172,74 @@ def test_database_compativel_exige_schema_completo():
     assert start_app._database_compativel(database) is False
 
 
-def test_garantir_database_reutiliza_configuracao_existente(monkeypatch):
-    monkeypatch.setenv(start_app.DATABASE_ENV, "database-existente")
+def test_garantir_database_sempre_pergunta_ao_subir(monkeypatch, tmp_path):
+    # Mesmo com um database já salvo, "Iniciar tudo" pergunta (com o atual
+    # pré-selecionado) — ele NÃO reusa em silêncio.
+    import questionary
+
+    capturado = {}
+
+    class Pergunta:
+        def ask(self):
+            return "db-trocado"
+
+    def fake_select(mensagem, choices, *args, **kwargs):
+        capturado["default"] = kwargs.get("default")
+        return Pergunta()
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("NOTION_TOKEN=ntn_teste\nNOTION_DATABASE_ID=db-atual\n", encoding="utf-8")
+    monkeypatch.setattr(start_app, "ENV_FILE", env_file)
+    monkeypatch.setenv(start_app.DATABASE_ENV, "db-atual")
+    monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
     monkeypatch.setattr(
         start_app,
         "_buscar_databases_compativeis",
-        lambda token: (_ for _ in ()).throw(AssertionError("não deve consultar o Notion")),
+        lambda token: [("Atual", "db-atual"), ("Outro", "db-trocado")],
     )
+    monkeypatch.setattr(questionary, "select", fake_select)
     console = Console(file=io.StringIO(), force_terminal=False)
 
     assert start_app._garantir_database_tarefas(console) is True
+    # O atual entra pré-selecionado e a troca é gravada.
+    assert capturado["default"] == "db-atual"
+    assert start_app.os.environ[start_app.DATABASE_ENV] == "db-trocado"
 
 
-def test_garantir_database_unico_salva_no_env(monkeypatch, tmp_path):
+def test_garantir_database_cancelar_mantem_o_atual_e_sobe(monkeypatch, tmp_path):
+    # Ao subir, cancelar a escolha mantém o database já salvo e segue (True).
+    import questionary
+
+    class Pergunta:
+        def ask(self):
+            return None  # usuário escolheu "Manter o atual"
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("NOTION_TOKEN=ntn_teste\nNOTION_DATABASE_ID=db-atual\n", encoding="utf-8")
+    monkeypatch.setattr(start_app, "ENV_FILE", env_file)
+    monkeypatch.setenv(start_app.DATABASE_ENV, "db-atual")
+    monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
+    monkeypatch.setattr(
+        start_app,
+        "_buscar_databases_compativeis",
+        lambda token: [("Atual", "db-atual"), ("Outro", "db-outro")],
+    )
+    monkeypatch.setattr(questionary, "select", lambda *args, **kwargs: Pergunta())
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    assert start_app._garantir_database_tarefas(console) is True
+    assert start_app.os.environ[start_app.DATABASE_ENV] == "db-atual"
+
+
+def test_garantir_database_pergunta_e_salva_na_primeira_vez(monkeypatch, tmp_path):
+    # Sem database salvo, "Iniciar tudo" pergunta (mesmo com um único
+    # compatível) e grava a escolha no .env.
+    import questionary
+
+    class Pergunta:
+        def ask(self):
+            return "database-selecionado"
+
     env_file = tmp_path / ".env"
     env_file.write_text("NOTION_TOKEN=ntn_teste\n", encoding="utf-8")
     monkeypatch.setattr(start_app, "ENV_FILE", env_file)
@@ -199,6 +254,7 @@ def test_garantir_database_unico_salva_no_env(monkeypatch, tmp_path):
         "_buscar_databases_compativeis",
         lambda token: [("Tarefas", "database-selecionado")],
     )
+    monkeypatch.setattr(questionary, "select", lambda *args, **kwargs: Pergunta())
     console = Console(file=io.StringIO(), force_terminal=False)
 
     assert start_app._garantir_database_tarefas(console) is True

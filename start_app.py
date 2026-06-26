@@ -432,27 +432,27 @@ def _buscar_databases_compativeis(token: str) -> list[tuple[str, str]]:
 
 
 def _garantir_database_tarefas(console) -> bool:
-    """Garante um database de tarefas: reusa o salvo ou seleciona na primeira vez.
+    """Pergunta qual database de tarefas usar antes de subir o site.
 
-    Usado pelo "Iniciar tudo" — se ``NOTION_DATABASE_ID`` já existe, reusa em
-    silêncio para não interromper o fluxo de um clique. Para trocar depois, use
-    a opção [bold]Configurar → Escolher database de tarefas[/bold]
-    (:func:`_selecionar_database_tarefas`).
+    Usado pelo "Iniciar tudo" — **sempre** pergunta, com o database atual já
+    pré-selecionado (basta dar Enter para manter). Se a pessoa cancelar e já
+    houver um database salvo, mantém esse e segue subindo o site; só barra
+    quando ainda não há nenhum configurado.
     """
 
-    database_id = _valor_configurado(DATABASE_ENV)
-    if database_id:
-        os.environ.setdefault(DATABASE_ENV, database_id)
-        return True
-
-    return _selecionar_database_tarefas(console)
+    return _selecionar_database_tarefas(console, manter_atual_ao_cancelar=True)
 
 
-def _selecionar_database_tarefas(console) -> bool:
+def _selecionar_database_tarefas(console, *, manter_atual_ao_cancelar: bool = False) -> bool:
     """Busca, escolhe e persiste o database de tarefas no ``.env``.
 
-    Sempre re-consulta o Notion e regrava ``NOTION_DATABASE_ID`` — é o caminho
-    para definir o database na primeira vez e para trocá-lo depois pelo menu.
+    Sempre re-consulta o Notion e regrava ``NOTION_DATABASE_ID``, com o database
+    atual pré-selecionado na lista. É o caminho usado tanto ao subir o site
+    ("Iniciar tudo") quanto pelo menu Configurar.
+
+    ``manter_atual_ao_cancelar``: quando ``True`` (fluxo de subir), cancelar a
+    escolha mantém o database já salvo e retorna sucesso, desde que exista um.
+    Quando ``False`` (menu Configurar), cancelar apenas não altera nada.
     """
 
     import questionary
@@ -465,6 +465,8 @@ def _selecionar_database_tarefas(console) -> bool:
         )
         return False
 
+    atual = _valor_configurado(DATABASE_ENV)
+
     console.print("Procurando databases de tarefas compartilhados com a integração...")
     try:
         databases = _buscar_databases_compativeis(token)
@@ -473,7 +475,8 @@ def _selecionar_database_tarefas(console) -> bool:
             "[red]✗[/red] Não consegui consultar os databases do Notion. "
             f"Verifique a integração e tente novamente ({type(exc).__name__})."
         )
-        return False
+        # Falha de rede ao subir não deve travar quem já tem um database salvo.
+        return bool(atual) if manter_atual_ao_cancelar else False
 
     if not databases:
         colunas = ", ".join(f"{nome} ({tipo})" for nome, tipo in SCHEMA_TAREFAS.items())
@@ -483,26 +486,28 @@ def _selecionar_database_tarefas(console) -> bool:
         )
         return False
 
-    atual = _valor_configurado(DATABASE_ENV)
-    if len(databases) == 1 and not atual:
-        titulo, database_id = databases[0]
-        console.print(f"Usando o database compatível encontrado: [bold]{titulo}[/bold].")
-    else:
-        escolhas = [
-            questionary.Choice(
-                f"{titulo} · {db_id[:8]}…" + ("  [atual]" if db_id == atual else ""),
-                value=db_id,
-            )
-            for titulo, db_id in databases
-        ]
-        escolhas.append(questionary.Choice("Cancelar", value=None))
-        database_id = questionary.select(
-            "Qual database deve alimentar a lista de tarefas?",
-            choices=escolhas,
-        ).ask()
-        if not database_id:
-            console.print("[dim]Configuração cancelada.[/dim]")
-            return False
+    escolha_atual = next((db_id for _, db_id in databases if db_id == atual), None)
+    escolhas = [
+        questionary.Choice(
+            f"{titulo} · {db_id[:8]}…" + ("  [atual]" if db_id == atual else ""),
+            value=db_id,
+        )
+        for titulo, db_id in databases
+    ]
+    rotulo_cancelar = "Manter o atual" if (manter_atual_ao_cancelar and atual) else "Cancelar"
+    escolhas.append(questionary.Choice(rotulo_cancelar, value=None))
+    database_id = questionary.select(
+        "Qual database deve alimentar a lista de tarefas?",
+        choices=escolhas,
+        default=escolha_atual,
+    ).ask()
+    if not database_id:
+        if manter_atual_ao_cancelar and atual:
+            console.print(f"[dim]Mantendo o database atual ({atual[:8]}…).[/dim]")
+            os.environ.setdefault(DATABASE_ENV, atual)
+            return True
+        console.print("[dim]Configuração cancelada.[/dim]")
+        return False
 
     _gravar_valor_env_file(DATABASE_ENV, database_id)
     os.environ[DATABASE_ENV] = database_id
