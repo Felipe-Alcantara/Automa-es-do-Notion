@@ -407,15 +407,35 @@ def _titulo_database(item: dict) -> str:
     return titulo.strip() or "(sem título)"
 
 
+def _colunas_faltantes(item: dict) -> list[str]:
+    """Colunas do schema de tarefas que o database não atende, já descritas.
+
+    Lista vazia significa que o database é compatível.
+    """
+
+    propriedades = {nome: info.get("type") for nome, info in item.get("properties", {}).items()}
+    faltantes = []
+    for nome, tipo in SCHEMA_TAREFAS.items():
+        atual = propriedades.get(nome)
+        if atual != tipo:
+            faltantes.append(f"{nome} (espera {tipo}, tem {atual or 'ausente'})")
+    return faltantes
+
+
 def _database_compativel(item: dict) -> bool:
     """Verifica o schema mínimo usado pelo front de tarefas."""
 
-    propriedades = {nome: info.get("type") for nome, info in item.get("properties", {}).items()}
-    return all(propriedades.get(nome) == tipo for nome, tipo in SCHEMA_TAREFAS.items())
+    return not _colunas_faltantes(item)
 
 
-def _buscar_databases_compativeis(token: str) -> list[tuple[str, str]]:
-    """Lista databases acessíveis que atendem ao schema padrão de tarefas."""
+def _buscar_databases(token: str) -> list[tuple[str, str, bool, list[str]]]:
+    """Lista TODOS os databases acessíveis à integração, ordenados.
+
+    Cada item é ``(titulo, db_id, compativel, faltantes)``. Compatíveis (que
+    atendem ao schema de tarefas) vêm primeiro; dentro de cada grupo, em ordem
+    alfabética. Mostrar todos — não só os compatíveis — deixa a pessoa escolher
+    livremente um database mesmo que precise ajustar as colunas depois.
+    """
 
     from notion_starter import NotionClient
 
@@ -423,12 +443,15 @@ def _buscar_databases_compativeis(token: str) -> list[tuple[str, str]]:
         buscar_todos=True,
         filtro={"property": "object", "value": "database"},
     )
-    compativeis = [
-        (_titulo_database(item), item.get("id", ""))
-        for item in itens
-        if item.get("id") and _database_compativel(item)
-    ]
-    return sorted(compativeis, key=lambda item: item[0].casefold())
+    databases = []
+    for item in itens:
+        db_id = item.get("id")
+        if not db_id:
+            continue
+        faltantes = _colunas_faltantes(item)
+        databases.append((_titulo_database(item), db_id, not faltantes, faltantes))
+    # Compatíveis primeiro (not compativel == False ordena antes), depois título.
+    return sorted(databases, key=lambda d: (not d[2], d[0].casefold()))
 
 
 def _garantir_database_tarefas(console) -> bool:
@@ -467,9 +490,9 @@ def _selecionar_database_tarefas(console, *, manter_atual_ao_cancelar: bool = Fa
 
     atual = _valor_configurado(DATABASE_ENV)
 
-    console.print("Procurando databases de tarefas compartilhados com a integração...")
+    console.print("Procurando databases compartilhados com a integração...")
     try:
-        databases = _buscar_databases_compativeis(token)
+        databases = _buscar_databases(token)
     except Exception as exc:  # noqa: BLE001 - fronteira externa com mensagem segura
         console.print(
             "[red]✗[/red] Não consegui consultar os databases do Notion. "
@@ -481,18 +504,27 @@ def _selecionar_database_tarefas(console, *, manter_atual_ao_cancelar: bool = Fa
     if not databases:
         colunas = ", ".join(f"{nome} ({tipo})" for nome, tipo in SCHEMA_TAREFAS.items())
         console.print(
-            "[red]✗[/red] Nenhum database compatível foi encontrado. Compartilhe com a "
-            f"integração um database que tenha: [bold]{colunas}[/bold]."
+            "[red]✗[/red] Nenhum database compartilhado com a integração foi encontrado. "
+            f"Compartilhe um database (idealmente com: [bold]{colunas}[/bold]) e tente de novo."
         )
         return False
 
-    escolha_atual = next((db_id for _, db_id in databases if db_id == atual), None)
+    compativeis = sum(1 for _, _, ok, _ in databases if ok)
+    console.print(
+        f"[dim]{len(databases)} databases acessíveis · {compativeis} já compatíveis "
+        "(✓). Os demais (⚠) podem ser usados, mas pedem ajuste de colunas.[/dim]"
+    )
+
+    # Mapa para descrever o database escolhido (título + colunas que faltam).
+    por_id = {db_id: (titulo, faltantes) for titulo, db_id, _, faltantes in databases}
+    escolha_atual = next((db_id for _, db_id, _, _ in databases if db_id == atual), None)
     escolhas = [
         questionary.Choice(
-            f"{titulo} · {db_id[:8]}…" + ("  [atual]" if db_id == atual else ""),
+            f"{'✓' if ok else '⚠'} {titulo} · {db_id[:8]}…"
+            + ("  [atual]" if db_id == atual else ""),
             value=db_id,
         )
-        for titulo, db_id in databases
+        for titulo, db_id, ok, _ in databases
     ]
     rotulo_cancelar = "Manter o atual" if (manter_atual_ao_cancelar and atual) else "Cancelar"
     escolhas.append(questionary.Choice(rotulo_cancelar, value=None))
@@ -508,6 +540,22 @@ def _selecionar_database_tarefas(console, *, manter_atual_ao_cancelar: bool = Fa
             return True
         console.print("[dim]Configuração cancelada.[/dim]")
         return False
+
+    titulo_escolhido, faltantes = por_id[database_id]
+    if faltantes:
+        console.print(
+            f"[yellow]⚠[/yellow] [bold]{titulo_escolhido}[/bold] não tem o schema de "
+            "tarefas. O site pode falhar ao ler/criar tarefas até você ajustar:"
+        )
+        for falta in faltantes:
+            console.print(f"   • {falta}")
+        if not questionary.confirm("Usar este database mesmo assim?", default=False).ask():
+            if manter_atual_ao_cancelar and atual:
+                console.print(f"[dim]Mantendo o database atual ({atual[:8]}…).[/dim]")
+                os.environ.setdefault(DATABASE_ENV, atual)
+                return True
+            console.print("[dim]Configuração cancelada.[/dim]")
+            return False
 
     _gravar_valor_env_file(DATABASE_ENV, database_id)
     os.environ[DATABASE_ENV] = database_id

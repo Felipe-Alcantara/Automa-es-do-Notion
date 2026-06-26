@@ -143,6 +143,15 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   o Notion também não trava quem já tem um database salvo. Implementado via flag
   `manter_atual_ao_cancelar` em `_selecionar_database_tarefas` (o menu Configurar
   continua com `Cancelar` = não altera nada).
+- [2026-06-26] ✅ **Lista todos os databases (sem filtro rígido)**: diagnóstico no
+  workspace real mostrou 112 databases compartilhados, mas só 2 batiam o schema
+  exato (`Nome`/title, `Status`/status, `Próximo prazo`/date) — escondendo databases
+  de tarefas reais que só diferiam no nome de uma coluna (ex.: `Task Name`). A seleção
+  passou a listar **todos** os databases: `_buscar_databases` devolve
+  `(titulo, db_id, compativel, faltantes)` ordenando compatíveis primeiro; o menu
+  marca `✓`/`⚠` e, ao escolher um incompatível, avisa as colunas faltantes
+  (`_colunas_faltantes`) e pede confirmação antes de gravar. O front é de tarefas,
+  mas nada impede apontar `NOTION_DATABASE_ID` para outra tabela do projeto.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
@@ -244,13 +253,14 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 - [2026-06-25] ✅ MCP e projetos: **32 testes focados** cobrindo a superfície
   `notion.*`, validação, anotações, transportes, erros sanitizados e atualização
   de página de projeto.
-- [2026-06-26] ✅ `tests/test_start_app.py` (21) — comando filho, seleção de
+- [2026-06-26] ✅ `tests/test_start_app.py` (23) — comando filho, seleção de
   terminal, processo independente, ação “Iniciar tudo”, health check, navegador e
   database de tarefas: pergunta sempre ao subir (com o atual pré-selecionado),
-  cancelar mantém o atual e sobe, primeira escolha grava, schema compatível,
-  sem-compatível falha e troca pelo menu Configurar (atual marcado `[atual]`).
+  cancelar mantém o atual e sobe, primeira escolha grava, lista todos com marca
+  `✓`/`⚠`, confirma ao escolher incompatível, sem-nenhum-compartilhado falha e
+  troca pelo menu Configurar (atual marcado `[atual]`).
 - [2026-06-26] ✅ Suíte completa do working tree compartilhado:
-  **260 testes passando**; `ruff check` limpo e `ruff format` consistente no
+  **262 testes passando**; `ruff check` limpo e `ruff format` consistente no
   `start_app.py`; `manage.py check` sem problemas.
 
 ---
