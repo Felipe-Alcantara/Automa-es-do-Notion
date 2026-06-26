@@ -3,6 +3,13 @@
 > **O que é este documento**: descreve a camada MCP (Model Context Protocol)
 > deste projeto — como as capacidades de Notion são expostas como ferramentas
 > que agentes do Felixo-AI-Core consomem.
+>
+> **MCP e CLI são irmãos.** Ambos são **bordas finas sobre os mesmos `services/`** —
+> nenhum reimplementa regra de negócio. O **MCP** serve os agentes do Felixo-AI-Core;
+> a **CLI** ([Ciclo 2](AGENTES.md#-ciclo-2--agentes-do-front-rico-cli-e-multi-tabela),
+> pasta `cli/`) serve uso direto por linha de comando e uma IA local. Quem mexer numa
+> operação deve garantir que a regra continue nos `services`, para as duas bordas
+> herdarem o mesmo comportamento.
 
 ---
 

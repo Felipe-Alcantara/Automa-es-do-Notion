@@ -15,6 +15,12 @@
 
 ---
 
+> **Estado [2026-06-26]:** o **Ciclo 1** (Agentes 0–7 abaixo) está **concluído** — a base
+> existe (cliente, robustez, API + front mínimo, ingestão, GitHub, IA, MCP). O trabalho
+> ativo agora é o **[Ciclo 2](#-ciclo-2--agentes-do-front-rico-cli-e-multi-tabela)** (front
+> React, CLI para IA, multi-tabela), no fim deste arquivo. As seções dos Agentes 0–7
+> ficam como **referência histórica** do que cada papel entregou.
+
 ## 🔢 Resumo para configurar o canvas
 
 **Total: 8 agentes** (8 nós de terminal no canvas). Cada um lê todo `docs/` via skills.
@@ -429,6 +435,110 @@ Onda 4 (até 2)     →  MCP · Otimização & Qualidade  (fecha o ciclo)
 A cada onda, o orquestrador coleta os resultados, re-injeta no contexto e decide a
 próxima — exatamente o loop App-Owned do Felixo-AI-Core. Entre ondas, vale rodar o
 **Agente Otimização & Qualidade** para não acumular dívida.
+
+---
+
+## 🔄 Ciclo 2 — agentes do front rico, CLI e multi-tabela
+
+> Estes são os agentes **ativos**. Diferente do Ciclo 1, eles **não têm ondas com
+> dependências bloqueantes**: cada um toca uma **pasta distinta** e lê o mesmo contrato já
+> fixado em [CONTRATOS.md](CONTRATOS.md) — então andam em paralelo sem parar um para fazer
+> o outro. O **núcleo** (`src/notion_starter/`) é leitura comum; quem precisar estendê-lo
+> faz pela Frente A (núcleo) para os demais não brigarem pelo mesmo arquivo.
+>
+> Visão geral das frentes em [PLANO.md](PLANO.md) → *Ciclo 2*. Todos seguem o **padrão de
+> qualidade** (documentação viva no mesmo commit, Conventional Commits, segredos fora do
+> repo, testes com HTTP mockado, linguagem open source) e as **regras de coordenação**
+> acima.
+
+| Agente | Pasta (escopo) | Lê também |
+|---|---|---|
+| A — Núcleo & API v2 | `src/notion_starter/`, `server/api/`, `server/services/` | [CONTRATOS.md](CONTRATOS.md) §1–2 |
+| B — Front React | `front/` (SPA nova) | design system de front do padrão de qualidade |
+| C — CLI para IA | `cli/` | [MODELOS-DE-USO.md](MODELOS-DE-USO.md), [MCP.md](MCP.md) |
+| D — Qualidade | transversal (commits próprios) | guia mínimo de qualidade |
+
+> Por que A pode andar com B/C: o **contrato já está escrito** (campos `duracao`/`areas`,
+> `GET /api/opcoes`, `PATCH` amplo). B e C programam contra esse contrato; se A ainda não
+> entregou a API, B mocka as respostas e C injeta uma `TaskList` de teste — ninguém fica
+> parado. A integração final é só apontar para a API real.
+
+### Agente A — Núcleo & API v2 (colunas reais + multi-tabela)
+
+- **Objetivo**: mapear as colunas que se usam de verdade e abrir a edição ampla.
+- **Entrega**:
+  - Núcleo: `properties.relation(ids)` (writer que faltava); `Tarefa`/`CamposTarefa` com
+    `duracao` e `areas`; `tarefa_de_pagina` lê os novos campos; `TaskList` resolve nomes de
+    áreas (cache em memória), aceita `duracao`/`areas` em criar/editar e expõe as opções.
+  - API: `PATCH /api/tarefas/{id}` vira edição ampla (retrocompat com `{status}`);
+    `POST` aceita `duracao`/`areas`; nova rota `GET /api/opcoes`; serializer com os campos
+    novos. Tudo conforme [CONTRATOS.md](CONTRATOS.md) §1–2.
+- **Escopo de arquivos**: `src/notion_starter/{properties,tasks}.py`, `server/api/`,
+  `server/services/tarefas.py` + testes correspondentes.
+- **Reusa**: `readers.ler_relation`/`ler_status`, o padrão de `extrair_perfil_database`.
+- **Pronto quando**: contrato v2 implementado, suíte verde (HTTP mockado), `ruff` limpo.
+- **Prompt sugerido**:
+  > Você é o Agente A (Núcleo & API v2) do projeto Automa-es-do-Notion. Leia `docs/README.md`,
+  > `docs/CONTRATOS.md` (§1–2) e a seção "Agente A" de `docs/AGENTES.md`. Implemente os
+  > campos `duracao`/`areas` em `Tarefa`/`CamposTarefa`, o writer `properties.relation`, a
+  > edição ampla no `PATCH` e a rota `GET /api/opcoes`, com testes mockados. Não invente
+  > formato — siga o contrato. Commit pequeno, doc viva no mesmo passo.
+
+### Agente B — Front React + Tailwind + Vite
+
+- **Objetivo**: a SPA rica que lista/edita tarefas com várias visualizações e filtros.
+- **Entrega**:
+  - App React (Vite) em `front/`, seguindo o **design system de front do padrão de
+    qualidade** (paleta/tipografia adaptáveis por projeto).
+  - Visualizações **grade / lista / kanban** (por status), **busca**, **filtros
+    persistentes** (status, duração, área) e ordenação — estado de filtro/visão guardado
+    localmente. Modais de criar/editar consumindo `POST`/`PATCH` e `GET /api/opcoes`.
+  - Estados de carregando / vazio / erro; acessibilidade (foco, aria).
+- **Escopo de arquivos**: `front/` (novo). Consome a API REST — **sem regra de negócio**.
+- **Pronto quando**: dá para ver/filtrar/editar tarefas reais no navegador, contra a API
+  (ou mock enquanto a Frente A não fecha).
+- **Prompt sugerido**:
+  > Você é o Agente B (Front React) do projeto Automa-es-do-Notion. Leia `docs/README.md`,
+  > `docs/CONTRATOS.md` (§2) e a seção "Agente B" de `docs/AGENTES.md`, além do design
+  > system de front do padrão de qualidade. Construa a SPA React+Tailwind+Vite em `front/`
+  > com grade/lista/kanban, busca e filtros persistentes, consumindo a API REST. Sem regra
+  > de negócio no front. Commit pequeno, doc viva no mesmo passo.
+
+### Agente C — CLI completa para IA
+
+- **Objetivo**: uma CLI com todas as operações de tasklist, fina sobre os `services`.
+- **Entrega**:
+  - CLI em `cli/` cobrindo: listar (com filtros), ler uma tarefa, criar, editar, mover,
+    concluir, mapear workspace, escolher/trocar database. Saída legível e também
+    **estruturada (JSON)** para uma IA consumir.
+  - **Borda fina**: cada comando chama `server/services/...` — não reimplementa regra nem
+    fala direto com o Notion. Documentar a relação **CLI ↔ MCP** (duas cascas dos mesmos
+    services) em [MCP.md](MCP.md)/[MODELOS-DE-USO.md](MODELOS-DE-USO.md).
+- **Escopo de arquivos**: `cli/` (novo) + testes; pode ganhar uma ação no `start_app.py`.
+- **Pronto quando**: todas as operações disponíveis por linha de comando, com testes
+  (services injetados/mockados) e saída JSON estável.
+- **Prompt sugerido**:
+  > Você é o Agente C (CLI para IA) do projeto Automa-es-do-Notion. Leia `docs/README.md`,
+  > `docs/MODELOS-DE-USO.md`, `docs/MCP.md` e a seção "Agente C" de `docs/AGENTES.md`.
+  > Construa uma CLI em `cli/` com todas as operações de tasklist como borda fina sobre os
+  > `services` (sem reimplementar regra), com saída JSON para IA e testes mockados. Commit
+  > pequeno, doc viva no mesmo passo.
+
+### Agente D — Qualidade (transversal)
+
+- **Objetivo**: fechar o ciclo sem dívida — testes, fronteiras, desempenho e guarda-corpos.
+- **Entrega**: revisão de cobertura e de fronteiras de camada das três frentes; cache onde
+  compensar; checagem dos guarda-corpos (segredos fora do repo, docs vivas, contrato
+  preservado, `ruff`/`format`/`manage.py check` limpos).
+- **Escopo de arquivos**: transversal, **em commits próprios** de melhoria, sem reabrir o
+  escopo de A/B/C sem necessidade.
+- **Prompt sugerido**:
+  > Você é o Agente D (Qualidade) do projeto Automa-es-do-Notion. Leia `docs/README.md`,
+  > `docs/OTIMIZACAO.md` e a seção "Agente D" de `docs/AGENTES.md`. Revise cobertura,
+  > fronteiras e guarda-corpos das frentes A/B/C; otimize só o que medir; mantenha a suíte
+  > verde. Não reabra o escopo de outro agente sem necessidade. Commit pequeno, doc viva.
+
+---
 
 > Lembrete final para todos: o **Notion é a fonte da verdade do conteúdo**; este projeto
 > é a camada de dados + front; o **Felixo-AI-Core é o cérebro**. Mantenha essa fronteira —
