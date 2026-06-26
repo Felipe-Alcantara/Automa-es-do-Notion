@@ -49,7 +49,8 @@ ferramentas; o Felixo-AI-Core decide qual agente usa qual ferramenta.
 | `notion.conclude_task` | write | sim | Conclui uma tarefa com o status informado |
 | `notion.update_project_page` | write | sim | Atualiza metadados de uma página de projeto |
 | `notion.search` | read | não | Pesquisa páginas e databases visíveis à integração |
-| `notion.read_page_content` | read | não | Lê o conteúdo (corpo) de uma página como Markdown |
+| `notion.read_page_content` | read | não | Lê o conteúdo (corpo) de uma página como Markdown; se o ID for um database, avisa e já traz as linhas |
+| `notion.list_database_rows` | read | não | Lista as linhas de um database (resolve *data sources* do modelo novo do Notion) |
 | `notion.append_content` | write | sim | Anexa conteúdo (Markdown) ao final de uma página |
 | `notion.edit_block` | write | sim | Substitui o texto de um bloco existente |
 | `notion.delete_block` | **delete** | **sim** | Apaga (arquiva) um bloco — **destrutivo** |
@@ -78,8 +79,9 @@ As ferramentas declaram anotações MCP:
   `notion.update_project_page` e `notion.edit_block`):
   `readOnlyHint=False`, `destructiveHint=False`, `idempotentHint=True`,
   `openWorldHint=True`
-- **read** (`notion.search`, `notion.read_page_content`): `readOnlyHint=True`,
-  `destructiveHint=False`, `openWorldHint=True`
+- **read** (`notion.search`, `notion.read_page_content`,
+  `notion.list_database_rows`): `readOnlyHint=True`, `destructiveHint=False`,
+  `openWorldHint=True`
 - **create** (`notion.append_content`): `readOnlyHint=False`,
   `destructiveHint=False`, `idempotentHint=False`, `openWorldHint=True`
 - **delete** (`notion.delete_block`): `readOnlyHint=False`,

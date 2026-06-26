@@ -18,6 +18,7 @@ except ImportError:  # pragma: no cover - fallback para Python 3.10
 from .constants import (
     NOTION_BACKOFF_BASE,
     NOTION_BASE_URL,
+    NOTION_DATA_SOURCE_VERSION,
     NOTION_MAX_RETRIES,
     NOTION_RATE_LIMIT_STATUS_CODES,
     NOTION_RETRYABLE_STATUS_CODES,
@@ -75,6 +76,14 @@ class DatabaseUpdatePayload(TypedDict):
 
 class DatabaseQueryPayload(TypedDict):
     """Payload para consulta de database."""
+
+    page_size: int
+    filter: NotRequired[dict[str, object]]
+    start_cursor: NotRequired[str]
+
+
+class DataSourceQueryPayload(TypedDict):
+    """Payload para consulta de um *data source* (modelo novo de database)."""
 
     page_size: int
     filter: NotRequired[dict[str, object]]
@@ -227,13 +236,19 @@ class NotionClient:
             )
         return limpo
 
-    def _headers(self) -> dict[str, str]:
-        """Monta os headers padrão autenticados."""
+    def _headers(self, version: str | None = None) -> dict[str, str]:
+        """Monta os headers padrão autenticados.
+
+        Args:
+            version: Quando informado, sobrescreve o ``Notion-Version`` padrão
+                apenas nesta chamada (usado pelos endpoints de *data sources*,
+                que exigem uma versão mais nova da API).
+        """
 
         return {
             "Authorization": f"Bearer {self._token}",
             "Content-Type": "application/json",
-            "Notion-Version": self._version,
+            "Notion-Version": version or self._version,
         }
 
     def _request_json(
@@ -243,6 +258,7 @@ class NotionClient:
         path: str,
         payload: dict[str, object] | None = None,
         idempotente: bool,
+        version: str | None = None,
     ) -> dict[str, Any]:
         """Executa uma requisição JSON contra a API do Notion.
 
@@ -257,6 +273,7 @@ class NotionClient:
             path: Caminho relativo à URL base.
             payload: Corpo JSON opcional.
             idempotente: Se repetir a operação preserva o mesmo efeito.
+            version: ``Notion-Version`` específico desta chamada (opcional).
 
         Returns:
             A resposta JSON decodificada.
@@ -278,7 +295,7 @@ class NotionClient:
                     method=method,
                     url=url,
                     json=payload,
-                    headers=self._headers(),
+                    headers=self._headers(version),
                     timeout=self._timeout,
                 )
             except requests.RequestException as exc:
@@ -566,6 +583,117 @@ class NotionClient:
                 path=f"/databases/{limpo}/query",
                 payload=payload,
                 idempotente=True,
+            )
+            resultados.extend(data.get("results", []))
+
+            if not buscar_todos or not data.get("has_more"):
+                break
+
+            next_cursor = data.get("next_cursor")
+            if not next_cursor:
+                break
+            payload["start_cursor"] = next_cursor
+
+        return resultados
+
+    # -- Data sources (databases do modelo novo) ---------------------------
+
+    def listar_data_sources(self, database_id: str) -> list[dict[str, Any]]:
+        """Lista os *data sources* (fontes de dados) de um database.
+
+        O Notion introduziu em 2025 o modelo multi-fonte: um database pode
+        conter um ou mais *data sources*, e as linhas passam a ser consultadas
+        por fonte, não mais pelo database. Este método lê esse índice usando a
+        versão de API exigida, sem alterar a versão padrão das demais rotas.
+
+        Args:
+            database_id: ID do database.
+
+        Returns:
+            A lista de ``{"id", "name", ...}`` de cada fonte. Vazia se o
+            database não expõe fontes a esta integração.
+
+        Raises:
+            NotionConfigurationError: Se ``database_id`` for inválido.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(database_id, "database_id")
+        data = self._request_json(
+            method="GET",
+            path=f"/databases/{limpo}",
+            idempotente=True,
+            version=NOTION_DATA_SOURCE_VERSION,
+        )
+        fontes = data.get("data_sources")
+        return fontes if isinstance(fontes, list) else []
+
+    def get_data_source(self, data_source_id: str) -> dict[str, Any]:
+        """Lê o schema (propriedades) de um *data source*.
+
+        Args:
+            data_source_id: ID da fonte de dados.
+
+        Returns:
+            O objeto ``data_source`` com ``properties``.
+
+        Raises:
+            NotionConfigurationError: Se ``data_source_id`` for inválido.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(data_source_id, "data_source_id")
+        return self._request_json(
+            method="GET",
+            path=f"/data_sources/{limpo}",
+            idempotente=True,
+            version=NOTION_DATA_SOURCE_VERSION,
+        )
+
+    def consultar_data_source(
+        self,
+        data_source_id: str,
+        page_size: int = 100,
+        buscar_todos: bool = False,
+        filtro: dict[str, object] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Consulta as linhas (páginas) de um *data source*, com paginação.
+
+        É o equivalente de ``consultar_database`` para o modelo novo: a query
+        migrou de ``/databases/{id}/query`` para ``/data_sources/{id}/query``.
+
+        Args:
+            data_source_id: ID da fonte de dados.
+            page_size: Quantidade de registros por página.
+            buscar_todos: Quando verdadeiro, percorre toda a paginação.
+            filtro: Filtro Notion opcional.
+
+        Returns:
+            A lista de páginas (linhas) retornadas pela API.
+
+        Raises:
+            NotionConfigurationError: Se ``data_source_id`` for inválido.
+            ValueError: Se ``page_size`` for menor que 1.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(data_source_id, "data_source_id")
+        if page_size < 1:
+            raise ValueError("page_size deve ser maior que zero.")
+
+        payload: DataSourceQueryPayload = {"page_size": page_size}
+        if filtro:
+            payload["filter"] = filtro
+
+        resultados: list[dict[str, Any]] = []
+
+        while True:
+            data = self._request_json(
+                method="POST",
+                path=f"/data_sources/{limpo}/query",
+                payload=payload,
+                idempotente=True,
+                version=NOTION_DATA_SOURCE_VERSION,
             )
             resultados.extend(data.get("results", []))
 

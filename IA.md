@@ -212,9 +212,26 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   (`destructiveHint=True`) e a CLI exige `--sim`. +23 testes (incl. fluxo
   destrutivo); suíte e ruff verdes. Docs: `README`, `docs/MCP.md`.
 
+- [2026-06-26] ✅ **Suporte a data sources + leitura de linhas de database** —
+  ao testar a leitura de conteúdo num database real do workspace ("Untitled"),
+  descobrimos duas lacunas: (1) `conteudo` num database voltava `markdown: ""`
+  em silêncio; (2) databases do modelo novo do Notion (multi-fonte, "data
+  sources", 2025) não eram consultáveis pela versão `2022-06-28`. Corrigido:
+  `NotionClient` ganhou `listar_data_sources`, `get_data_source` e
+  `consultar_data_source` (endpoints `/data_sources/*`, versão `2025-09-03`
+  enviada **só** nessas chamadas via override por request — a versão padrão das
+  demais rotas não muda). Service `conteudo.listar_linhas` resolve as fontes e
+  devolve as linhas normalizadas. CLI ganhou `linhas <database_id>` e o `conteudo`
+  num database agora avisa e já traz as linhas; MCP ganhou
+  `notion.list_database_rows` e o mesmo aviso em `read_page_content`. Validado no
+  database de tarefas real (15 linhas lidas). Nota: o "Untitled" volta vazio
+  porque **não está compartilhado** com a integração — é config no Notion, não
+  bug. +13 testes; suíte e ruff verdes.
+
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 mais tipos de bloco no conversor Markdown (tabelas, blocos aninhados/toggle),
-mais exemplos de "Iniciar/Rodar" por fonte de dados (banco, API, planilha).
+escrita de linhas em data sources, mais exemplos de "Iniciar/Rodar" por fonte
+de dados (banco, API, planilha).
 
 ---
 
