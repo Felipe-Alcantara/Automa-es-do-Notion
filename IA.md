@@ -239,6 +239,16 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   Home real (7 databases, incl. Estudo/Trabalho/Arquivos/Observações diárias
   dentro de colunas, e a playlist do toggle). +5 testes; suíte e ruff verdes.
 
+- [2026-06-26] ✅ **Intuitividade para IA + start_app em subtelas** — ao ver uma
+  IA tatear o workspace com curl em vez de usar a CLI pronta, duas melhorias de
+  UX: (1) comando `python -m cli --json guia` que auto-documenta todos os
+  comandos (reflete o parser, nunca desatualiza) com descrição e exemplo — o
+  primeiro lugar onde a IA deve olhar; (2) `start_app.py` reorganizado de 9 opções
+  soltas para 3 categorias (Usar o app / Para IA e integrações / Configurar e
+  instalar) + Status + Sair, navegando por subtelas — menos informação de uma vez,
+  mais intuitivo, mantendo o mínimo obrigatório do contrato de start app. +4
+  testes; suíte (334) e ruff verdes.
+
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 mais tipos de bloco no conversor Markdown (tabelas), escrita de linhas em data
 sources, mais exemplos de "Iniciar/Rodar" por fonte de dados (banco, API,

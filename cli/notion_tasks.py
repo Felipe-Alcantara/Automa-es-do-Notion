@@ -453,7 +453,20 @@ def _linhas_tabela(registros: Iterable[dict[str, Any]], colunas: Sequence[str]) 
     return [cabecalho, separador, *corpo]
 
 
+def _formatar_guia(dados: dict[str, Any]) -> str:
+    """Renderiza o guia de comandos em texto legível."""
+
+    linhas = [dados["ferramenta"], dados["dica"], ""]
+    for item in dados["comandos"]:
+        linhas.append(f"{item['comando']:18} {item['descricao']}")
+        for exemplo in item["exemplos"]:
+            linhas.append(f"    {exemplo}")
+    return "\n".join(linhas)
+
+
 def _formatar_humano(comando: str, dados: Any) -> str:
+    if comando == "guia":
+        return _formatar_guia(dados)
     if comando in {"listar", "ler", "criar", "editar", "mover", "concluir"}:
         tarefas = dados if isinstance(dados, list) else [dados]
         return "\n".join(
@@ -689,6 +702,64 @@ def cmd_buscar(args: argparse.Namespace, *, client_factory: ClientFactory) -> An
     return svc_conteudo.buscar(_normalizar_texto(args.query), cliente=client_factory())
 
 
+#: Exemplos de uso por comando, mostrados pelo ``guia``. Texto curto e copiável.
+EXEMPLOS_GUIA: dict[str, list[str]] = {
+    "listar": ['python -m cli --json listar --status "Entrada"'],
+    "ler": ["python -m cli --json ler <task_id>"],
+    "criar": ['python -m cli --json criar "Nova tarefa" --status "Entrada" --duracao "Dias"'],
+    "editar": ['python -m cli --json editar <task_id> --status "Concluída"'],
+    "mover": ['python -m cli --json mover <task_id> "Concluída"'],
+    "concluir": ['python -m cli --json concluir <task_id> "Concluída"'],
+    "opcoes": ["python -m cli --json opcoes"],
+    "databases": ["python -m cli --json databases"],
+    "database-atual": ["python -m cli --json database-atual"],
+    "escolher-database": ["python -m cli --json escolher-database <database_id>"],
+    "normalizar-nomes": ["python -m cli --json normalizar-nomes --dry-run"],
+    "mapear": ["python -m cli --json mapear"],
+    "buscar": ['python -m cli --json buscar "nota de reunião"'],
+    "conteudo": ["python -m cli --json conteudo <page_id>"],
+    "linhas": ["python -m cli --json linhas <database_id>"],
+    "escrever": ["python -m cli --json escrever <page_id> $'# Título\\n\\nTexto'"],
+    "editar-bloco": ['python -m cli --json editar-bloco <block_id> "## Novo título"'],
+    "apagar-bloco": ["python -m cli --json apagar-bloco <block_id> --sim"],
+    "guia": ["python -m cli --json guia"],
+}
+
+
+def cmd_guia(args: argparse.Namespace) -> Any:
+    """Auto-documenta a CLI: todos os comandos, o que fazem e um exemplo.
+
+    Pensado para uma IA descobrir como operar a ferramenta sem tatear: é a
+    primeira chamada a fazer. Reflete o próprio parser, então nunca desatualiza.
+    """
+
+    parser = construir_parser()
+    subparsers = next(
+        acao for acao in parser._subparsers._group_actions if hasattr(acao, "choices")
+    )
+    # O texto de ajuda de cada subcomando fica em ``_choices_actions`` (o ``help``
+    # passado em ``add_parser``); lê de lá para o guia refletir o parser.
+    ajudas = {acao.dest: (acao.help or "") for acao in subparsers._choices_actions}
+    comandos = []
+    for nome in subparsers.choices:
+        comandos.append(
+            {
+                "comando": nome,
+                "descricao": ajudas.get(nome, ""),
+                "exemplos": EXEMPLOS_GUIA.get(nome, [f"python -m cli {nome} --help"]),
+            }
+        )
+    return {
+        "ferramenta": "cli notion (mesmos services da API e do MCP)",
+        "dica": (
+            "Use estes comandos em vez de chamar a API do Notion na mão. "
+            "Acrescente --json para saída estável {ok, dados}. Sufixo '--help' "
+            "em qualquer comando mostra os argumentos."
+        ),
+        "comandos": comandos,
+    }
+
+
 def construir_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="python -m cli",
@@ -774,6 +845,8 @@ def construir_parser() -> argparse.ArgumentParser:
 
     buscar = sub.add_parser("buscar", help="pesquisa páginas e databases visíveis")
     buscar.add_argument("query", nargs="?", help="texto do título; vazio lista tudo")
+
+    sub.add_parser("guia", help="lista todos os comandos com o que fazem e exemplos")
     return parser
 
 
@@ -787,7 +860,9 @@ def executar(
     args = parser.parse_args(argv)
     try:
         comando = args.comando
-        if comando == "listar":
+        if comando == "guia":
+            dados = cmd_guia(args)
+        elif comando == "listar":
             dados = cmd_listar(args, tasklist_factory=tasklist_factory)
         elif comando == "ler":
             dados = cmd_ler(args, tasklist_factory=tasklist_factory)
