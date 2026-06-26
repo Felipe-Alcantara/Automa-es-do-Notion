@@ -15,12 +15,17 @@ env/
 .mypy_cache/
 .coverage
 htmlcov/
+node_modules/
 
 # Logs / local config
 *.log
 .env
 .env.*
 !.env.example
+
+# Artefatos gerados localmente pelos exemplos de mapeamento do workspace.
+mapa.json
+mapa.html
 
 # Servidor Django — estado operacional e estáticos coletados (não são fonte da verdade)
 *.sqlite3

@@ -136,11 +136,7 @@ def construir_inventario(itens_crus: list[dict[str, Any]]) -> Inventario:
         Um :class:`Inventario` com árvore, duplicatas, vazios e órfãos.
     """
 
-    itens = {
-        item.id: item
-        for item in (normalizar_item(cru) for cru in itens_crus)
-        if item.id
-    }
+    itens = {item.id: item for item in (normalizar_item(cru) for cru in itens_crus) if item.id}
 
     nos = {item_id: NoArvore(item=item) for item_id, item in itens.items()}
 

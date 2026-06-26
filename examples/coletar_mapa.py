@@ -55,8 +55,7 @@ def main(saida: Path) -> None:
     inventario = construir_inventario(itens)
 
     print(
-        f"Encontrados: {inventario.total_paginas} páginas, "
-        f"{inventario.total_databases} databases.",
+        f"Encontrados: {inventario.total_paginas} páginas, {inventario.total_databases} databases.",
         file=sys.stderr,
     )
 
@@ -69,8 +68,7 @@ def main(saida: Path) -> None:
         "itens": [asdict(item) for item in inventario.itens.values()],
         "linhas_por_database": linhas_por_db,
         "duplicatas": {
-            titulo: [item.id for item in itens]
-            for titulo, itens in inventario.duplicatas.items()
+            titulo: [item.id for item in itens] for titulo, itens in inventario.duplicatas.items()
         },
         "orfaos": [item.id for item in inventario.orfaos],
     }

@@ -87,8 +87,7 @@ class _TaskListFixa:
 
     def listar(self):
         return [
-            Tarefa(id=f"t-{indice}", nome=nome)
-            for indice, nome in enumerate(self.nomes_existentes)
+            Tarefa(id=f"t-{indice}", nome=nome) for indice, nome in enumerate(self.nomes_existentes)
         ]
 
     def criar(self, nome, status=None, prazo=None):

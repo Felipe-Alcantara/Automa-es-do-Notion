@@ -22,9 +22,7 @@ SAIDA_PADRAO = Path("mapa.html")
 
 def _carregar(entrada: Path) -> dict:
     if not entrada.exists():
-        raise SystemExit(
-            f"{entrada} não encontrado. Rode antes: python examples/coletar_mapa.py"
-        )
+        raise SystemExit(f"{entrada} não encontrado. Rode antes: python examples/coletar_mapa.py")
     return json.loads(entrada.read_text(encoding="utf-8"))
 
 
@@ -75,18 +73,16 @@ def _render_no(
         link = f' <a href="{html.escape(item["url"])}" target="_blank" class="link">↗</a>'
 
     sub = filhos.get(item_id, [])
-    rotulo = f'{icone} {titulo}{sufixo}{link}'
+    rotulo = f"{icone} {titulo}{sufixo}{link}"
 
     if not sub:
         return f'<li class="leaf">{rotulo}</li>'
 
-    filhos_html = "\n".join(
-        _render_no(f, itens, filhos, linhas_db) for f in sub
-    )
+    filhos_html = "\n".join(_render_no(f, itens, filhos, linhas_db) for f in sub)
     return (
-        f'<li><details><summary>{rotulo} '
+        f"<li><details><summary>{rotulo} "
         f'<span class="count">({len(sub)})</span></summary>\n'
-        f'<ul>\n{filhos_html}\n</ul></details></li>'
+        f"<ul>\n{filhos_html}\n</ul></details></li>"
     )
 
 
@@ -96,9 +92,7 @@ def _secao_duplicatas(mapa: dict, itens: dict[str, dict]) -> str:
         return "<p>Nenhuma duplicata por nome. 🎉</p>"
     linhas = []
     for titulo, ids in sorted(dups.items(), key=lambda kv: -len(kv[1])):
-        linhas.append(
-            f"<li><b>{html.escape(titulo)}</b> — {len(ids)} itens</li>"
-        )
+        linhas.append(f"<li><b>{html.escape(titulo)}</b> — {len(ids)} itens</li>")
     return f"<ul>{''.join(linhas)}</ul>"
 
 
@@ -168,10 +162,10 @@ def gerar_html(mapa: dict) -> str:
 <body>
 <h1>🗺️ Mapa do Workspace Notion</h1>
 <div class="resumo">
-  <div class="card"><b>{mapa['total_paginas']}</b> páginas</div>
-  <div class="card"><b>{mapa['total_databases']}</b> databases</div>
-  <div class="card"><b>{len(mapa.get('duplicatas', {}))}</b> nomes duplicados</div>
-  <div class="card"><b>{len(mapa.get('orfaos', []))}</b> órfãos</div>
+  <div class="card"><b>{mapa["total_paginas"]}</b> páginas</div>
+  <div class="card"><b>{mapa["total_databases"]}</b> databases</div>
+  <div class="card"><b>{len(mapa.get("duplicatas", {}))}</b> nomes duplicados</div>
+  <div class="card"><b>{len(mapa.get("orfaos", []))}</b> órfãos</div>
 </div>
 
 <section><details class="dest" open><summary>📑 Duplicatas por nome</summary>

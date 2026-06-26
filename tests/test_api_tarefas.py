@@ -262,9 +262,7 @@ def test_get_opcoes_lista_status_duracao_areas(client):
             "properties": {
                 "Status": {
                     "type": "status",
-                    "status": {
-                        "options": [{"name": "00. Inbox"}, {"name": "06. Feito"}]
-                    },
+                    "status": {"options": [{"name": "00. Inbox"}, {"name": "06. Feito"}]},
                 },
                 "Duração": {
                     "type": "status",

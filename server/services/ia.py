@@ -30,12 +30,14 @@ from notion_starter import Tarefa, TaskList
 # ---------------------------------------------------------------------------
 
 # Operações válidas que o provedor pode sugerir.
-OPERACOES_VALIDAS = frozenset({
-    "listar_tarefas",
-    "criar_tarefa",
-    "mover_status",
-    "concluir_tarefa",
-})
+OPERACOES_VALIDAS = frozenset(
+    {
+        "listar_tarefas",
+        "criar_tarefa",
+        "mover_status",
+        "concluir_tarefa",
+    }
+)
 
 
 @dataclass
@@ -130,9 +132,7 @@ def _parse_resposta(resposta: str) -> AcaoSugerida:
     try:
         dados = json.loads(limpa)
     except json.JSONDecodeError as exc:
-        raise InterpretacaoErro(
-            f"a resposta do provedor não é JSON válido: {resposta!r}"
-        ) from exc
+        raise InterpretacaoErro(f"a resposta do provedor não é JSON válido: {resposta!r}") from exc
 
     operacao = dados.get("operacao", "")
     if not isinstance(operacao, str) or not operacao:
@@ -191,18 +191,14 @@ def executar_acao(
         task_id = p.get("task_id", "").strip()
         status = p.get("status", "").strip()
         if not task_id or not status:
-            raise ValueError(
-                "a operação 'mover_status' exige 'task_id' e 'status'."
-            )
+            raise ValueError("a operação 'mover_status' exige 'task_id' e 'status'.")
         return svc.mover_status(task_id, status, tasklist=tasklist)
 
     if op == "concluir_tarefa":
         task_id = p.get("task_id", "").strip()
         status_c = p.get("status_concluido", "").strip()
         if not task_id or not status_c:
-            raise ValueError(
-                "a operação 'concluir_tarefa' exige 'task_id' e 'status_concluido'."
-            )
+            raise ValueError("a operação 'concluir_tarefa' exige 'task_id' e 'status_concluido'.")
         return svc.concluir_tarefa(task_id, status_c, tasklist=tasklist)
 
     raise ValueError(f"operação desconhecida: {op!r}")

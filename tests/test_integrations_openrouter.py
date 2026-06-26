@@ -200,9 +200,14 @@ def test_completar_retorna_texto(monkeypatch):
 def test_completar_usa_modelo_informado(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "sk-or-test-key-fake")
 
-    responses.add(responses.POST, CHAT_URL, json={
-        "choices": [{"message": {"content": "ok"}}],
-    }, status=200)
+    responses.add(
+        responses.POST,
+        CHAT_URL,
+        json={
+            "choices": [{"message": {"content": "ok"}}],
+        },
+        status=200,
+    )
 
     provedor = ProvedorOpenRouter()
     provedor.completar("Olá!", modelo="anthropic/claude-sonnet-4")
