@@ -6,6 +6,7 @@ import os
 import time
 from copy import deepcopy
 from typing import Any
+from urllib.parse import urlencode
 
 import requests
 
@@ -110,6 +111,18 @@ class PageUpdatePayload(TypedDict):
 
 class PageArchivePayload(TypedDict):
     """Payload para arquivamento de página."""
+
+    archived: bool
+
+
+class BlocksAppendPayload(TypedDict):
+    """Payload para anexar blocos filhos a uma página ou bloco."""
+
+    children: list[dict[str, object]]
+
+
+class BlockArchivePayload(TypedDict):
+    """Payload para arquivar um bloco (delete reversível do Notion)."""
 
     archived: bool
 
@@ -635,5 +648,150 @@ class NotionClient:
             method="PATCH",
             path=f"/pages/{limpo}",
             payload=payload,
+            idempotente=True,
+        )
+
+    # -- Blocos (conteúdo) -------------------------------------------------
+
+    def ler_blocos(
+        self,
+        block_id: str,
+        page_size: int = 100,
+        buscar_todos: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Lê os blocos filhos de uma página ou bloco, com paginação.
+
+        Cada página do Notion é um bloco; seus parágrafos, títulos, listas e
+        demais conteúdos são blocos filhos. Este método os devolve crus — a
+        conversão para texto/markdown fica a cargo de quem chama (camada de
+        conteúdo), preservando a separação de responsabilidades.
+
+        Args:
+            block_id: ID da página ou do bloco pai.
+            page_size: Quantidade de blocos por página da API.
+            buscar_todos: Quando verdadeiro, percorre toda a paginação.
+
+        Returns:
+            A lista de blocos filhos retornados pela API.
+
+        Raises:
+            NotionConfigurationError: Se ``block_id`` for inválido.
+            ValueError: Se ``page_size`` for menor que 1.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(block_id, "block_id")
+        if page_size < 1:
+            raise ValueError("page_size deve ser maior que zero.")
+
+        resultados: list[dict[str, Any]] = []
+        cursor: str | None = None
+
+        while True:
+            params: dict[str, str] = {"page_size": str(page_size)}
+            if cursor:
+                params["start_cursor"] = cursor
+            data = self._request_json(
+                method="GET",
+                path=f"/blocks/{limpo}/children?{urlencode(params)}",
+                idempotente=True,
+            )
+            resultados.extend(data.get("results", []))
+
+            if not buscar_todos or not data.get("has_more"):
+                break
+
+            cursor = data.get("next_cursor")
+            if not cursor:
+                break
+
+        return resultados
+
+    def anexar_blocos(
+        self,
+        block_id: str,
+        blocos: list[dict[str, object]],
+    ) -> dict[str, Any]:
+        """Anexa blocos filhos ao final de uma página ou bloco.
+
+        Args:
+            block_id: ID da página ou do bloco pai.
+            blocos: Lista de blocos no formato da API do Notion.
+
+        Returns:
+            A resposta JSON da API (os blocos criados).
+
+        Raises:
+            NotionConfigurationError: Se ``block_id`` for inválido.
+            ValueError: Se ``blocos`` estiver vazio.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(block_id, "block_id")
+        if not blocos:
+            raise ValueError("Informe ao menos um bloco para anexar.")
+
+        payload: BlocksAppendPayload = {"children": blocos}
+        # Anexar não é idempotente: repetir duplicaria o conteúdo.
+        return self._request_json(
+            method="PATCH",
+            path=f"/blocks/{limpo}/children",
+            payload=payload,
+            idempotente=False,
+        )
+
+    def atualizar_bloco(
+        self,
+        block_id: str,
+        conteudo: dict[str, object],
+    ) -> dict[str, Any]:
+        """Atualiza o conteúdo de um bloco existente.
+
+        Args:
+            block_id: ID do bloco.
+            conteudo: Payload do tipo do bloco (ex.: ``{"paragraph": {...}}``).
+
+        Returns:
+            A resposta JSON do bloco atualizado.
+
+        Raises:
+            NotionConfigurationError: Se ``block_id`` for inválido.
+            ValueError: Se ``conteudo`` estiver vazio.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(block_id, "block_id")
+        if not conteudo:
+            raise ValueError("Informe o conteúdo do bloco a atualizar.")
+
+        return self._request_json(
+            method="PATCH",
+            path=f"/blocks/{limpo}",
+            payload=dict(conteudo),
+            idempotente=True,
+        )
+
+    def excluir_bloco(self, block_id: str) -> dict[str, Any]:
+        """Exclui (arquiva) um bloco do Notion.
+
+        O Notion trata ``DELETE`` de bloco como arquivamento reversível: o bloco
+        sai da página, mas pode ser restaurado pela lixeira. É a operação
+        destrutiva de conteúdo — quem expõe (CLI/MCP) deve pedir confirmação.
+
+        Args:
+            block_id: ID do bloco a excluir.
+
+        Returns:
+            A resposta JSON do bloco arquivado.
+
+        Raises:
+            NotionConfigurationError: Se ``block_id`` for inválido.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(block_id, "block_id")
+        return self._request_json(
+            method="DELETE",
+            path=f"/blocks/{limpo}",
             idempotente=True,
         )

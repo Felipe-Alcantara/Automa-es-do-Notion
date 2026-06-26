@@ -199,10 +199,22 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   `Assim que possível`, `Concluída`, `Agora` e `Hoje`; áreas `Money`, `Projects`
   e `Shoppe` viraram `Finanças`, `Projetos` e `Compras`. O front não traduz mais
   rótulos localmente — exibe o que vem de `GET /api/opcoes`.
+- [2026-06-26] ✅ **Conteúdo do workspace para IA** — a IA passou a acessar o
+  **corpo** das páginas, não só as propriedades. Camada base nova em
+  `src/notion_starter/content.py` (conversor puro Markdown ↔ blocos) e métodos de
+  blocos no `NotionClient` (`ler_blocos`, `anexar_blocos`, `atualizar_bloco`,
+  `excluir_bloco`). Service `server/services/conteudo.py` (cliente injetável)
+  orquestra ler/escrever/editar/excluir/buscar. Exposto na CLI (`buscar`,
+  `conteudo`, `escrever`, `editar-bloco`, `apagar-bloco --sim`) e no MCP
+  (`notion.search`, `notion.read_page_content`, `notion.append_content`,
+  `notion.edit_block`, `notion.delete_block`). Escopo: acesso total (inclui
+  apagar), em tudo que a integração enxerga. `delete_block` é destrutivo
+  (`destructiveHint=True`) e a CLI exige `--sim`. +23 testes (incl. fluxo
+  destrutivo); suíte e ruff verdes. Docs: `README`, `docs/MCP.md`.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
-suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
-(banco, API, planilha).
+mais tipos de bloco no conversor Markdown (tabelas, blocos aninhados/toggle),
+mais exemplos de "Iniciar/Rodar" por fonte de dados (banco, API, planilha).
 
 ---
 
@@ -271,6 +283,15 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   Não monta payload cru do Notion. Operações de database (`databases`,
   `escolher-database`) ficam na borda operacional porque só listam/gravam a escolha
   de `NOTION_DATABASE_ID`, sem regra de domínio.
+- [2026-06-26] Conteúdo das páginas segue as mesmas 4 camadas: a conversão
+  Markdown ↔ blocos é pura (`notion_starter.content`, par de `properties`/
+  `readers`); o HTTP de blocos vive no `NotionClient`; a orquestração no service
+  `conteudo` (cliente injetável); CLI e MCP são bordas finas. **Decisão de escopo:**
+  a IA tem acesso total ao workspace — pesquisar/ler/escrever/editar **e apagar** —
+  em tudo que a integração enxerga. Isso muda a política anterior de "nenhuma
+  ferramenta apaga": agora há delete, mas guardado — `notion.delete_block` declara
+  `destructiveHint=True` (host confirma) e a CLI `apagar-bloco` exige `--sim`. A
+  reversibilidade é real: o Notion arquiva o bloco (lixeira), não apaga em definitivo.
 
 ---
 
