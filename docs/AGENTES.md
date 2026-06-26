@@ -463,12 +463,24 @@ próxima — exatamente o loop App-Owned do Felixo-AI-Core. Entre ondas, vale ro
 | C — CLI para IA | `cli/` | [MODELOS-DE-USO.md](MODELOS-DE-USO.md), [MCP.md](MCP.md) |
 | D — Qualidade | transversal (commits próprios) | guia mínimo de qualidade |
 
+**Estado [2026-06-26]**
+
+- ✅ **A — Núcleo & API v2**: concluído em commits pequenos no `main`; API v2 fechada em
+  `3733f1d`.
+- ✅ **B — Front React**: concluído em `bd35500`; auditoria posterior ajustou foco/ARIA do
+  modal em `front/src/components/ui/modal.jsx`.
+- ✅ **C — CLI para IA**: concluído em `bed3ba2`, com CLI em `cli/`, testes e docs vivas.
+- ✅ **D — Qualidade**: higiene transversal inicial concluída em `77be263`; revisão final
+  após A/B/C concluída sem bloqueios.
+
 > Por que A pode andar com B/C: o **contrato já está escrito** (campos `duracao`/`areas`,
 > `GET /api/opcoes`, `PATCH` amplo). B e C programam contra esse contrato; se A ainda não
 > entregou a API, B mocka as respostas e C injeta uma `TaskList` de teste — ninguém fica
 > parado. A integração final é só apontar para a API real.
 
 ### Agente A — Núcleo & API v2 (colunas reais + multi-tabela)
+
+> **Status:** concluído no Ciclo 2.
 
 - **Objetivo**: mapear as colunas que se usam de verdade e abrir a edição ampla.
 - **Entrega**:
@@ -491,6 +503,9 @@ próxima — exatamente o loop App-Owned do Felixo-AI-Core. Entre ondas, vale ro
 
 ### Agente B — Front React + Tailwind + Vite
 
+> **Status:** concluído no Ciclo 2; auditoria de acessibilidade do modal feita depois da
+> entrega inicial.
+
 - **Objetivo**: a SPA rica que lista/edita tarefas com várias visualizações e filtros.
 - **Entrega**:
   - App React (Vite) em `front/`, seguindo o **design system de front do padrão de
@@ -511,6 +526,8 @@ próxima — exatamente o loop App-Owned do Felixo-AI-Core. Entre ondas, vale ro
 
 ### Agente C — CLI completa para IA
 
+> **Status:** concluído no Ciclo 2.
+
 - **Objetivo**: uma CLI com todas as operações de tasklist, fina sobre os `services`.
 - **Entrega**:
   - CLI em `cli/` cobrindo: listar (com filtros), ler uma tarefa, criar, editar, mover,
@@ -530,6 +547,8 @@ próxima — exatamente o loop App-Owned do Felixo-AI-Core. Entre ondas, vale ro
   > pequeno, doc viva no mesmo passo.
 
 ### Agente D — Qualidade (transversal)
+
+> **Status:** concluído no Ciclo 2; revisão final sem bloqueios após A/B/C.
 
 - **Objetivo**: fechar o ciclo sem dívida — testes, fronteiras, desempenho e guarda-corpos.
 - **Entrega**: revisão de cobertura e de fronteiras de camada das três frentes; cache onde

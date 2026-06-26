@@ -400,8 +400,15 @@ confirmação, mantendo a fronteira entre os dois projetos.
 >
 > Tom: próximos passos abertos à comunidade — cada frente pode ser pegada de forma
 > independente.
+>
+> **Estado [2026-06-26]**: Frente A concluída (`64aae8e`, `3ad9675`, `185d811`,
+> `986ab46`, `3733f1d`); Frente B concluída (`bd35500`); Frente C concluída
+> (`bed3ba2`); Frente D concluiu a higiene transversal inicial (`77be263`) e a revisão
+> final de coordenação/qualidade após A/B/C.
 
 ### Frente A — Mapear as colunas que se usam de verdade (núcleo + API)
+
+> **Status:** ✅ entregue no Ciclo 2.
 
 O front e a CLI passam a refletir o **uso real**: o database principal preenche `Status`,
 `Duração` (status) e `Áreas-da-Vida` (relation) em 100% das tarefas, enquanto
@@ -412,6 +419,8 @@ edição ampla no `PATCH /api/tarefas/{id}` e a rota `GET /api/opcoes`. Contrato
 
 ### Frente B — Front SPA React + Tailwind + Vite (design system)
 
+> **Status:** ✅ entregue em `front/` no commit `bd35500`.
+
 Substitui o front vanilla por uma SPA em `front/`, seguindo o **design system de front do
 padrão de qualidade** (React 18 + Tailwind + Framer Motion + Vite). Várias **visualizações**
 (grade / lista / kanban por status), **busca**, **filtros persistentes** (por status,
@@ -419,6 +428,8 @@ duração, área), ordenação e modais de criar/editar — espelhando os padrõ
 rico. Consome a API REST; sem regra de negócio no front.
 
 ### Frente C — CLI completa para IA
+
+> **Status:** ✅ entregue no commit `bed3ba2`.
 
 Uma CLI em `cli/` com **todas as funções** (listar, ler, criar, editar, mover, concluir,
 mapear, escolher database), **borda fina sobre os mesmos `services`** que a API usa — para
@@ -435,7 +446,8 @@ database arbitrário fica como ponto de extensão aberto à comunidade.
 
 **Pronto quando**: o front mostra/edita Status+Duração+Área com múltiplas visualizações e
 filtros; a CLI cobre todas as operações sobre os `services`; tudo coberto por testes (HTTP
-mockado) e alinhado ao contrato.
+mockado) e alinhado ao contrato. Em 2026-06-26, A/B/C fecharam e D concluiu a revisão
+transversal final do ciclo.
 
 ---
 
