@@ -122,6 +122,14 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   `notion.*` foram incorporadas ao catálogo do Felixo-AI-Core no commit `75c8a12`,
   com confirmação obrigatória em todas as operações de escrita.
 
+- [2026-06-25] ✅ **"Iniciar tudo" → seleção do database de tarefas**: na primeira
+  execução, `start_app.py` procura databases compartilhados com a integração que
+  atendem ao schema do front (`Nome`/title, `Status`/status, `Próximo prazo`/date),
+  escolhe automaticamente quando há só um, pergunta quando há vários e grava
+  `NOTION_DATABASE_ID` no `.env` para reusar depois. Antes o app subia sem saber
+  qual database alimentar a lista. Mensagem de erro `erro_interno` da API passou a
+  orientar a rodar "Iniciar tudo" novamente em vez do texto genérico.
+
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 (banco, API, planilha).
@@ -222,10 +230,12 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 - [2026-06-25] ✅ MCP e projetos: **32 testes focados** cobrindo a superfície
   `notion.*`, validação, anotações, transportes, erros sanitizados e atualização
   de página de projeto.
-- [2026-06-25] ✅ `tests/test_start_app.py` (14) — comando filho, seleção de
-  terminal, processo independente, ação “Iniciar tudo”, health check e navegador.
+- [2026-06-25] ✅ `tests/test_start_app.py` (19) — comando filho, seleção de
+  terminal, processo independente, ação “Iniciar tudo”, health check, navegador e
+  seleção do database de tarefas (schema compatível, reuso, escolha, falha).
 - [2026-06-25] ✅ Suíte completa do working tree compartilhado:
-  **252 testes passando**; `ruff` limpo e `manage.py check` sem problemas.
+  **258 testes passando**; `ruff check` limpo e `ruff format` consistente no
+  `start_app.py`; `manage.py check` sem problemas.
 
 ---
 
@@ -238,6 +248,14 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
   após 5xx ou falha de rede, podendo duplicar uma página já processada pelo Notion.
   FIX: retry ambíguo restrito a operações explicitamente idempotentes; criações só
   repetem 429/529, com regressão cobrindo página e database.
+- [2026-06-25] BUG (isolamento de teste): os testes de seleção de database em
+  `test_start_app.py` deixavam `NOTION_DATABASE_ID` vazado em `os.environ` (a
+  produção escreve `os.environ[...]` e o teste só fazia `delenv` antes). Como
+  `test_api_tarefas` usava `os.environ.setdefault`, herdava o valor vazado e a
+  query ia para um database sem mock → `test_get_tarefas_lista` falhava com 502
+  na suíte completa (passava isolado). FIX: os testes adotam a chave via
+  `monkeypatch.setenv` (revertido no teardown) e `test_api_tarefas` fixa seu
+  token/database por teste com `setenv`, sem depender da ordem da suíte.
 
 ---
 
