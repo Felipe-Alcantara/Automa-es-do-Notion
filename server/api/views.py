@@ -1,15 +1,15 @@
 """Views da borda HTTP — finas: parse, validação e delegação a ``services``.
 
 Sem regra de negócio aqui (isso vive em ``services``) nem formato cru do Notion
-(isso é do ``notion_starter``). O contrato das rotas segue o esboço da Fase 2 em
-``docs/PLANO.md`` — alinhar a ``docs/CONTRATOS.md`` quando o Agente 0 publicá-lo:
+(isso é do ``notion_starter``). O contrato das rotas segue ``docs/CONTRATOS.md``:
 
-    GET   /api/tarefas[?status=<nome>]   lista (filtro opcional por status)
-    POST  /api/tarefas                   cria  {nome, status?, prazo?}        -> 201
-    PATCH /api/tarefas/<id>              move status {status}                 -> 200
+    GET   /api/tarefas[?status=<nome>]    lista (filtro opcional por status)
+    POST  /api/tarefas                    cria  {nome, status?, prazo?, duracao?, areas?}  -> 201
+    PATCH /api/tarefas/<id>               edita {nome?, status?, prazo?, duracao?, areas?} -> 200
+    GET   /api/opcoes                     valores para seletores                          -> 200
 
-Saída em JSON. Erros mapeados: 400 (entrada inválida), 502 (falha na API do
-Notion), 503 (servidor sem token/database configurado).
+Saída em JSON. Erros mapeados: 400 (entrada inválida), 404 (tarefa inexistente),
+502 (falha na API do Notion), 500 (servidor sem token/database configurado).
 """
 
 from __future__ import annotations
@@ -48,6 +48,26 @@ def _corpo_json(request: HttpRequest) -> dict[str, Any]:
     if not isinstance(dados, dict):
         raise ValueError("o corpo deve ser um objeto JSON")
     return dados
+
+
+def _lista_de_strings(valor: Any, campo: str) -> list[str] | None:
+    """Valida listas opcionais de IDs recebidas pelo JSON público."""
+
+    if valor is None:
+        return None
+    if not isinstance(valor, list) or not all(isinstance(item, str) for item in valor):
+        raise ValueError(f"'{campo}' deve ser uma lista de strings")
+    return valor
+
+
+def _texto_opcional(dados: dict[str, Any], campo: str) -> str | None:
+    """Normaliza um campo textual opcional, preservando ausência real."""
+
+    if campo not in dados or dados[campo] is None:
+        return None
+    if not isinstance(dados[campo], str):
+        raise ValueError(f"'{campo}' deve ser uma string")
+    return dados[campo].strip() or None
 
 
 def _responder(acao: Callable[[], JsonResponse]) -> JsonResponse:
@@ -92,13 +112,15 @@ def tarefas(request: HttpRequest) -> JsonResponse:
 
     def _criar() -> JsonResponse:
         dados = _corpo_json(request)
-        nome = (dados.get("nome") or "").strip()
+        nome = _texto_opcional(dados, "nome") or ""
         if not nome:
             raise ValueError("'nome' é obrigatório")
         tarefa = svc.criar_tarefa(
             nome,
-            status=dados.get("status") or None,
-            prazo=dados.get("prazo") or None,
+            status=_texto_opcional(dados, "status"),
+            prazo=_texto_opcional(dados, "prazo"),
+            duracao=_texto_opcional(dados, "duracao"),
+            areas=_lista_de_strings(dados.get("areas"), "areas"),
         )
         return JsonResponse(tarefa_para_dict(tarefa), status=201)
 
@@ -108,14 +130,32 @@ def tarefas(request: HttpRequest) -> JsonResponse:
 @csrf_exempt
 @require_http_methods(["PATCH"])
 def tarefa_detalhe(request: HttpRequest, task_id: str) -> JsonResponse:
-    """Move o status de uma tarefa existente (``PATCH``)."""
+    """Edita uma tarefa existente (``PATCH`` amplo, retrocompatível com status)."""
 
-    def _mover() -> JsonResponse:
+    def _editar() -> JsonResponse:
         dados = _corpo_json(request)
-        status = (dados.get("status") or "").strip()
-        if not status:
-            raise ValueError("'status' é obrigatório")
-        tarefa = svc.mover_status(task_id, status)
+        campos_permitidos = {"nome", "status", "prazo", "duracao", "areas"}
+        if not any(campo in dados for campo in campos_permitidos):
+            raise ValueError("ao menos um campo deve ser informado")
+
+        tarefa = svc.editar_tarefa(
+            task_id,
+            nome=_texto_opcional(dados, "nome"),
+            status=_texto_opcional(dados, "status"),
+            prazo=_texto_opcional(dados, "prazo"),
+            duracao=_texto_opcional(dados, "duracao"),
+            areas=_lista_de_strings(dados.get("areas"), "areas"),
+        )
         return JsonResponse(tarefa_para_dict(tarefa))
 
-    return _responder(_mover)
+    return _responder(_editar)
+
+
+@require_http_methods(["GET"])
+def opcoes(_request: HttpRequest) -> JsonResponse:
+    """Devolve opções de status, duração e áreas para seletores."""
+
+    def _listar_opcoes() -> JsonResponse:
+        return JsonResponse(svc.listar_opcoes())
+
+    return _responder(_listar_opcoes)

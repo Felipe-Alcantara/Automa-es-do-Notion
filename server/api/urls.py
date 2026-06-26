@@ -14,4 +14,5 @@ urlpatterns = [
     path("health", views.health, name="health"),
     path("tarefas", views.tarefas, name="tarefas"),
     path("tarefas/<str:task_id>", views.tarefa_detalhe, name="tarefa-detalhe"),
+    path("opcoes", views.opcoes, name="opcoes"),
 ]

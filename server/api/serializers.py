@@ -12,12 +12,15 @@ from notion_starter import Tarefa
 
 
 def tarefa_para_dict(tarefa: Tarefa) -> dict[str, Any]:
-    """Converte uma :class:`Tarefa` no objeto JSON público da API."""
+    """Converte uma :class:`Tarefa` no objeto JSON público da API (sem ``bruto``)."""
 
     return {
         "id": tarefa.id,
         "nome": tarefa.nome,
         "status": tarefa.status,
         "prazo": tarefa.prazo,
+        "duracao": tarefa.duracao,
+        "areas": tarefa.areas,
+        "areas_nomes": tarefa.areas_nomes,
         "url": tarefa.url,
     }
