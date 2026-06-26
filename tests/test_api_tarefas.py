@@ -47,12 +47,19 @@ def client():
     return Client()
 
 
-def _pagina(id_, nome, status=None, prazo=None):
+def _pagina(id_, nome, status=None, prazo=None, duracao=None, areas=None):
     props = {"Nome": {"type": "title", "title": [{"plain_text": nome}]}}
     if status is not None:
         props["Status"] = {"type": "status", "status": {"name": status}}
     if prazo is not None:
         props["Próximo prazo"] = {"type": "date", "date": {"start": prazo}}
+    if duracao is not None:
+        props["Duração"] = {"type": "status", "status": {"name": duracao}}
+    if areas is not None:
+        props["Áreas-da-Vida"] = {
+            "type": "relation",
+            "relation": [{"id": area_id} for area_id in areas],
+        }
     return {"id": id_, "url": f"https://notion.so/{id_}", "properties": props}
 
 
@@ -89,16 +96,30 @@ def test_post_tarefa_cria(client):
     responses.add(
         responses.POST,
         f"{NOTION_BASE_URL}/pages",
-        json=_pagina("novo", "Nova", "00. Inbox"),
+        json=_pagina("novo", "Nova", "00. Inbox", duracao="Dias", areas=["a1"]),
         status=200,
     )
     resp = client.post(
         "/api/tarefas",
-        data=json.dumps({"nome": "Nova", "status": "00. Inbox"}),
+        data=json.dumps(
+            {
+                "nome": "Nova",
+                "status": "00. Inbox",
+                "duracao": "Dias",
+                "areas": ["a1"],
+            }
+        ),
         content_type="application/json",
     )
     assert resp.status_code == 201
-    assert resp.json()["id"] == "novo"
+    corpo = resp.json()
+    assert corpo["id"] == "novo"
+    assert corpo["duracao"] == "Dias"
+    assert corpo["areas"] == ["a1"]
+
+    request = json.loads(responses.calls[0].request.body)
+    assert request["properties"]["Duração"]["status"]["name"] == "Dias"
+    assert request["properties"]["Áreas-da-Vida"]["relation"] == [{"id": "a1"}]
 
 
 def test_post_tarefa_sem_nome_e_400(client):
@@ -128,10 +149,52 @@ def test_patch_tarefa_move_status(client):
     assert resp.json()["status"] == "02. Fazendo"
 
 
-def test_patch_tarefa_sem_status_e_400(client):
+@responses.activate
+def test_patch_tarefa_edita_campos_amplos(client):
+    responses.add(
+        responses.PATCH,
+        f"{NOTION_BASE_URL}/pages/t1",
+        json=_pagina("t1", "Renomeada", "02. Fazendo", duracao="Poucas horas", areas=["a1"]),
+        status=200,
+    )
+    resp = client.patch(
+        "/api/tarefas/t1",
+        data=json.dumps(
+            {
+                "nome": "Renomeada",
+                "status": "02. Fazendo",
+                "duracao": "Poucas horas",
+                "areas": ["a1"],
+            }
+        ),
+        content_type="application/json",
+    )
+    assert resp.status_code == 200
+    corpo = resp.json()
+    assert corpo["nome"] == "Renomeada"
+    assert corpo["duracao"] == "Poucas horas"
+    assert corpo["areas"] == ["a1"]
+
+    request = json.loads(responses.calls[0].request.body)
+    assert request["properties"]["Nome"]["title"][0]["text"]["content"] == "Renomeada"
+    assert request["properties"]["Duração"]["status"]["name"] == "Poucas horas"
+    assert request["properties"]["Áreas-da-Vida"]["relation"] == [{"id": "a1"}]
+
+
+def test_patch_tarefa_sem_campos_e_400(client):
     resp = client.patch(
         "/api/tarefas/t1",
         data=json.dumps({}),
+        content_type="application/json",
+    )
+    assert resp.status_code == 400
+    assert resp.json()["erro"]["codigo"] == "validacao"
+
+
+def test_patch_tarefa_areas_invalidas_e_400(client):
+    resp = client.patch(
+        "/api/tarefas/t1",
+        data=json.dumps({"areas": "a1"}),
         content_type="application/json",
     )
     assert resp.status_code == 400
@@ -188,3 +251,56 @@ def test_configuracao_ausente_orienta_iniciar_tudo(client, monkeypatch):
 def test_metodo_nao_permitido_e_405(client):
     resp = client.delete("/api/tarefas/t1")
     assert resp.status_code == 405
+
+
+@responses.activate
+def test_get_opcoes_lista_status_duracao_areas(client):
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json={
+            "properties": {
+                "Status": {
+                    "type": "status",
+                    "status": {
+                        "options": [{"name": "00. Inbox"}, {"name": "06. Feito"}]
+                    },
+                },
+                "Duração": {
+                    "type": "status",
+                    "status": {"options": [{"name": "Minutos"}, {"name": "Dias"}]},
+                },
+                "Áreas-da-Vida": {
+                    "type": "relation",
+                    "relation": {"database_id": "db_areas"},
+                },
+            },
+        },
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/db_areas/query",
+        json={
+            "results": [
+                {
+                    "id": "a1",
+                    "properties": {
+                        "Nome": {
+                            "type": "title",
+                            "title": [{"plain_text": "Estudos"}],
+                        }
+                    },
+                }
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
+    resp = client.get("/api/opcoes")
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "status": ["00. Inbox", "06. Feito"],
+        "duracao": ["Minutos", "Dias"],
+        "areas": [{"id": "a1", "nome": "Estudos"}],
+    }

@@ -163,8 +163,16 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   do MCP); **D** Qualidade transversal. Contrato v2 fixado em `docs/CONTRATOS.md`; frentes
   em `docs/PLANO.md` (*Ciclo 2*); agentes em `docs/AGENTES.md`. Decisão de origem:
   diagnóstico leu 15 linhas do database real → só Status/Duração/Áreas-da-Vida são usados
-  (Prazo/Priority/Projeto/Subitens ficam vazios); o site reflete o uso real. Implementação
-  ainda **não** começou — este passo é só a documentação/faseamento.
+  (Prazo/Priority/Projeto/Subitens ficam vazios); o site reflete o uso real.
+- [2026-06-26] ✅ **Agente A (Núcleo & API v2)** — contrato v2 de tarefas implementado:
+  `properties.relation`, `Tarefa`/`CamposTarefa` com `duracao`/`areas`,
+  `TaskList.editar`, resolução/cache de nomes de áreas, `TaskList.opcoes`,
+  `services.tarefas.editar_tarefa`/`listar_opcoes`, serializer público com
+  `duracao`/`areas`/`areas_nomes`, `POST /api/tarefas` aceitando os campos novos,
+  `PATCH /api/tarefas/{id}` amplo e retrocompatível com `{status}`, e `GET /api/opcoes`.
+  Validação: 34 testes do escopo A verdes no `.venv` (`test_api_tarefas`, `test_tasks`,
+  `test_services_tarefas`), `ruff check` do escopo limpo e
+  `DJANGO_DEBUG=1 .venv/bin/python server/manage.py check` sem issues.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
