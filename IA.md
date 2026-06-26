@@ -129,6 +129,14 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   `NOTION_DATABASE_ID` no `.env` para reusar depois. Antes o app subia sem saber
   qual database alimentar a lista. Mensagem de erro `erro_interno` da API passou a
   orientar a rodar "Iniciar tudo" novamente em vez do texto genérico.
+- [2026-06-25] ✅ **Trocar o database pelo menu**: o "Iniciar tudo" reusa o database
+  salvo em silêncio (de propósito, p/ o fluxo de um clique). Para trocar depois, o
+  menu **Configurar** virou submenu (Token / Database) e a opção "Escolher database
+  de tarefas" re-consulta e regrava `NOTION_DATABASE_ID` — sem editar o `.env` na
+  mão (padrão Felixo: configurar sem editar arquivo). O núcleo busca/escolhe/grava
+  foi extraído p/ `_selecionar_database_tarefas`; `_garantir_database_tarefas` só
+  decide reuso vs. primeira seleção (Open/Closed: trocar não mexe no fluxo de subir).
+  O database em uso aparece marcado `[atual]` na lista de escolhas.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
@@ -230,11 +238,12 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 - [2026-06-25] ✅ MCP e projetos: **32 testes focados** cobrindo a superfície
   `notion.*`, validação, anotações, transportes, erros sanitizados e atualização
   de página de projeto.
-- [2026-06-25] ✅ `tests/test_start_app.py` (19) — comando filho, seleção de
-  terminal, processo independente, ação “Iniciar tudo”, health check, navegador e
-  seleção do database de tarefas (schema compatível, reuso, escolha, falha).
+- [2026-06-25] ✅ `tests/test_start_app.py` (20) — comando filho, seleção de
+  terminal, processo independente, ação “Iniciar tudo”, health check, navegador,
+  seleção do database de tarefas (schema compatível, reuso, escolha, falha) e
+  troca pelo menu Configurar (re-pergunta com o atual marcado).
 - [2026-06-25] ✅ Suíte completa do working tree compartilhado:
-  **258 testes passando**; `ruff check` limpo e `ruff format` consistente no
+  **259 testes passando**; `ruff check` limpo e `ruff format` consistente no
   `start_app.py`; `manage.py check` sem problemas.
 
 ---

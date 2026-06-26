@@ -247,6 +247,42 @@ def test_garantir_database_falha_sem_compativel(monkeypatch, tmp_path):
     assert "Nenhum database compatível" in saida.getvalue()
 
 
+def test_selecionar_database_pergunta_para_trocar_o_atual(monkeypatch, tmp_path):
+    # Mesmo com um único database compatível, se já houver um selecionado a
+    # opção "Configurar → Escolher database" deve perguntar (para poder trocar),
+    # não reusar em silêncio. Marca o atual na lista de escolhas.
+    import questionary
+
+    capturado = {}
+
+    class Pergunta:
+        def ask(self):
+            return "db-novo"
+
+    def fake_select(mensagem, choices, *args, **kwargs):
+        capturado["choices"] = choices
+        return Pergunta()
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("NOTION_TOKEN=ntn_teste\nNOTION_DATABASE_ID=db-antigo\n", encoding="utf-8")
+    monkeypatch.setattr(start_app, "ENV_FILE", env_file)
+    monkeypatch.setenv(start_app.DATABASE_ENV, "db-antigo")
+    monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
+    monkeypatch.setattr(
+        start_app,
+        "_buscar_databases_compativeis",
+        lambda token: [("Tarefas (atual)", "db-antigo"), ("Tarefas nova", "db-novo")],
+    )
+    monkeypatch.setattr(questionary, "select", fake_select)
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    assert start_app._selecionar_database_tarefas(console) is True
+    assert start_app.os.environ[start_app.DATABASE_ENV] == "db-novo"
+    assert "NOTION_DATABASE_ID=db-novo" in env_file.read_text()
+    # O database atualmente em uso aparece marcado para o usuário se orientar.
+    assert any("[atual]" in str(c.title) for c in capturado["choices"])
+
+
 def test_app_web_ativo_valida_health_do_projeto(monkeypatch):
     class Resposta:
         def __enter__(self):
