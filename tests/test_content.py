@@ -176,3 +176,73 @@ def test_excluir_bloco_usa_delete():
 def test_excluir_bloco_id_vazio_levanta():
     with pytest.raises(NotionConfigurationError):
         criar_client().excluir_bloco("   ")
+
+
+# -- Data sources (modelo novo de database) --------------------------------
+
+
+@responses.activate
+def test_listar_data_sources_usa_versao_nova():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/db1",
+        json={"data_sources": [{"id": "ds1", "name": "Principal"}]},
+        status=200,
+    )
+    fontes = criar_client().listar_data_sources("db1")
+    assert fontes == [{"id": "ds1", "name": "Principal"}]
+    assert responses.calls[0].request.headers["Notion-Version"] == "2025-09-03"
+
+
+@responses.activate
+def test_listar_data_sources_sem_fontes_retorna_lista_vazia():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/db1",
+        json={"object": "database"},
+        status=200,
+    )
+    assert criar_client().listar_data_sources("db1") == []
+
+
+@responses.activate
+def test_consultar_data_source_pagina_todos():
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/data_sources/ds1/query",
+        json={"results": [{"id": "r1"}], "has_more": True, "next_cursor": "c2"},
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/data_sources/ds1/query",
+        json={"results": [{"id": "r2"}], "has_more": False},
+        status=200,
+    )
+    linhas = criar_client().consultar_data_source("ds1", buscar_todos=True)
+    assert [linha["id"] for linha in linhas] == ["r1", "r2"]
+    assert responses.calls[0].request.headers["Notion-Version"] == "2025-09-03"
+
+
+@responses.activate
+def test_get_data_source_le_schema():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/data_sources/ds1",
+        json={"object": "data_source", "properties": {"Name": {"type": "title"}}},
+        status=200,
+    )
+    schema = criar_client().get_data_source("ds1")
+    assert schema["properties"]["Name"]["type"] == "title"
+
+
+@responses.activate
+def test_versao_padrao_nao_muda_nas_rotas_antigas():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/db1",
+        json={"id": "db1", "properties": {}},
+        status=200,
+    )
+    criar_client().get_database("db1")
+    assert responses.calls[0].request.headers["Notion-Version"] == "2022-06-28"

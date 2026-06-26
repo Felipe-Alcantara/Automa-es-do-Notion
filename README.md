@@ -218,6 +218,7 @@ python -m cli --json mapear
 # Conteúdo das páginas (corpo, não só propriedades)
 python -m cli --json buscar "nota de reunião"
 python -m cli --json conteudo <page_id>
+python -m cli --json linhas <database_id>   # linhas de um database
 python -m cli --json escrever <page_id> $'# Resumo\n\n- ponto um\n- ponto dois'
 python -m cli --json editar-bloco <block_id> "## Novo título"
 python -m cli --json apagar-bloco <block_id> --sim   # destrutivo: exige --sim
@@ -225,7 +226,10 @@ python -m cli --json apagar-bloco <block_id> --sim   # destrutivo: exige --sim
 
 Os comandos de conteúdo dão à IA acesso ao **corpo** das páginas (em Markdown),
 para qualquer página visível à integração — pesquisar, ler, escrever, editar e
-apagar. `apagar-bloco` é destrutivo e só executa com `--sim`.
+apagar. `apagar-bloco` é destrutivo e só executa com `--sim`. Para databases, o
+conteúdo são as **linhas**: use `linhas <database_id>` (e `conteudo` num database
+avisa e já traz as linhas). O `linhas` resolve os *data sources* do modelo novo
+do Notion, então lê inclusive databases criados recentemente.
 
 O envelope JSON é sempre `{ "ok": true, "dados": ... }` em sucesso e
 `{ "ok": false, "erro": { "mensagem": ... } }` em erro. A CLI lê `NOTION_TOKEN`
