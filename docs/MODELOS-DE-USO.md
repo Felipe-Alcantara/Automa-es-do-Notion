@@ -35,8 +35,8 @@ parar em qualquer degrau.
 > **CLI (4) e MCP (6) são bordas finas sobre os mesmos `services/`** — CLI para uso
 > direto/IA local, MCP para os agentes do Felixo-AI-Core; sem duplicar regra.
 >
-> As camadas 1–2, a API/servidor e a **CLI para IA** já existem; o **front React** é o
-> [Ciclo 2](PLANO.md) em construção. As camadas 5–6 seguem como roadmap aberto.
+> As camadas 1–4 já existem: biblioteca, menu, API + front React e CLI para IA. As camadas
+> 5–6 seguem como evolução sobre a base já entregue (IA assistida e agentes via MCP).
 
 Exemplos de CLI para consumo por IA/script:
 
