@@ -104,6 +104,12 @@ def date(
     return {"date": payload}
 
 
+def relation(ids: list[str]) -> NotionPropertyValue:
+    """Monta um valor de propriedade ``relation`` (lista de IDs de páginas)."""
+
+    return {"relation": [{"id": id_} for id_ in ids]}
+
+
 def _para_iso(valor: str | _dt.date | _dt.datetime) -> str:
     """Serializa um valor de data em uma string ISO 8601."""
 
