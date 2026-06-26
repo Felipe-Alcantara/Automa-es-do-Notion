@@ -27,6 +27,11 @@ def test_select_status_multi_select():
     assert p.multi_select(["x", "y"]) == {"multi_select": [{"name": "x"}, {"name": "y"}]}
 
 
+def test_relation():
+    assert p.relation(["id-1", "id-2"]) == {"relation": [{"id": "id-1"}, {"id": "id-2"}]}
+    assert p.relation([]) == {"relation": []}
+
+
 def test_date_com_string():
     assert p.date("2026-06-24") == {"date": {"start": "2026-06-24"}}
 
