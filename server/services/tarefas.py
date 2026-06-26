@@ -32,12 +32,14 @@ def _tasklist_padrao() -> TaskList:
 
 def listar_tarefas(
     status: str | None = None,
+    duracao: str | None = None,
+    areas: list[str] | None = None,
     *,
     tasklist: TaskList | None = None,
 ) -> list[Tarefa]:
-    """Lista as tarefas, opcionalmente filtrando por ``status``."""
+    """Lista as tarefas, opcionalmente filtrando por propriedades do Notion."""
 
-    return (tasklist or _tasklist_padrao()).listar(status=status)
+    return (tasklist or _tasklist_padrao()).listar(status=status, duracao=duracao, areas=areas)
 
 
 def criar_tarefa(

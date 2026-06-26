@@ -104,6 +104,25 @@ def test_listar_por_status_envia_filtro():
     }
 
 
+@responses.activate
+def test_listar_por_status_duracao_e_area_envia_filtro_composto():
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/{DB}/query",
+        json={"results": [], "has_more": False},
+        status=200,
+    )
+    criar_tasklist().listar(status="00. Inbox", duracao="Dias", areas=["area-1"])
+    corpo = json.loads(responses.calls[0].request.body)
+    assert corpo["filter"] == {
+        "and": [
+            {"property": "Status", "status": {"equals": "00. Inbox"}},
+            {"property": "Duração", "status": {"equals": "Dias"}},
+            {"property": "Áreas-da-Vida", "relation": {"contains": "area-1"}},
+        ]
+    }
+
+
 # -- Criar -----------------------------------------------------------------
 
 

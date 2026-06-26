@@ -89,6 +89,16 @@ def _texto_title_de_pagina(pagina: dict[str, Any]) -> str:
     return ""
 
 
+def _combinar_filtros(filtros: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Combina filtros do Notion mantendo o caso simples legível."""
+
+    if not filtros:
+        return None
+    if len(filtros) == 1:
+        return filtros[0]
+    return {"and": filtros}
+
+
 def tarefa_de_pagina(pagina: dict[str, Any], campos: CamposTarefa) -> Tarefa:
     """Converte o JSON cru de uma página do Notion em :class:`Tarefa`.
 
@@ -156,29 +166,37 @@ class TaskList:
     def listar(
         self,
         status: str | None = None,
+        duracao: str | None = None,
+        areas: list[str] | None = None,
         buscar_todos: bool = True,
     ) -> list[Tarefa]:
-        """Lista as tarefas, opcionalmente filtrando por status.
+        """Lista as tarefas, opcionalmente filtrando por propriedades.
 
         Enriquece cada tarefa com os nomes das áreas relacionadas
         (``areas_nomes``), resolvidos via cache em memória.
 
         Args:
             status: Quando informado, retorna só as tarefas nesse status.
+            duracao: Quando informado, filtra pela coluna de duração/esforço.
+            areas: IDs de áreas relacionadas; todas devem estar presentes.
             buscar_todos: Percorre toda a paginação (padrão).
 
         Returns:
             As tarefas normalizadas e enriquecidas.
         """
 
-        filtro = None
+        filtros: list[dict[str, Any]] = []
         if status is not None:
-            filtro = {
-                "property": self._campos.status,
-                "status": {"equals": status},
-            }
+            filtros.append({"property": self._campos.status, "status": {"equals": status}})
+        if duracao is not None:
+            filtros.append({"property": self._campos.duracao, "status": {"equals": duracao}})
+        for area_id in areas or []:
+            filtros.append({"property": self._campos.areas, "relation": {"contains": area_id}})
+
         paginas = self._client.consultar_database(
-            self._database_id, buscar_todos=buscar_todos, filtro=filtro
+            self._database_id,
+            buscar_todos=buscar_todos,
+            filtro=_combinar_filtros(filtros),
         )
         tarefas = [tarefa_de_pagina(pg, self._campos) for pg in paginas]
         self._enriquecer_areas(tarefas)

@@ -18,16 +18,16 @@ class FakeTaskList:
     def __init__(self) -> None:
         self.chamadas: list[tuple[str, object]] = []
 
-    def listar(self, status=None):
-        self.chamadas.append(("listar", status))
+    def listar(self, status=None, duracao=None, areas=None):
+        self.chamadas.append(("listar", (status, duracao, areas)))
         return [
             Tarefa(
                 id="t1",
                 nome="Estudar",
                 status=status or "00. Inbox",
                 prazo="2026-07-01",
-                duracao="Dias",
-                areas=["a1"],
+                duracao=duracao or "Dias",
+                areas=areas or ["a1"],
                 areas_nomes=["Estudos"],
                 url="https://notion.so/t1",
             )
@@ -112,11 +112,24 @@ def _executar(args, fake: FakeTaskList | None = None):
 
 
 def test_listar_json_emite_envelope_estavel():
-    codigo, saida = _executar(["--json", "listar", "--status", "00. Inbox"])
+    codigo, saida = _executar(
+        ["--json", "listar", "--status", "00. Inbox", "--duracao", "Dias", "--area", "a1"]
+    )
     assert codigo == 0
     assert saida["ok"] is True
     assert saida["dados"][0]["id"] == "t1"
     assert "bruto" not in saida["dados"][0]
+
+
+def test_listar_delega_filtros_para_services():
+    fake = FakeTaskList()
+    codigo, _ = _executar(
+        ["--json", "listar", "--status", "00. Inbox", "--duracao", "Dias", "--area", "a1,a2"],
+        fake,
+    )
+
+    assert codigo == 0
+    assert fake.chamadas == [("listar", ("00. Inbox", "Dias", ["a1", "a2"]))]
 
 
 def test_criar_delega_campos_amplos_para_services():

@@ -41,7 +41,7 @@ parar em qualquer degrau.
 Exemplos de CLI para consumo por IA/script:
 
 ```bash
-python -m cli --json listar --status "00. Inbox"
+python -m cli --json listar --status "00. Inbox" --duracao "Dias" --area <area_id>
 python -m cli --json criar "Nova tarefa" --status "00. Inbox" --duracao "Dias"
 python -m cli --json editar <task_id> --status "02. Fazendo" --area <area_id>
 python -m cli --json opcoes
@@ -66,8 +66,9 @@ python -m cli --json mapear
 ## 🎬 Cenários práticos
 
 ### 1. "O que eu faço hoje?"
-Lista as tarefas do dia (filtro por status/prazo) e, na camada de IA, pede um resumo
-priorizado. Base já pronta: `TaskList.listar(status=...)`.
+Lista as tarefas do dia (filtro por status/duração/área, e futuramente prazo) e, na
+camada de IA, pede um resumo priorizado. Base já pronta:
+`TaskList.listar(status=..., duracao=..., areas=[...])`.
 
 ### 2. "Cria essa tarefa pra mim"
 Em linguagem natural → a IA propõe a tarefa (nome, status, prazo) → você confirma →

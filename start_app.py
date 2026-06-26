@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -25,6 +26,7 @@ import urllib.error
 import urllib.request
 import webbrowser
 from pathlib import Path
+from typing import NamedTuple
 
 RAIZ = Path(__file__).resolve().parent
 ENV_FILE = RAIZ / ".env"
@@ -32,12 +34,22 @@ ENV_EXEMPLO = RAIZ / ".env.example"
 EXEMPLOS = RAIZ / "examples"
 SERVIDOR = RAIZ / "server"
 MANAGE_PY = SERVIDOR / "manage.py"
+FRONT = RAIZ / "front"
+FRONT_NODE_MODULES = FRONT / "node_modules"
 TOKEN_ENV = "NOTION_TOKEN"
 DATABASE_ENV = "NOTION_DATABASE_ID"
 TOKEN_PREFIXO = "ntn_"
 APP_ENDERECO_PADRAO = "127.0.0.1:8000"
-APP_URL = f"http://{APP_ENDERECO_PADRAO}/"
-APP_HEALTH_URL = f"{APP_URL}api/health"
+API_ENDERECO_PADRAO = APP_ENDERECO_PADRAO
+API_URL = f"http://{API_ENDERECO_PADRAO}/"
+API_HEALTH_URL = f"{API_URL}api/health"
+FRONT_HOST = "127.0.0.1"
+FRONT_PORT = "5173"
+FRONT_ENDERECO_PADRAO = f"{FRONT_HOST}:{FRONT_PORT}"
+FRONT_URL = f"http://{FRONT_ENDERECO_PADRAO}/"
+APP_URL = FRONT_URL
+APP_HEALTH_URL = API_HEALTH_URL
+NODE_VERSAO_MINIMA = "20.19+ ou 22.12+"
 SCHEMA_TAREFAS = {
     "Nome": "title",
     "Status": "status",
@@ -47,6 +59,14 @@ SCHEMA_TAREFAS = {
 # As deps de TUI são do próprio menu; o passo de Instalar/Setup garante que
 # existem. Antes disso, caímos num fallback em texto puro para nunca quebrar.
 _DEPS_TUI = ("questionary", "rich")
+
+
+class FrontRuntime(NamedTuple):
+    """Runtime Node/npm escolhido para executar a SPA React."""
+
+    node: Path
+    npm: Path
+    versao: str
 
 
 # --------------------------------------------------------------------------- #
@@ -206,6 +226,149 @@ def _mcp_disponivel() -> bool:
     return True
 
 
+def _parse_versao_node(texto: str) -> tuple[int, int, int] | None:
+    """Converte ``v22.12.0`` em tupla comparável."""
+
+    match = re.search(r"v?(\d+)\.(\d+)\.(\d+)", texto.strip())
+    if not match:
+        return None
+    return tuple(int(parte) for parte in match.groups())
+
+
+def _node_compativel(versao: tuple[int, int, int] | None) -> bool:
+    """Valida a versão exigida pelo Vite atual."""
+
+    if versao is None:
+        return False
+    major, minor, _patch = versao
+    if major == 20:
+        return minor >= 19
+    if major == 22:
+        return minor >= 12
+    return major > 22
+
+
+def _versao_node(executavel: Path) -> str | None:
+    """Lê a versão de um executável ``node`` sem poluir a saída do menu."""
+
+    try:
+        resultado = subprocess.run(
+            [str(executavel), "--version"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if resultado.returncode != 0:
+        return None
+    return resultado.stdout.strip()
+
+
+def _candidatos_node() -> list[Path]:
+    """Lista runtimes Node conhecidos, preferindo PATH e depois instalações NVM."""
+
+    candidatos: list[Path] = []
+    do_path = shutil.which("node")
+    if do_path:
+        candidatos.append(Path(do_path))
+
+    nvm_versions = Path.home() / ".nvm" / "versions" / "node"
+    if nvm_versions.exists():
+        candidatos.extend(sorted(nvm_versions.glob("v*/bin/node"), reverse=True))
+
+    vistos: set[Path] = set()
+    unicos = []
+    for candidato in candidatos:
+        resolvido = candidato.resolve()
+        if resolvido not in vistos:
+            vistos.add(resolvido)
+            unicos.append(resolvido)
+    return unicos
+
+
+def _resolver_runtime_front() -> FrontRuntime | None:
+    """Escolhe um Node compatível e o npm correspondente para rodar o Vite."""
+
+    for node in _candidatos_node():
+        versao_texto = _versao_node(node)
+        if not _node_compativel(_parse_versao_node(versao_texto or "")):
+            continue
+
+        npm_nome = "npm.cmd" if sys.platform == "win32" else "npm"
+        npm = node.parent / npm_nome
+        if not npm.exists():
+            encontrado = shutil.which("npm")
+            if not encontrado:
+                continue
+            npm = Path(encontrado).resolve()
+        return FrontRuntime(node=node, npm=npm, versao=versao_texto or "desconhecida")
+    return None
+
+
+def _ambiente_front(runtime: FrontRuntime) -> dict[str, str]:
+    """Monta o ambiente do Vite forçando o Node compatível no início do PATH."""
+
+    ambiente = dict(os.environ)
+    caminho_node = str(runtime.node.parent)
+    path_atual = ambiente.get("PATH", "")
+    ambiente["PATH"] = caminho_node + (os.pathsep + path_atual if path_atual else "")
+    return ambiente
+
+
+def _front_deps_instaladas() -> bool:
+    """Confere se as dependências npm do front já foram instaladas."""
+
+    return FRONT_NODE_MODULES.exists()
+
+
+def _instalar_deps_front(console, runtime: FrontRuntime) -> bool:
+    """Instala as dependências da SPA React."""
+
+    if not (FRONT / "package.json").exists():
+        console.print("[red]✗[/red] Pasta front/ sem package.json. Não dá para subir a SPA.")
+        return False
+
+    console.print(
+        f"Instalando dependências do front React com Node {runtime.versao} "
+        f"([bold]{runtime.npm.name} install[/bold])..."
+    )
+    codigo = subprocess.call(
+        [str(runtime.npm), "install"],
+        cwd=FRONT,
+        env=_ambiente_front(runtime),
+    )
+    if codigo == 0:
+        console.print("[green]✓[/green] Dependências do front instaladas.")
+        return True
+
+    console.print(
+        "[red]✗[/red] Não consegui instalar as dependências do front. "
+        "Confira sua conexão e rode novamente o menu."
+    )
+    return False
+
+
+def _garantir_front_pronto(console) -> FrontRuntime | None:
+    """Garante Node/npm compatíveis e dependências instaladas para a SPA."""
+
+    runtime = _resolver_runtime_front()
+    if runtime is None:
+        console.print(
+            "[red]✗[/red] Não encontrei Node compatível para o front React. "
+            f"O Vite usado pelo projeto exige Node {NODE_VERSAO_MINIMA}."
+        )
+        console.print(
+            "[dim]Dica: se você usa nvm, selecione uma versão recente e rode o menu de novo.[/dim]"
+        )
+        return None
+
+    if not _front_deps_instaladas() and not _instalar_deps_front(console, runtime):
+        return None
+    return runtime
+
+
 def _ler_valor_env_file(nome: str) -> str | None:
     """Lê uma variável do arquivo ``.env`` local, se existir."""
 
@@ -259,7 +422,7 @@ def _token_configurado() -> tuple[bool, str]:
 # Ações do menu                                                               #
 # --------------------------------------------------------------------------- #
 def acao_instalar(console) -> None:
-    """Instala/Setup: dependências da lib (modo dev) e cria o ``.env``."""
+    """Instala/Setup: dependências Python, front React e cria o ``.env``."""
 
     console.rule("[bold]Instalar / Setup")
     console.print(
@@ -283,6 +446,20 @@ def acao_instalar(console) -> None:
         )
     elif ENV_FILE.exists():
         console.print("[yellow]•[/yellow] .env já existe — mantido como está.")
+
+    runtime = _resolver_runtime_front()
+    if runtime is None:
+        console.print(
+            "[yellow]•[/yellow] Front React não preparado: Node compatível não encontrado "
+            f"(requer {NODE_VERSAO_MINIMA})."
+        )
+    elif not _front_deps_instaladas():
+        _instalar_deps_front(console, runtime)
+    else:
+        console.print(
+            f"[green]✓[/green] Front React já preparado (Node {runtime.versao}, "
+            "node_modules presente)."
+        )
 
 
 def acao_configurar(console) -> None:
@@ -691,7 +868,7 @@ def _aplicar_migracoes(console, ambiente: dict[str, str]) -> bool:
 
 
 def _app_web_ativo(url: str = APP_HEALTH_URL) -> bool:
-    """Confirma que a porta responde como este projeto, não apenas que está ocupada."""
+    """Confirma que a API Django responde como este projeto."""
 
     try:
         with urllib.request.urlopen(url, timeout=0.5) as resposta:  # noqa: S310 - URL local fixa
@@ -705,16 +882,27 @@ def _app_web_ativo(url: str = APP_HEALTH_URL) -> bool:
     )
 
 
+def _front_web_ativo(url: str = FRONT_URL) -> bool:
+    """Confirma que a SPA React/Vite está respondendo na porta esperada."""
+
+    try:
+        with urllib.request.urlopen(url, timeout=0.5) as resposta:  # noqa: S310 - URL local fixa
+            html = resposta.read().decode("utf-8", errors="replace")
+    except (OSError, UnicodeError, urllib.error.URLError):
+        return False
+    return resposta.status == 200 and 'id="root"' in html and "/src/main.jsx" in html
+
+
 def _abrir_navegador_quando_pronto(
     console,
     *,
     tentativas: int = 40,
     intervalo: float = 0.25,
 ) -> None:
-    """Espera o health check responder e abre o front no navegador padrão."""
+    """Espera API + SPA responderem e abre o front React no navegador padrão."""
 
     for _ in range(tentativas):
-        if _app_web_ativo():
+        if _app_web_ativo() and _front_web_ativo():
             if webbrowser.open(APP_URL):
                 console.print(f"[green]✓[/green] Navegador aberto em [bold]{APP_URL}[/bold].")
             else:
@@ -726,7 +914,7 @@ def _abrir_navegador_quando_pronto(
         time.sleep(intervalo)
 
     console.print(
-        "[yellow]•[/yellow] O servidor demorou para responder. "
+        "[yellow]•[/yellow] A API ou o front demorou para responder. "
         f"Quando estiver pronto, acesse [bold]{APP_URL}[/bold]."
     )
 
@@ -742,8 +930,59 @@ def _agendar_abertura_navegador(console) -> None:
     ).start()
 
 
+def _comando_front(runtime: FrontRuntime) -> list[str]:
+    """Comando padrão para subir a SPA React com proxy para a API Django."""
+
+    return [
+        str(runtime.npm),
+        "run",
+        "dev",
+        "--",
+        "--host",
+        FRONT_HOST,
+        "--port",
+        FRONT_PORT,
+    ]
+
+
+def _encerrar_processos(processos: list[subprocess.Popen]) -> None:
+    """Encerra processos filhos iniciados pelo menu."""
+
+    for processo in processos:
+        if processo.poll() is None:
+            processo.terminate()
+    for processo in processos:
+        if processo.poll() is None:
+            try:
+                processo.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                processo.kill()
+
+
+def _aguardar_processos(console, processos: list[subprocess.Popen]) -> None:
+    """Mantém o terminal vivo enquanto API/front rodam."""
+
+    try:
+        while processos and all(processo.poll() is None for processo in processos):
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        console.print("\n[dim]Encerrando aplicação local...[/dim]")
+        _encerrar_processos(processos)
+        return
+
+    for processo in processos:
+        codigo = processo.poll()
+        if codigo not in (None, 0):
+            console.print(
+                f"[red]✗[/red] Um processo da aplicação terminou com código {codigo}. "
+                "Confira a saída acima para entender o motivo."
+            )
+            _encerrar_processos(processos)
+            return
+
+
 def acao_iniciar_tudo(console) -> None:
-    """Inicia front + API com defaults locais e abre o navegador."""
+    """Inicia API Django + SPA React com defaults locais e abre o navegador."""
 
     console.rule("[bold]Iniciar tudo")
 
@@ -760,41 +999,67 @@ def acao_iniciar_tudo(console) -> None:
     if not _garantir_database_tarefas(console):
         return
 
-    if _app_web_ativo():
-        console.print("[green]✓[/green] O app já está rodando.")
+    runtime = _garantir_front_pronto(console)
+    if runtime is None:
+        return
+
+    api_ativa = _app_web_ativo()
+    front_ativo = _front_web_ativo()
+    if api_ativa and front_ativo:
+        console.print("[green]✓[/green] API e front React já estão rodando.")
         if not webbrowser.open(APP_URL):
             console.print(f"Acesse [bold]{APP_URL}[/bold] no navegador.")
         return
 
     ambiente = _ambiente_servidor()
-    if not _aplicar_migracoes(console, ambiente):
+    if not api_ativa and not _aplicar_migracoes(console, ambiente):
         return
 
     console.print(
-        f"Subindo front + API em [bold]{APP_URL}[/bold]. O navegador abrirá automaticamente."
+        f"Subindo API em [bold]{API_URL}[/bold] e front React em "
+        f"[bold]{APP_URL}[/bold]. O navegador abrirá automaticamente."
     )
     _agendar_abertura_navegador(console)
+
+    processos: list[subprocess.Popen] = []
     try:
-        codigo = subprocess.call(
-            [sys.executable, str(MANAGE_PY), "runserver", APP_ENDERECO_PADRAO],
-            cwd=SERVIDOR,
-            env=ambiente,
-        )
-        if codigo != 0:
-            console.print(
-                f"[red]✗[/red] O servidor terminou com código {codigo}. "
-                f"Verifique se {APP_ENDERECO_PADRAO} já está sendo usado."
+        if api_ativa:
+            console.print(f"[green]✓[/green] API já ativa em [bold]{API_URL}[/bold].")
+        else:
+            processos.append(
+                subprocess.Popen(
+                    [sys.executable, str(MANAGE_PY), "runserver", API_ENDERECO_PADRAO],
+                    cwd=SERVIDOR,
+                    env=ambiente,
+                )
             )
+
+        if front_ativo:
+            console.print(f"[green]✓[/green] Front React já ativo em [bold]{APP_URL}[/bold].")
+        else:
+            processos.append(
+                subprocess.Popen(
+                    _comando_front(runtime),
+                    cwd=FRONT,
+                    env=_ambiente_front(runtime),
+                )
+            )
+
+        _aguardar_processos(console, processos)
+    except OSError as exc:
+        _encerrar_processos(processos)
+        console.print(f"[red]✗[/red] Não consegui iniciar a aplicação local: {exc}")
     except KeyboardInterrupt:
         console.print("\n[dim]Aplicação encerrada.[/dim]")
+        _encerrar_processos(processos)
 
 
 def acao_servidor(console) -> None:
-    """Subir servidor: aplica as migrações e sobe o servidor Django local."""
+    """Subir API: aplica as migrações e sobe o servidor Django local."""
 
     import questionary
 
-    console.rule("[bold]Subir servidor")
+    console.rule("[bold]Subir API Django")
 
     if not _django_disponivel():
         console.print("[yellow]•[/yellow] O Django (extra de servidor) não está instalado.")
@@ -803,7 +1068,7 @@ def acao_servidor(console) -> None:
                 return
         else:
             console.print(
-                "[dim]Sem o Django o servidor não sobe. Instale quando quiser:\n"
+                "[dim]Sem o Django a API não sobe. Instale quando quiser:\n"
                 f'  {sys.executable} -m pip install -e ".[server]"[/dim]'
             )
             return
@@ -811,7 +1076,7 @@ def acao_servidor(console) -> None:
     configurado, origem = _token_configurado()
     if not configurado:
         console.print(
-            f"[yellow]•[/yellow] Token {origem}. O servidor sobe, mas as rotas que falam "
+            f"[yellow]•[/yellow] Token {origem}. A API sobe, mas as rotas que falam "
             "com o Notion vão falhar até o token ser configurado em [bold]Configurar[/bold]."
         )
 
@@ -828,15 +1093,15 @@ def acao_servidor(console) -> None:
         return
 
     console.print(
-        f"Subindo o servidor em [bold]http://{endereco}/[/bold] — health em "
-        "[bold]/api/health[/bold]. Pressione [bold]Ctrl+C[/bold] para encerrar este servidor."
+        f"Subindo a API em [bold]http://{endereco}/[/bold] — health em "
+        "[bold]/api/health[/bold]. Pressione [bold]Ctrl+C[/bold] para encerrar este processo."
     )
     try:
         subprocess.call(
             [sys.executable, str(MANAGE_PY), "runserver", endereco], cwd=SERVIDOR, env=ambiente
         )
     except KeyboardInterrupt:
-        console.print("\n[dim]Servidor encerrado.[/dim]")
+        console.print("\n[dim]API encerrada.[/dim]")
 
 
 def acao_mcp(console) -> None:
@@ -1013,6 +1278,22 @@ def acao_status(console) -> None:
         "[green]ok[/green]" if _tui_disponivel() else "[yellow]faltando[/yellow]",
     )
     tabela.add_row(
+        "Django (API)",
+        "[green]ok[/green]" if _django_disponivel() else "[yellow]faltando[/yellow]",
+    )
+    runtime = _resolver_runtime_front()
+    if runtime is None:
+        tabela.add_row(
+            "Node do front",
+            f"[yellow]não encontrado/compatível[/yellow] (requer {NODE_VERSAO_MINIMA})",
+        )
+    else:
+        tabela.add_row("Node do front", f"[green]{runtime.versao}[/green]")
+    tabela.add_row(
+        "Deps do front",
+        "[green]ok[/green]" if _front_deps_instaladas() else "[yellow]faltando[/yellow]",
+    )
+    tabela.add_row(
         "Arquivo .env",
         "[green]existe[/green]" if ENV_FILE.exists() else "[yellow]ausente[/yellow]",
     )
@@ -1020,6 +1301,13 @@ def acao_status(console) -> None:
     tabela.add_row(
         f"Token ({TOKEN_ENV})",
         f"[green]{origem}[/green]" if configurado else f"[yellow]{origem}[/yellow]",
+    )
+    database = _valor_configurado(DATABASE_ENV)
+    tabela.add_row(
+        f"Database ({DATABASE_ENV})",
+        f"[green]configurado ({database[:8]}…)[/green]"
+        if database
+        else "[yellow]não configurado[/yellow]",
     )
 
     console.print(tabela)
@@ -1030,11 +1318,11 @@ def _acoes_menu():
 
     return {
         "tudo": (
-            "🚀  Iniciar tudo — abre front + API no navegador",
+            "🚀  Iniciar tudo — abre SPA React + API no navegador",
             acao_iniciar_tudo,
         ),
         "rodar": ("▶  Iniciar / Rodar — executa um exemplo da biblioteca", acao_rodar),
-        "servidor": ("🌐  Subir servidor — sobe a API web (Django) local", acao_servidor),
+        "servidor": ("🌐  Subir API Django — health e rotas REST locais", acao_servidor),
         "mcp": ("🔗  Subir servidor MCP — ponte para o Felixo-AI-Core", acao_mcp),
         "cli": ("⌘  CLI para IA — mostra comandos e saída JSON", acao_cli),
         "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),

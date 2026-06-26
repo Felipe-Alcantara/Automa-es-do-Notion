@@ -71,11 +71,13 @@ Pelo menu (porta de entrada única):
 python start_app.py     # → "🚀 Iniciar tudo"
 ```
 
-A opção principal usa `127.0.0.1:8000`, instala o extra de servidor se necessário,
-aplica as migrações, sobe front + API com `DJANGO_DEBUG=1` e abre o navegador
+A opção principal usa `127.0.0.1:8000` para a API Django e `127.0.0.1:5173`
+para a SPA React/Vite. Ela instala o extra de servidor se necessário, valida o
+Node do front (Vite exige Node 20.19+ ou 22.12+), instala `front/node_modules`
+quando faltar, aplica as migrações e abre o navegador no front React
 automaticamente. O menu principal permanece disponível; `Ctrl+C` encerra somente
-o app no terminal dedicado. A opção “Subir servidor” permanece para quem quiser
-escolher outro `host:porta`.
+o app no terminal dedicado. A opção “Subir API Django” permanece para quem quiser
+subir só a API ou escolher outro `host:porta`.
 
 Manualmente:
 
@@ -84,6 +86,10 @@ pip install -e ".[server]"
 cd server
 DJANGO_DEBUG=1 python manage.py migrate
 DJANGO_DEBUG=1 python manage.py runserver 127.0.0.1:8000
+
+cd ../front
+npm install
+npm run dev -- --host 127.0.0.1 --port 5173
 ```
 
 Smoke test: `GET http://127.0.0.1:8000/api/health` → `{"status": "ok", ...}`.

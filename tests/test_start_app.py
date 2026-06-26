@@ -440,10 +440,58 @@ def test_app_web_ativo_valida_health_do_projeto(monkeypatch):
     assert start_app._app_web_ativo() is True
 
 
+def test_front_web_ativo_valida_html_do_vite(monkeypatch):
+    class Resposta:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return None
+
+        def read(self):
+            return b'<div id="root"></div><script type="module" src="/src/main.jsx"></script>'
+
+    monkeypatch.setattr(start_app.urllib.request, "urlopen", lambda *args, **kwargs: Resposta())
+
+    assert start_app._front_web_ativo() is True
+
+
+def test_node_compativel_reflete_requisito_do_vite():
+    assert start_app._node_compativel((20, 18, 1)) is False
+    assert start_app._node_compativel((20, 19, 0)) is True
+    assert start_app._node_compativel((22, 11, 0)) is False
+    assert start_app._node_compativel((22, 12, 0)) is True
+    assert start_app._node_compativel((25, 9, 0)) is True
+
+
+def test_comando_front_usa_host_e_porta_padrao():
+    runtime = start_app.FrontRuntime(
+        node=start_app.Path("/usr/bin/node"),
+        npm=start_app.Path("/usr/bin/npm"),
+        versao="v22.12.0",
+    )
+
+    comando = start_app._comando_front(runtime)
+
+    assert comando == [
+        "/usr/bin/npm",
+        "run",
+        "dev",
+        "--",
+        "--host",
+        start_app.FRONT_HOST,
+        "--port",
+        start_app.FRONT_PORT,
+    ]
+
+
 def test_abre_navegador_assim_que_health_responde(monkeypatch):
     estados = iter((False, True))
     aberturas = []
     monkeypatch.setattr(start_app, "_app_web_ativo", lambda: next(estados))
+    monkeypatch.setattr(start_app, "_front_web_ativo", lambda: True)
     monkeypatch.setattr(start_app.time, "sleep", lambda intervalo: None)
     monkeypatch.setattr(
         start_app.webbrowser,
@@ -460,10 +508,23 @@ def test_abre_navegador_assim_que_health_responde(monkeypatch):
 def test_iniciar_tudo_usa_defaults_e_sobe_front_api(monkeypatch):
     chamadas = []
     agendamentos = []
+    aguardados = []
+    runtime = start_app.FrontRuntime(
+        node=start_app.Path("/usr/bin/node"),
+        npm=start_app.Path("/usr/bin/npm"),
+        versao="v22.12.0",
+    )
+
+    class Processo:
+        def poll(self):
+            return None
+
     monkeypatch.setattr(start_app, "_django_disponivel", lambda: True)
     monkeypatch.setattr(start_app, "_token_configurado", lambda: (True, ".env local"))
     monkeypatch.setattr(start_app, "_garantir_database_tarefas", lambda console: True)
     monkeypatch.setattr(start_app, "_app_web_ativo", lambda: False)
+    monkeypatch.setattr(start_app, "_front_web_ativo", lambda: False)
+    monkeypatch.setattr(start_app, "_garantir_front_pronto", lambda console: runtime)
     monkeypatch.setattr(start_app, "_ambiente_servidor", lambda: {"DJANGO_DEBUG": "1"})
     monkeypatch.setattr(start_app, "_aplicar_migracoes", lambda console, ambiente: True)
     monkeypatch.setattr(
@@ -472,19 +533,29 @@ def test_iniciar_tudo_usa_defaults_e_sobe_front_api(monkeypatch):
         lambda console: agendamentos.append(True),
     )
     monkeypatch.setattr(
+        start_app,
+        "_aguardar_processos",
+        lambda console, processos: aguardados.extend(processos),
+    )
+    monkeypatch.setattr(
         start_app.subprocess,
-        "call",
-        lambda comando, **kwargs: chamadas.append((comando, kwargs)) or 0,
+        "Popen",
+        lambda comando, **kwargs: chamadas.append((comando, kwargs)) or Processo(),
     )
     console = Console(file=io.StringIO(), force_terminal=False)
 
     start_app.acao_iniciar_tudo(console)
 
     assert agendamentos == [True]
-    comando, kwargs = chamadas[0]
-    assert comando[-2:] == ["runserver", start_app.APP_ENDERECO_PADRAO]
-    assert kwargs["cwd"] == start_app.SERVIDOR
-    assert kwargs["env"] == {"DJANGO_DEBUG": "1"}
+    assert len(chamadas) == 2
+    comando_api, kwargs_api = chamadas[0]
+    comando_front, kwargs_front = chamadas[1]
+    assert comando_api[-2:] == ["runserver", start_app.API_ENDERECO_PADRAO]
+    assert kwargs_api["cwd"] == start_app.SERVIDOR
+    assert kwargs_api["env"] == {"DJANGO_DEBUG": "1"}
+    assert comando_front == start_app._comando_front(runtime)
+    assert kwargs_front["cwd"] == start_app.FRONT
+    assert len(aguardados) == 2
 
 
 def test_iniciar_tudo_reabre_app_que_ja_esta_rodando(monkeypatch):
@@ -493,6 +564,16 @@ def test_iniciar_tudo_reabre_app_que_ja_esta_rodando(monkeypatch):
     monkeypatch.setattr(start_app, "_token_configurado", lambda: (True, ".env local"))
     monkeypatch.setattr(start_app, "_garantir_database_tarefas", lambda console: True)
     monkeypatch.setattr(start_app, "_app_web_ativo", lambda: True)
+    monkeypatch.setattr(start_app, "_front_web_ativo", lambda: True)
+    monkeypatch.setattr(
+        start_app,
+        "_garantir_front_pronto",
+        lambda console: start_app.FrontRuntime(
+            node=start_app.Path("/usr/bin/node"),
+            npm=start_app.Path("/usr/bin/npm"),
+            versao="v22.12.0",
+        ),
+    )
     monkeypatch.setattr(
         start_app.webbrowser,
         "open",
@@ -500,9 +581,9 @@ def test_iniciar_tudo_reabre_app_que_ja_esta_rodando(monkeypatch):
     )
     monkeypatch.setattr(
         start_app.subprocess,
-        "call",
+        "Popen",
         lambda *args, **kwargs: (_ for _ in ()).throw(
-            AssertionError("não deve iniciar outro servidor")
+            AssertionError("não deve iniciar outro processo")
         ),
     )
     console = Console(file=io.StringIO(), force_terminal=False)
