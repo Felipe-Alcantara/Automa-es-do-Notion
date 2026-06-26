@@ -403,12 +403,51 @@ def read_page_content(page_id: str) -> dict[str, str]:
 
     from services import conteudo as svc
 
-    def _ler() -> dict[str, str]:
+    def _ler() -> dict[str, Any]:
         page_id_normalizado = _texto_obrigatorio(page_id, "page_id")
-        markdown = svc.ler_conteudo(page_id_normalizado, cliente=_criar_notion_client())
-        return {"id": page_id_normalizado, "markdown": markdown}
+        cliente = _criar_notion_client()
+        markdown = svc.ler_conteudo(page_id_normalizado, cliente=cliente)
+        if markdown:
+            return {"id": page_id_normalizado, "markdown": markdown}
+        # Sem corpo: pode ser um database (conteudo = linhas, nao blocos).
+        linhas = svc.listar_linhas(page_id_normalizado, cliente=cliente)
+        if linhas:
+            return {
+                "id": page_id_normalizado,
+                "markdown": "",
+                "tipo": "database",
+                "aviso": "Isto e um database: use notion.list_database_rows.",
+                "linhas": linhas,
+            }
+        return {"id": page_id_normalizado, "markdown": ""}
 
     return _executar(_ler)
+
+
+@mcp.tool(name="notion.list_database_rows", annotations=_READ)
+def list_database_rows(database_id: str) -> dict[str, Any]:
+    """Lista as linhas (paginas) de um database do Notion.
+
+    Ferramenta de leitura (read) — nao modifica dados. Resolve os *data sources*
+    do database (modelo novo do Notion) e devolve as linhas normalizadas. Use
+    quando notion.read_page_content indicar que o ID e um database.
+
+    Args:
+        database_id: ID do database.
+
+    Returns:
+        Um dict com ``id`` e ``linhas`` (cada uma com id, titulo e url). A lista
+        vem vazia se o database nao tiver data source acessivel a integracao.
+    """
+
+    from services import conteudo as svc
+
+    def _listar() -> dict[str, Any]:
+        database_id_normalizado = _texto_obrigatorio(database_id, "database_id")
+        linhas = svc.listar_linhas(database_id_normalizado, cliente=_criar_notion_client())
+        return {"id": database_id_normalizado, "linhas": linhas}
+
+    return _executar(_listar)
 
 
 @mcp.tool(name="notion.append_content", annotations=_CREATE)
