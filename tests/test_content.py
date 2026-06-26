@@ -246,3 +246,91 @@ def test_versao_padrao_nao_muda_nas_rotas_antigas():
     )
     criar_client().get_database("db1")
     assert responses.calls[0].request.headers["Notion-Version"] == "2022-06-28"
+
+
+# -- Leitura recursiva (colunas, toggles, child_database) ------------------
+
+
+@responses.activate
+def test_ler_blocos_recursivo_desce_em_filhos():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/blocks/page1/children",
+        json={
+            "results": [
+                {"id": "col-list", "type": "column_list", "has_children": True},
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/blocks/col-list/children",
+        json={
+            "results": [
+                {
+                    "id": "p1",
+                    "type": "paragraph",
+                    "has_children": False,
+                    "paragraph": {"rich_text": [{"plain_text": "dentro da coluna"}]},
+                }
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
+    blocos = criar_client().ler_blocos("page1", recursivo=True)
+    assert blocos[0]["_filhos"][0]["id"] == "p1"
+
+
+@responses.activate
+def test_ler_blocos_recursivo_nao_desce_em_child_database():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/blocks/page1/children",
+        json={
+            "results": [
+                {"id": "db1", "type": "child_database", "has_children": True},
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
+    blocos = criar_client().ler_blocos("page1", recursivo=True)
+    # Não deve ter feito uma segunda chamada para descer no child_database.
+    assert "_filhos" not in blocos[0]
+    assert len(responses.calls) == 1
+
+
+def test_markdown_inclui_filhos_aninhados():
+    blocos = [
+        {
+            "type": "column_list",
+            "column_list": {},
+            "_filhos": [
+                {"type": "paragraph", "paragraph": {"rich_text": [{"plain_text": "aninhado"}]}}
+            ],
+        }
+    ]
+    assert blocos_para_markdown(blocos) == "aninhado"
+
+
+def test_markdown_child_database_mostra_titulo():
+    blocos = [{"type": "child_database", "child_database": {"title": "Tarefas"}}]
+    assert blocos_para_markdown(blocos) == "**[database: Tarefas]**"
+
+
+def test_markdown_ignora_custom_emoji_em_titulo():
+    blocos = [
+        {
+            "type": "heading_2",
+            "heading_2": {
+                "rich_text": [
+                    {"type": "mention", "mention": {"type": "custom_emoji"}, "plain_text": ":x:"},
+                    {"type": "text", "plain_text": " pessoal"},
+                ]
+            },
+        }
+    ]
+    assert blocos_para_markdown(blocos) == "## pessoal"

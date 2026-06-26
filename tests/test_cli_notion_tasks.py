@@ -211,7 +211,7 @@ class FakeClient:
         self.chamadas.append(("atualizar_pagina", (page_id, propriedades)))
         return {"id": page_id, "properties": propriedades}
 
-    def ler_blocos(self, block_id, page_size=100, buscar_todos=False):
+    def ler_blocos(self, block_id, page_size=100, buscar_todos=False, recursivo=False):
         self.chamadas.append(("ler_blocos", block_id))
         return [{"type": "paragraph", "paragraph": {"rich_text": [{"plain_text": "oi"}]}}]
 
@@ -239,7 +239,7 @@ class FakeClient:
 class FakeDatabaseClient(FakeClient):
     """Cliente onde o ID consultado é um database (blocos vazios, com linhas)."""
 
-    def ler_blocos(self, block_id, page_size=100, buscar_todos=False):
+    def ler_blocos(self, block_id, page_size=100, buscar_todos=False, recursivo=False):
         return []
 
     def listar_data_sources(self, database_id):

@@ -67,9 +67,21 @@ def _texto_de_bloco(bloco: dict[str, Any]) -> str:
     tipo = bloco.get("type", "")
     corpo = bloco.get(tipo, {})
     itens = corpo.get("rich_text", []) if isinstance(corpo, dict) else []
-    return "".join(
-        item.get("plain_text", item.get("text", {}).get("content", "")) for item in itens
-    )
+    return "".join(_texto_de_item(item) for item in itens).strip()
+
+
+def _texto_de_item(item: dict[str, Any]) -> str:
+    """Extrai o texto de um item de *rich text*, ignorando ícones decorativos.
+
+    *Custom emojis* (ícones de imagem usados em títulos) vêm como menção com
+    ``plain_text`` no formato ``:nome:`` — ruído visual, não conteúdo. São
+    descartados para o Markdown ficar legível.
+    """
+
+    mention = item.get("mention")
+    if isinstance(mention, dict) and mention.get("type") == "custom_emoji":
+        return ""
+    return item.get("plain_text", item.get("text", {}).get("content", ""))
 
 
 def markdown_para_blocos(markdown: str) -> list[dict[str, Any]]:
@@ -153,7 +165,10 @@ def blocos_para_markdown(blocos: list[dict[str, Any]]) -> str:
     """Converte blocos do Notion de volta em Markdown legível.
 
     Tipos conhecidos viram a marcação correspondente; tipos desconhecidos que
-    tenham *rich text* viram parágrafo, para nunca descartar conteúdo.
+    tenham *rich text* viram parágrafo, para nunca descartar conteúdo. Blocos
+    aninhados (a chave ``_filhos``, presente quando ``ler_blocos`` é recursivo)
+    são incluídos logo após o bloco-pai — assim o conteúdo dentro de colunas e
+    toggles não some.
 
     Args:
         blocos: Lista de blocos como retornados por ``ler_blocos``.
@@ -164,30 +179,53 @@ def blocos_para_markdown(blocos: list[dict[str, Any]]) -> str:
 
     linhas: list[str] = []
     for bloco in blocos:
-        tipo = bloco.get("type", "")
-        texto = _texto_de_bloco(bloco)
-        if tipo == "divider":
-            linhas.append("---")
-        elif tipo == "heading_1":
-            linhas.append(f"# {texto}")
-        elif tipo == "heading_2":
-            linhas.append(f"## {texto}")
-        elif tipo == "heading_3":
-            linhas.append(f"### {texto}")
-        elif tipo == "quote":
-            linhas.append(f"> {texto}")
-        elif tipo == "bulleted_list_item":
-            linhas.append(f"- {texto}")
-        elif tipo == "numbered_list_item":
-            linhas.append(f"1. {texto}")
-        elif tipo == "to_do":
-            marca = "x" if bloco.get("to_do", {}).get("checked") else " "
-            linhas.append(f"- [{marca}] {texto}")
-        elif tipo == "code":
-            lingua = bloco.get("code", {}).get("language", "")
-            linhas.append(f"```{lingua}\n{texto}\n```")
-        elif tipo in _TIPOS_TEXTO:
-            linhas.append(texto)
-        elif texto:
-            linhas.append(texto)
+        linha = _bloco_para_linha(bloco)
+        if linha is not None:
+            linhas.append(linha)
+        filhos = bloco.get("_filhos")
+        if filhos:
+            aninhado = blocos_para_markdown(filhos)
+            if aninhado:
+                linhas.append(aninhado)
     return "\n\n".join(linhas)
+
+
+def _titulo_child_database(bloco: dict[str, Any]) -> str:
+    """Título de um bloco ``child_database`` (cai para ``"(sem título)"``)."""
+
+    titulo = bloco.get("child_database", {}).get("title", "")
+    return titulo or "(sem título)"
+
+
+def _bloco_para_linha(bloco: dict[str, Any]) -> str | None:
+    """Converte um único bloco em sua linha Markdown (``None`` se vazio)."""
+
+    tipo = bloco.get("type", "")
+    texto = _texto_de_bloco(bloco)
+    if tipo == "divider":
+        return "---"
+    if tipo == "heading_1":
+        return f"# {texto}"
+    if tipo == "heading_2":
+        return f"## {texto}"
+    if tipo == "heading_3":
+        return f"### {texto}"
+    if tipo == "quote":
+        return f"> {texto}"
+    if tipo == "bulleted_list_item":
+        return f"- {texto}"
+    if tipo == "numbered_list_item":
+        return f"1. {texto}"
+    if tipo == "to_do":
+        marca = "x" if bloco.get("to_do", {}).get("checked") else " "
+        return f"- [{marca}] {texto}"
+    if tipo == "code":
+        lingua = bloco.get("code", {}).get("language", "")
+        return f"```{lingua}\n{texto}\n```"
+    if tipo == "child_database":
+        return f"**[database: {_titulo_child_database(bloco)}]**"
+    if tipo == "child_page":
+        return f"**[página: {bloco.get('child_page', {}).get('title', '') or '(sem título)'}]**"
+    if tipo in _TIPOS_TEXTO:
+        return texto or None
+    return texto or None

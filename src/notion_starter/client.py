@@ -786,6 +786,7 @@ class NotionClient:
         block_id: str,
         page_size: int = 100,
         buscar_todos: bool = False,
+        recursivo: bool = False,
     ) -> list[dict[str, Any]]:
         """Lê os blocos filhos de uma página ou bloco, com paginação.
 
@@ -798,9 +799,14 @@ class NotionClient:
             block_id: ID da página ou do bloco pai.
             page_size: Quantidade de blocos por página da API.
             buscar_todos: Quando verdadeiro, percorre toda a paginação.
+            recursivo: Quando verdadeiro, desce nos blocos que têm filhos
+                (colunas, toggles, blocos sincronizados…) e os aninha sob a
+                chave ``_filhos`` de cada bloco-pai. Sem ele, lê só um nível —
+                o conteúdo dentro de colunas/toggles fica invisível.
 
         Returns:
-            A lista de blocos filhos retornados pela API.
+            A lista de blocos filhos retornados pela API. Com ``recursivo``,
+            cada bloco que tem filhos ganha a chave ``_filhos`` com a sublista.
 
         Raises:
             NotionConfigurationError: Se ``block_id`` for inválido.
@@ -832,6 +838,18 @@ class NotionClient:
             cursor = data.get("next_cursor")
             if not cursor:
                 break
+
+        if recursivo:
+            for bloco in resultados:
+                # ``child_database`` "tem filhos" (as linhas), mas elas não são
+                # blocos — são lidas por consultar_data_source. Não descemos nele.
+                if bloco.get("has_children") and bloco.get("type") != "child_database":
+                    bloco["_filhos"] = self.ler_blocos(
+                        bloco["id"],
+                        page_size=page_size,
+                        buscar_todos=buscar_todos,
+                        recursivo=True,
+                    )
 
         return resultados
 
