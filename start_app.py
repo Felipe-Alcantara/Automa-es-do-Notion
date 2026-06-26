@@ -1198,7 +1198,9 @@ def acao_cli(console) -> None:
     console.print(
         "\n[dim]Exemplo JSON:[/dim]\n"
         f"  {sys.executable} -m cli --json listar\n"
-        f'  {sys.executable} -m cli --json criar "Nova tarefa" --status "Entrada"'
+        f'  {sys.executable} -m cli --json criar "Nova tarefa" --status "Entrada"\n'
+        f'  {sys.executable} -m cli --json buscar "nota"\n'
+        f"  {sys.executable} -m cli --json conteudo <page_id>"
     )
 
 

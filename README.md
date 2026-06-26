@@ -136,13 +136,16 @@ notion-starter-boilerplate/
 - **IA copiloto** — camada de IA plugável (OpenRouter) para linguagem natural →
   operações de tasklist. Sugere ações, pessoa confirma antes de escrever.
 - **CLI para IA** — `python -m cli` lista, lê, cria, edita, move, conclui,
-  mapeia e escolhe database usando os mesmos `services/` da API/MCP. Use
-  `--json` para saída estruturada estável.
+  mapeia e escolhe database; e ainda **pesquisa, lê, escreve, edita e apaga o
+  conteúdo** das páginas (em Markdown), usando os mesmos `services/` da API/MCP.
+  Use `--json` para saída estruturada estável.
 - **Servidor MCP** — expõe `notion.list_tasks`, `notion.create_task`,
-  `notion.move_status`, `notion.conclude_task` e `notion.update_project_page` como
-  invólucros dos casos de uso. Escritas são anotadas para confirmação; a política
-  obrigatória fica no catálogo do host Felixo-AI-Core. Instale com
-  `pip install -e ".[mcp]"`.
+  `notion.move_status`, `notion.conclude_task`, `notion.update_project_page` e as
+  ferramentas de conteúdo (`notion.search`, `notion.read_page_content`,
+  `notion.append_content`, `notion.edit_block`, `notion.delete_block`) como
+  invólucros dos casos de uso. Escritas são anotadas para confirmação e o delete
+  é destrutivo (`destructiveHint`); a política obrigatória fica no catálogo do
+  host Felixo-AI-Core. Instale com `pip install -e ".[mcp]"`.
 - **Logging opcional**; silencioso por padrão (`NullHandler`, amigável a bibliotecas).
 - **Exemplos executáveis**, testes com HTTP mockado, CI e um menu de entrada — a base
   para você só adicionar a lógica do seu projeto.
@@ -211,7 +214,18 @@ python -m cli --json databases
 python -m cli --json escolher-database <database_id>
 python -m cli --json normalizar-nomes --dry-run
 python -m cli --json mapear
+
+# Conteúdo das páginas (corpo, não só propriedades)
+python -m cli --json buscar "nota de reunião"
+python -m cli --json conteudo <page_id>
+python -m cli --json escrever <page_id> $'# Resumo\n\n- ponto um\n- ponto dois'
+python -m cli --json editar-bloco <block_id> "## Novo título"
+python -m cli --json apagar-bloco <block_id> --sim   # destrutivo: exige --sim
 ```
+
+Os comandos de conteúdo dão à IA acesso ao **corpo** das páginas (em Markdown),
+para qualquer página visível à integração — pesquisar, ler, escrever, editar e
+apagar. `apagar-bloco` é destrutivo e só executa com `--sim`.
 
 O envelope JSON é sempre `{ "ok": true, "dados": ... }` em sucesso e
 `{ "ok": false, "erro": { "mensagem": ... } }` em erro. A CLI lê `NOTION_TOKEN`
