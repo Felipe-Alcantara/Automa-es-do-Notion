@@ -50,9 +50,13 @@ def ler_conteudo(
 
     Returns:
         O conteúdo da página em Markdown (``""`` se a página não tiver corpo).
+        Lê em profundidade: desce em colunas, toggles e blocos sincronizados,
+        para que o conteúdo aninhado não fique de fora.
     """
 
-    blocos = (cliente or _cliente_padrao()).ler_blocos(page_id, buscar_todos=True)
+    blocos = (cliente or _cliente_padrao()).ler_blocos(
+        page_id, buscar_todos=True, recursivo=True
+    )
     return blocos_para_markdown(blocos)
 
 

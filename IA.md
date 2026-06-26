@@ -228,10 +228,21 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   porque **não está compartilhado** com a integração — é config no Notion, não
   bug. +13 testes; suíte e ruff verdes.
 
+- [2026-06-26] ✅ **Leitura recursiva de conteúdo** — testando a Home real,
+  vimos que `conteudo` lia só um nível: os databases dentro de `column_list` e o
+  conteúdo de toggles ficavam invisíveis (a Home tinha 7 databases, mas só 3
+  apareciam). Agora `ler_blocos(..., recursivo=True)` desce nos blocos com filhos
+  (colunas, toggles, blocos sincronizados) e os aninha sob `_filhos`; o conversor
+  inclui os filhos e marca databases embutidos como `**[database: Nome]**`.
+  `ler_conteudo` passou a ler em profundidade por padrão. Bônus: *custom emojis*
+  em títulos (que vinham como `:hash:`) são descartados do Markdown. Validado na
+  Home real (7 databases, incl. Estudo/Trabalho/Arquivos/Observações diárias
+  dentro de colunas, e a playlist do toggle). +5 testes; suíte e ruff verdes.
+
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
-mais tipos de bloco no conversor Markdown (tabelas, blocos aninhados/toggle),
-escrita de linhas em data sources, mais exemplos de "Iniciar/Rodar" por fonte
-de dados (banco, API, planilha).
+mais tipos de bloco no conversor Markdown (tabelas), escrita de linhas em data
+sources, mais exemplos de "Iniciar/Rodar" por fonte de dados (banco, API,
+planilha).
 
 ---
 
