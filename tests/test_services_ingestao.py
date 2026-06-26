@@ -159,9 +159,7 @@ def test_ingerir_cria_pagina_quando_origem_nao_existe():
         json=_pagina_resposta("p1"),
         status=200,
     )
-    fonte = _FonteFixa(
-        [ItemColetado(nome="item1", tipo_fonte="teste", origem="o1")]
-    )
+    fonte = _FonteFixa([ItemColetado(nome="item1", tipo_fonte="teste", origem="o1")])
     resultado = ingerir(
         fonte,
         client=NotionClient(token=TOKEN),
@@ -186,9 +184,7 @@ def test_ingerir_atualiza_pagina_existente_por_origem():
         json=_pagina_resposta("existente"),
         status=200,
     )
-    fonte = _FonteFixa(
-        [ItemColetado(nome="item1", tipo_fonte="teste", origem="o1")]
-    )
+    fonte = _FonteFixa([ItemColetado(nome="item1", tipo_fonte="teste", origem="o1")])
     resultado = ingerir(
         fonte,
         client=NotionClient(token=TOKEN),

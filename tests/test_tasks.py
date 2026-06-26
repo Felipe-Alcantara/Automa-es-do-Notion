@@ -38,8 +38,12 @@ def pagina_tarefa(id_, nome, status=None, prazo=None, duracao=None, areas=None):
 def test_tarefa_de_pagina_extrai_campos():
     t = tarefa_de_pagina(
         pagina_tarefa(
-            "t1", "Estudar", "00. Inbox", "2026-07-01",
-            duracao="Dias", areas=["area-1"],
+            "t1",
+            "Estudar",
+            "00. Inbox",
+            "2026-07-01",
+            duracao="Dias",
+            areas=["area-1"],
         ),
         CamposTarefa(),
     )
@@ -179,9 +183,7 @@ def test_editar_envia_campos_parciais():
         json=pagina_tarefa("t1", "Renomeada", "02. ASAP", duracao="Poucas horas"),
         status=200,
     )
-    t = criar_tasklist().editar(
-        "t1", nome="Renomeada", status="02. ASAP", duracao="Poucas horas"
-    )
+    t = criar_tasklist().editar("t1", nome="Renomeada", status="02. ASAP", duracao="Poucas horas")
     corpo = json.loads(responses.calls[0].request.body)
     assert corpo["properties"]["Nome"]["title"][0]["text"]["content"] == "Renomeada"
     assert corpo["properties"]["Status"]["status"]["name"] == "02. ASAP"

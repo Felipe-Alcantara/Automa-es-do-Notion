@@ -23,9 +23,7 @@ class Job(models.Model):
         FALHOU = "falhou", "Falhou"
 
     tipo = models.CharField(max_length=64, help_text="Categoria do job, ex.: 'sync_github'.")
-    status = models.CharField(
-        max_length=16, choices=Status.choices, default=Status.PENDENTE
-    )
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDENTE)
     payload = models.JSONField(default=dict, blank=True, help_text="Parâmetros do job.")
     resultado = models.JSONField(null=True, blank=True, help_text="Saída ou erro do job.")
     criado_em = models.DateTimeField(auto_now_add=True)

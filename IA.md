@@ -326,6 +326,10 @@ suporte a blocos, mais exemplos de "Iniciar/Rodar" por fonte de dados
 
 ## 📝 NOTAS GERAIS
 
+- [2026-06-26] `mapa.json` e `mapa.html` são artefatos gerados localmente pelos
+  exemplos de mapeamento do workspace. Não devem ser versionados, porque podem conter
+  URLs/títulos reais de páginas do Notion; gere novamente com `python start_app.py` ou
+  pelos scripts em `examples/`.
 - [2026-06-24] A pasta `Padrão de qualidade - Felixo System Design/` é referência de
   padrões e está no `.gitignore`; não faz parte do pacote distribuído.
 - [2026-06-24] O projeto tem exemplos executáveis, então o `start_app.py` se aplica

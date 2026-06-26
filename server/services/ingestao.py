@@ -79,9 +79,7 @@ class FonteArquivos:
             raise ValueError("max_caracteres não pode ser negativo.")
         self._pasta = Path(pasta)
         self._extensoes = (
-            {self._normalizar_extensao(ext) for ext in extensoes}
-            if extensoes is not None
-            else None
+            {self._normalizar_extensao(ext) for ext in extensoes} if extensoes is not None else None
         )
         self._recursivo = recursivo
         self._max_caracteres = max_caracteres

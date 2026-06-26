@@ -50,13 +50,19 @@ class ProvedorMock:
 
 
 def _provedor_json(
-    operacao: str, parametros: dict | None = None, descricao: str = "",
+    operacao: str,
+    parametros: dict | None = None,
+    descricao: str = "",
 ) -> ProvedorMock:
-    return ProvedorMock(json.dumps({
-        "operacao": operacao,
-        "parametros": parametros or {},
-        "descricao": descricao,
-    }))
+    return ProvedorMock(
+        json.dumps(
+            {
+                "operacao": operacao,
+                "parametros": parametros or {},
+                "descricao": descricao,
+            }
+        )
+    )
 
 
 def test_provedor_mock_implementa_protocolo():
@@ -88,7 +94,8 @@ def _pagina(id_, nome, status=None, prazo=None):
 
 def test_interpretar_criar_tarefa():
     prov = _provedor_json(
-        "criar_tarefa", {"nome": "Estudar IA", "prazo": "2026-07-01"},
+        "criar_tarefa",
+        {"nome": "Estudar IA", "prazo": "2026-07-01"},
         "Criar tarefa 'Estudar IA'",
     )
     acao = interpretar_comando("cria tarefa pra estudar IA", provedor=prov)

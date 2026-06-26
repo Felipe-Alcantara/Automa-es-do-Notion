@@ -166,8 +166,7 @@ def carregar_modelos(
         if em_cache:
             return em_cache
         raise CatalogoErro(
-            "não foi possível obter a lista de modelos do OpenRouter "
-            f"(sem rede e sem cache): {exc}"
+            f"não foi possível obter a lista de modelos do OpenRouter (sem rede e sem cache): {exc}"
         ) from exc
 
 
@@ -253,9 +252,7 @@ class ProvedorOpenRouter:
                 f"OpenRouter retornou HTTP {code} para o modelo {modelo_id}."
             ) from exc
         except http.RequestException as exc:
-            raise ProvedorErro(
-                f"falha de rede ao chamar o OpenRouter: {exc}"
-            ) from exc
+            raise ProvedorErro(f"falha de rede ao chamar o OpenRouter: {exc}") from exc
 
         return _extrair_resposta(resp.json())
 
@@ -282,8 +279,7 @@ def _resolver_chave() -> str:
             pass
     if not chave:
         raise ProvedorErro(
-            "OPENROUTER_API_KEY não configurada. Defina a variável de ambiente "
-            "ou adicione ao .env."
+            "OPENROUTER_API_KEY não configurada. Defina a variável de ambiente ou adicione ao .env."
         )
     return chave
 

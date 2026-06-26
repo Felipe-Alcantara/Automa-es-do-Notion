@@ -116,9 +116,7 @@ def sincronizar(
 
         notion_client = criar_cliente()
 
-    db_projetos = database_projetos_id or os.environ.get(
-        "NOTION_PROJECTS_DATABASE_ID", ""
-    ).strip()
+    db_projetos = database_projetos_id or os.environ.get("NOTION_PROJECTS_DATABASE_ID", "").strip()
     if not db_projetos:
         raise ValueError(
             "database_projetos_id é obrigatório. Passe como argumento ou defina "
@@ -126,9 +124,7 @@ def sincronizar(
         )
 
     if tasklist is None:
-        db_tarefas = database_tarefas_id or os.environ.get(
-            "NOTION_DATABASE_ID", ""
-        ).strip()
+        db_tarefas = database_tarefas_id or os.environ.get("NOTION_DATABASE_ID", "").strip()
         if not db_tarefas:
             raise ValueError(
                 "database_tarefas_id é obrigatório. Passe como argumento ou defina "

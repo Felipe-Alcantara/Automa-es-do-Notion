@@ -253,11 +253,7 @@ class GitHubClient:
             accept=accept,
             aceitar_404=aceitar_404,
         )
-        return (
-            response.content.decode("utf-8", errors="replace")
-            if response is not None
-            else None
-        )
+        return response.content.decode("utf-8", errors="replace") if response is not None else None
 
     def _calcular_espera(self, response: requests.Response, tentativa: int) -> float:
         retry_after = response.headers.get("Retry-After")
