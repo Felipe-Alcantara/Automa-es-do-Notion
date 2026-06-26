@@ -92,6 +92,25 @@ def test_get_tarefas_filtra_por_status(client):
 
 
 @responses.activate
+def test_get_tarefas_filtra_por_status_duracao_e_area(client):
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/{DB}/query",
+        json={"results": [], "has_more": False},
+        status=200,
+    )
+    client.get("/api/tarefas", {"status": "00. Inbox", "duracao": "Dias", "area": "a1"})
+    corpo = json.loads(responses.calls[0].request.body)
+    assert corpo["filter"] == {
+        "and": [
+            {"property": "Status", "status": {"equals": "00. Inbox"}},
+            {"property": "Duração", "status": {"equals": "Dias"}},
+            {"property": "Áreas-da-Vida", "relation": {"contains": "a1"}},
+        ]
+    }
+
+
+@responses.activate
 def test_post_tarefa_cria(client):
     responses.add(
         responses.POST,

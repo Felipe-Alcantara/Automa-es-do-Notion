@@ -1,9 +1,8 @@
 /**
  * API client para o backend Django (CONTRATOS.md §2).
  *
- * Quando o backend não está disponível (Frente A em andamento), usa dados
- * mock que seguem o contrato. O modo mock é ativado automaticamente quando
- * o fetch falha, ou forçado via VITE_MOCK_API=true.
+ * Em uso normal, toda leitura/escrita passa pela API Django, que usa o Notion
+ * como fonte de verdade. O mock só é usado quando VITE_MOCK_API=true.
  */
 
 const USE_MOCK = import.meta.env.VITE_MOCK_API === 'true'
@@ -106,7 +105,6 @@ async function request(path, options = {}) {
   } catch (error) {
     const apiError = new Error('Backend indisponivel.')
     apiError.cause = error
-    apiError.fallbackToMock = true
     throw apiError
   }
   const data = await res.json()
@@ -114,7 +112,6 @@ async function request(path, options = {}) {
     const msg = data?.erro?.mensagem ?? `Erro ${res.status}`
     const error = new Error(msg)
     error.status = res.status
-    error.fallbackToMock = res.status === 404 || res.status === 501
     throw error
   }
   return data
@@ -123,10 +120,12 @@ async function request(path, options = {}) {
 // ─── Mock implementations ────────────────────────────────────────────────
 
 const mockApi = {
-  async listarTarefas(status) {
+  async listarTarefas(filtros = {}) {
     await delay(300)
     let list = [...MOCK_TAREFAS]
-    if (status) list = list.filter((t) => t.status === status)
+    if (filtros.status) list = list.filter((t) => t.status === filtros.status)
+    if (filtros.duracao) list = list.filter((t) => t.duracao === filtros.duracao)
+    if (filtros.area) list = list.filter((t) => (t.areas ?? []).includes(filtros.area))
     return { tarefas: list }
   },
 
@@ -175,9 +174,13 @@ function delay(ms) {
 // ─── Real API ────────────────────────────────────────────────────────────
 
 const realApi = {
-  async listarTarefas(status) {
-    const qs = status ? `?status=${encodeURIComponent(status)}` : ''
-    return request(`/api/tarefas${qs}`)
+  async listarTarefas(filtros = {}) {
+    const qs = new URLSearchParams()
+    if (filtros.status) qs.set('status', filtros.status)
+    if (filtros.duracao) qs.set('duracao', filtros.duracao)
+    if (filtros.area) qs.set('area', filtros.area)
+    const query = qs.toString()
+    return request(`/api/tarefas${query ? `?${query}` : ''}`)
   },
 
   async criarTarefa(body) {
@@ -199,26 +202,15 @@ const realApi = {
   },
 }
 
-// ─── Exported API (mock fallback) ────────────────────────────────────────
+// ─── Exported API (mock explícito) ────────────────────────────────────────
 
-function withFallback(fn, mockFn) {
-  if (USE_MOCK) return mockFn
-  return async (...args) => {
-    try {
-      return await fn(...args)
-    } catch (error) {
-      if (error.fallbackToMock) {
-        console.warn('[api] Backend indisponivel ou contrato v2 ausente, usando mock')
-        return mockFn(...args)
-      }
-      throw error
-    }
-  }
+function escolherApi(fn, mockFn) {
+  return USE_MOCK ? mockFn : fn
 }
 
 export const api = {
-  listarTarefas: withFallback(realApi.listarTarefas, mockApi.listarTarefas),
-  criarTarefa: withFallback(realApi.criarTarefa, mockApi.criarTarefa),
-  editarTarefa: withFallback(realApi.editarTarefa, mockApi.editarTarefa),
-  opcoes: withFallback(realApi.opcoes, mockApi.opcoes),
+  listarTarefas: escolherApi(realApi.listarTarefas, mockApi.listarTarefas),
+  criarTarefa: escolherApi(realApi.criarTarefa, mockApi.criarTarefa),
+  editarTarefa: escolherApi(realApi.editarTarefa, mockApi.editarTarefa),
+  opcoes: escolherApi(realApi.opcoes, mockApi.opcoes),
 }

@@ -178,8 +178,10 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   visualizações grade/lista/kanban, busca, filtros persistentes por status/duração/área,
   ordenação, modais de criar/editar e estados de carregando/vazio/erro. O client consome
   `GET /api/tarefas`, `POST /api/tarefas`, `PATCH /api/tarefas/{id}` e `GET /api/opcoes`
-  conforme `docs/CONTRATOS.md`, com fallback mockado enquanto a API v2 da Frente A não
-  fecha. Documentação viva em `front/README.md`; validação: `npm run lint`,
+  conforme `docs/CONTRATOS.md`. Atualização posterior: mock do front só roda com
+  `VITE_MOCK_API=true`; em uso normal, falha de API/Notion aparece como erro. Filtros de
+  status/duração/área descem por API/CLI até a query do Notion; busca textual e ordenação
+  ficam no navegador. Documentação viva em `front/README.md`; validação: `npm run lint`,
   `npm run build` e smoke HTTP do Vite em `http://127.0.0.1:5174/`.
 - [2026-06-26] ✅ **Agente C (CLI para IA)** — CLI em `cli/` entregue como borda fina
   sobre `server/services/tarefas.py`, irmã do MCP: `python -m cli` suporta

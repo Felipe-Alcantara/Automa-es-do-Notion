@@ -7,6 +7,7 @@ depender de rede, token do Notion ou execução de JavaScript no navegador.
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
 
@@ -45,3 +46,21 @@ def test_css_preserva_elementos_ocultos():
 
     assert caminho is not None
     assert "[hidden]" in open(caminho, encoding="utf-8").read()
+
+
+def test_spa_usa_mock_somente_quando_variavel_explicitamente_ativa():
+    client_js = Path(__file__).resolve().parents[1] / "front" / "src" / "api" / "client.js"
+    codigo = client_js.read_text(encoding="utf-8")
+
+    assert "VITE_MOCK_API === 'true'" in codigo
+    assert "fallbackToMock" not in codigo
+    assert "Backend indisponivel ou contrato v2 ausente, usando mock" not in codigo
+
+
+def test_spa_envia_filtros_de_propriedade_para_api():
+    client_js = Path(__file__).resolve().parents[1] / "front" / "src" / "api" / "client.js"
+    codigo = client_js.read_text(encoding="utf-8")
+
+    assert "qs.set('status', filtros.status)" in codigo
+    assert "qs.set('duracao', filtros.duracao)" in codigo
+    assert "qs.set('area', filtros.area)" in codigo

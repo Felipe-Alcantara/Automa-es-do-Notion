@@ -73,7 +73,11 @@ function App() {
   const [uiState, setUiState] = useState(carregarEstadoInicial)
   const [modalAberto, setModalAberto] = useState(false)
   const [tarefaSelecionada, setTarefaSelecionada] = useState(null)
-  const { tarefas, carregando, erro, carregar, criar, editar } = useTarefas()
+  const { tarefas, carregando, erro, carregar, criar, editar } = useTarefas({
+    status: uiState.statusFiltro,
+    duracao: uiState.duracaoFiltro,
+    area: uiState.areaFiltro,
+  })
   const { opcoes, erro: erroOpcoes } = useOpcoes()
 
   const atualizarUiState = (campo, valor) => {

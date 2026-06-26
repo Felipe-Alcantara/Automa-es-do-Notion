@@ -170,7 +170,12 @@ def _salvar_database_env(database_id: str, env_file: Path = RAIZ / ".env") -> No
 
 
 def cmd_listar(args: argparse.Namespace, *, tasklist_factory: TaskListFactory) -> Any:
-    tarefas = svc.listar_tarefas(status=_normalizar_texto(args.status), tasklist=tasklist_factory())
+    tarefas = svc.listar_tarefas(
+        status=_normalizar_texto(args.status),
+        duracao=_normalizar_texto(args.duracao),
+        areas=_lista_csv(args.area),
+        tasklist=tasklist_factory(),
+    )
     return [_tarefa_dict(tarefa) for tarefa in tarefas]
 
 
@@ -286,6 +291,8 @@ def construir_parser() -> argparse.ArgumentParser:
 
     listar = sub.add_parser("listar", help="lista tarefas")
     listar.add_argument("--status")
+    listar.add_argument("--duracao")
+    listar.add_argument("--area", action="append", help="ID de área; aceita CSV e repetição")
 
     ler = sub.add_parser("ler", help="lê uma tarefa pelo ID")
     ler.add_argument("task_id")

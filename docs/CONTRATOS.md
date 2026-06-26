@@ -102,9 +102,14 @@ delegação para `services`); a regra de negócio fica nos casos de uso
 
 ### `GET /api/tarefas` — listar
 
-Lista as tarefas, com filtro opcional por status.
+Lista as tarefas. Os filtros opcionais são aplicados na consulta ao Notion, não só no
+front, para o database real continuar sendo a fonte de verdade.
 
-- **Query string**: `status` (opcional) — filtra por nome de status.
+- **Query string**:
+  - `status` (opcional) — filtra por nome de status.
+  - `duracao` (opcional) — filtra por nome da coluna de duração/esforço.
+  - `area` (opcional, repetível ou CSV) — filtra por IDs relacionados em
+    `Áreas-da-Vida`.
 - **200 OK**:
 
 ```json

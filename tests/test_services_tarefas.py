@@ -65,6 +65,30 @@ def test_listar_tarefas_filtra_por_status():
 
 
 @responses.activate
+def test_listar_tarefas_repassa_filtros_amplos():
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/{DB}/query",
+        json={"results": [], "has_more": False},
+        status=200,
+    )
+    svc.listar_tarefas(
+        status="00. Inbox",
+        duracao="Dias",
+        areas=["a1"],
+        tasklist=_tasklist(),
+    )
+    corpo = json.loads(responses.calls[0].request.body)
+    assert corpo["filter"] == {
+        "and": [
+            {"property": "Status", "status": {"equals": "00. Inbox"}},
+            {"property": "Duração", "status": {"equals": "Dias"}},
+            {"property": "Áreas-da-Vida", "relation": {"contains": "a1"}},
+        ]
+    }
+
+
+@responses.activate
 def test_criar_tarefa_devolve_tarefa_criada():
     responses.add(
         responses.POST,

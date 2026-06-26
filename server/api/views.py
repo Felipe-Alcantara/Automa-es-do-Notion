@@ -3,7 +3,7 @@
 Sem regra de negócio aqui (isso vive em ``services``) nem formato cru do Notion
 (isso é do ``notion_starter``). O contrato das rotas segue ``docs/CONTRATOS.md``:
 
-    GET   /api/tarefas[?status=<nome>]    lista (filtro opcional por status)
+    GET   /api/tarefas[?status=<nome>&duracao=<nome>&area=<id>] lista (filtros opcionais)
     POST  /api/tarefas                    cria  {nome, status?, prazo?, duracao?, areas?}  -> 201
     PATCH /api/tarefas/<id>               edita {nome?, status?, prazo?, duracao?, areas?} -> 200
     GET   /api/opcoes                     valores para seletores                          -> 200
@@ -60,6 +60,15 @@ def _lista_de_strings(valor: Any, campo: str) -> list[str] | None:
     return valor
 
 
+def _lista_query(request: HttpRequest, campo: str) -> list[str] | None:
+    """Lê parâmetros repetidos ou CSV da query string."""
+
+    valores: list[str] = []
+    for bruto in request.GET.getlist(campo):
+        valores.extend(item.strip() for item in bruto.split(",") if item.strip())
+    return valores or None
+
+
 def _texto_opcional(dados: dict[str, Any], campo: str) -> str | None:
     """Normaliza um campo textual opcional, preservando ausência real."""
 
@@ -105,7 +114,11 @@ def tarefas(request: HttpRequest) -> JsonResponse:
     if request.method == "GET":
 
         def _listar() -> JsonResponse:
-            itens = svc.listar_tarefas(status=request.GET.get("status") or None)
+            itens = svc.listar_tarefas(
+                status=request.GET.get("status") or None,
+                duracao=request.GET.get("duracao") or None,
+                areas=_lista_query(request, "area"),
+            )
             return JsonResponse({"tarefas": [tarefa_para_dict(t) for t in itens]})
 
         return _responder(_listar)
