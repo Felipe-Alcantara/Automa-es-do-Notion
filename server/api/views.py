@@ -172,3 +172,31 @@ def opcoes(_request: HttpRequest) -> JsonResponse:
         return JsonResponse(svc.listar_opcoes())
 
     return _responder(_listar_opcoes)
+
+
+@require_http_methods(["GET"])
+def databases(request: HttpRequest) -> JsonResponse:
+    """Lista os databases visíveis à integração (modo exploração, read-only)."""
+
+    from services import exploracao
+
+    def _listar() -> JsonResponse:
+        query = request.GET.get("query") or None
+        itens = exploracao.listar_databases(query)
+        return JsonResponse({"databases": itens})
+
+    return _responder(_listar)
+
+
+@require_http_methods(["GET"])
+def database_detalhe(request: HttpRequest, database_id: str) -> JsonResponse:
+    """Descreve um database genérico: colunas + linhas como texto (read-only)."""
+
+    from services import exploracao
+
+    def _descrever() -> JsonResponse:
+        if not database_id.strip():
+            raise ValueError("database_id é obrigatório")
+        return JsonResponse(exploracao.descrever_database(database_id.strip()))
+
+    return _responder(_descrever)
