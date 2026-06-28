@@ -650,6 +650,74 @@ class NotionClient:
             version=NOTION_DATA_SOURCE_VERSION,
         )
 
+    def atualizar_data_source(
+        self,
+        data_source_id: str,
+        *,
+        propriedades: dict[str, dict[str, object]],
+    ) -> dict[str, Any]:
+        """Atualiza o schema (propriedades) de um *data source*.
+
+        No modelo novo do Notion as colunas vivem no *data source*, não no
+        database. Criar/alterar propriedades — inclusive opções de ``status``,
+        ``select`` e alvos de ``relation`` — exige a versão 2025-09-03 e o
+        endpoint ``PATCH /data_sources/{id}``.
+
+        Args:
+            data_source_id: ID da fonte de dados.
+            propriedades: Alterações de schema por propriedade.
+
+        Returns:
+            O objeto ``data_source`` atualizado, com ``properties``.
+
+        Raises:
+            NotionConfigurationError: Se ``data_source_id`` for inválido.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(data_source_id, "data_source_id")
+        return self._request_json(
+            method="PATCH",
+            path=f"/data_sources/{limpo}",
+            payload={"properties": propriedades},
+            idempotente=True,
+            version=NOTION_DATA_SOURCE_VERSION,
+        )
+
+    def criar_pagina_em_fonte(
+        self,
+        data_source_id: str,
+        propriedades: dict[str, dict[str, object]],
+    ) -> dict[str, Any]:
+        """Cria uma página (linha) dentro de um *data source*.
+
+        Equivalente de ``criar_pagina`` para o modelo novo: o ``parent`` passa
+        a ser ``data_source_id`` em vez de ``database_id``.
+
+        Args:
+            data_source_id: ID da fonte de dados de destino.
+            propriedades: Propriedades da nova página.
+
+        Returns:
+            A resposta JSON da página criada.
+
+        Raises:
+            NotionConfigurationError: Se ``data_source_id`` for inválido.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(data_source_id, "data_source_id")
+        return self._request_json(
+            method="POST",
+            path="/pages",
+            payload={
+                "parent": {"type": "data_source_id", "data_source_id": limpo},
+                "properties": propriedades,
+            },
+            idempotente=False,
+            version=NOTION_DATA_SOURCE_VERSION,
+        )
+
     def consultar_data_source(
         self,
         data_source_id: str,

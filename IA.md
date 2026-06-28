@@ -475,3 +475,25 @@ e usar `Origem`/URL/título da tarefa como chaves de reconciliação. Repositór
 só entram quando o token pertence ao usuário consultado.
 VALIDAÇÃO: 52 testes focados verdes, `ruff` limpo, compileall e diff-check; commit
 `d643894`. Guia operacional em `docs/INTEGRACOES.md`.
+
+[2026-06-28] CONTEXTO: Database "todolist" da HOME do usuário aparecia linkado a um
+database da Vitis Souls (Tasks/AI Core), misturando tarefas pessoais, da Vitis e da LM
+Consultoria. A casca embutida na HOME estava sem título ("Untitled") e vazia; as 15
+tarefas reais moravam numa fonte única compartilhada. Necessidade: um database pessoal
+isolado, com as MESMAS propriedades da origem, sem vínculo com a Vitis.
+ALTERNATIVAS: (a) separar linhas na UI (preserva tudo, manual); (b) copiar linhas por
+código (perde vínculos); (c) automatizar a clonagem de schema+linhas num comando.
+DECISÃO: Criar `services/clonagem.clonar_database` + comando CLI `clonar-database` e tool
+MCP `notion.clone_database`. Fluxo do modelo novo: cria database com a propriedade title
+(o data source exige uma), faz PATCH no data source com o schema completo, e cria linhas
+com parent `data_source_id`. Relações auto-referentes (apontavam para a própria fonte)
+viram auto-relações do clone; relações externas (ex.: "Áreas da vida") são preservadas;
+`status`/`select` recriam opções; campos automáticos (created_time, rollup, formula…)
+não recebem valor ao copiar. Novos métodos no client: `atualizar_data_source` e
+`criar_pagina_em_fonte`, ambos na versão 2025-09-03.
+VALIDAÇÃO: 375 testes verdes (test_services_clonagem com 13 casos cobrindo auto vs
+externa, status, cópia de linhas e erros; +CLI/MCP/client), ruff limpo, e teste real
+contra o workspace (clone com as 14 propriedades idênticas, relações corretas, depois
+arquivado). LIÇÃO: nunca apagar database da HOME sem confirmação visual — leitura "vazia"
+pode ser view linkada; e validar diagnóstico antes de afirmar (as relações eram da home,
+não da Vitis).

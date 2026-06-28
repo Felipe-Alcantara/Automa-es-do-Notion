@@ -25,6 +25,7 @@ from mcp_server import (
     _resolver_transporte,
     _tarefa_dict,
     append_content,
+    clone_database,
     conclude_task,
     create_task,
     delete_block,
@@ -137,6 +138,11 @@ class TestAnotacoesMCP:
         assert ann.destructiveHint is True
         assert ann.openWorldHint is True
 
+    def test_clone_database_e_write_nao_destrutivo(self):
+        ann = self._tools()["notion.clone_database"].annotations
+        assert ann.readOnlyHint is False
+        assert ann.destructiveHint is False
+
     def test_superficie_publica_tem_namespace_notion(self):
         assert set(self._tools()) == {
             "notion.list_tasks",
@@ -150,6 +156,7 @@ class TestAnotacoesMCP:
             "notion.edit_block",
             "notion.delete_block",
             "notion.list_database_rows",
+            "notion.clone_database",
         }
 
 
@@ -650,3 +657,50 @@ class TestDataSources:
             resultado = read_page_content(page_id="db1")
         assert resultado["tipo"] == "database"
         assert resultado["linhas"][0]["id"] == "r1"
+
+    @responses.activate
+    def test_clone_database_cria_e_aplica_schema(self):
+        # origem: GET database -> 1 fonte; GET data source -> schema
+        responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/databases/db1",
+            json={"data_sources": [{"id": "ds_origem", "name": "Origem"}]},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/data_sources/ds_origem",
+            json={
+                "properties": {
+                    "Tarefa": {"type": "title", "title": {}},
+                    "Etapa": {"type": "status", "status": {"options": [{"name": "Entrada"}]}},
+                },
+                "parent": {"type": "page_id", "page_id": "pagina_pai"},
+            },
+            status=200,
+        )
+        # cria database -> clone; GET clone -> 1 fonte; PATCH schema
+        responses.add(
+            responses.POST,
+            f"{NOTION_BASE_URL}/databases",
+            json={"id": "db_clone"},
+            status=200,
+        )
+        responses.add(
+            responses.GET,
+            f"{NOTION_BASE_URL}/databases/db_clone",
+            json={"data_sources": [{"id": "ds_clone", "name": "Origem (cópia)"}]},
+            status=200,
+        )
+        responses.add(
+            responses.PATCH,
+            f"{NOTION_BASE_URL}/data_sources/ds_clone",
+            json={"properties": {"Etapa": {"type": "status"}}},
+            status=200,
+        )
+        with self._patch_cliente():
+            resultado = clone_database(database_id="db1")
+        assert resultado["id"] == "db_clone"
+        assert resultado["data_source_id"] == "ds_clone"
+        assert resultado["titulo"] == "Origem (cópia)"
+        assert resultado["linhas_copiadas"] == 0

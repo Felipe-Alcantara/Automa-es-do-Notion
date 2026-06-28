@@ -450,6 +450,49 @@ def list_database_rows(database_id: str) -> dict[str, Any]:
     return _executar(_listar)
 
 
+@mcp.tool(name="notion.clone_database", annotations=_CREATE)
+def clone_database(
+    database_id: str,
+    titulo: str | None = None,
+    pagina_destino: str | None = None,
+    com_linhas: bool = False,
+    relacoes: str = "auto-novo",
+) -> dict[str, Any]:
+    """Clona um database com todas as propriedades, sem vinculo com a origem.
+
+    Ferramenta de escrita (write) — requer confirmacao do usuario. Replica o
+    schema completo (status, select, relacoes) num database novo. Relacoes que a
+    origem fazia consigo mesma viram auto-relacoes do clone; relacoes para outros
+    databases sao preservadas. Opcionalmente copia as linhas.
+
+    Args:
+        database_id: ID do database de origem.
+        titulo: Titulo do clone (padrao: ``"<origem> (copia)"``).
+        pagina_destino: ID da pagina onde criar o clone (padrao: a pai da origem).
+        com_linhas: Quando verdadeiro, copia tambem as linhas da origem.
+        relacoes: ``"auto-novo"`` (padrao) ou ``"texto"`` (relacoes viram texto).
+
+    Returns:
+        Um dict com ``id``, ``data_source_id``, ``titulo``, ``propriedades`` e
+        ``linhas_copiadas``.
+    """
+
+    from services import clonagem as svc
+
+    def _clonar() -> dict[str, Any]:
+        database_id_normalizado = _texto_obrigatorio(database_id, "database_id")
+        return svc.clonar_database(
+            database_id_normalizado,
+            titulo=(titulo or "").strip() or None,
+            pagina_destino=(pagina_destino or "").strip() or None,
+            com_linhas=com_linhas,
+            relacoes=relacoes,
+            cliente=_criar_notion_client(),
+        )
+
+    return _executar(_clonar)
+
+
 @mcp.tool(name="notion.append_content", annotations=_CREATE)
 def append_content(page_id: str, markdown: str) -> dict[str, Any]:
     """Anexa conteudo (em Markdown) ao final de uma pagina do Notion.
