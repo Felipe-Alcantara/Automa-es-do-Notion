@@ -22,6 +22,7 @@ if str(SERVER_DIR) not in sys.path:
 from core.config import carregar_env_file  # noqa: E402
 from services import clonagem as svc_clonagem  # noqa: E402
 from services import conteudo as svc_conteudo  # noqa: E402
+from services import normalizacao as svc_normalizacao  # noqa: E402
 from services import tarefas as svc  # noqa: E402
 
 from notion_starter import (  # noqa: E402
@@ -31,49 +32,12 @@ from notion_starter import (  # noqa: E402
     NotionHTTPError,
     TaskList,
     construir_inventario,
-    properties,
 )
 
 carregar_env_file()
 
 TaskListFactory = Callable[[], TaskList]
 ClientFactory = Callable[[], NotionClient]
-
-RENOMEAR_PROPRIEDADES = {
-    "Nome": "Tarefa",
-    "Status": "Etapa",
-    "Duração": "Esforço",
-    "Próximo prazo": "Prazo",
-    "Áreas-da-Vida": "Áreas da vida",
-    "Priority": "Prioridade",
-    "Subitem": "Subtarefas",
-    "Subitem 1": "Subtarefas relacionadas",
-    "item principal": "Tarefa principal",
-}
-
-RENOMEAR_STATUS = {
-    "00. Inbox": "Entrada",
-    "01. Urgente": "Urgente",
-    "02. ASAP": "Assim que possível",
-    "03. Delegar": "Delegar",
-    "04. Aguardando Resposta": "Aguardando resposta",
-    "05. Referências": "Referência",
-    "06. Feito": "Concluída",
-    "07. Someday": "Algum dia",
-    "xx. Agendado": "Agendada",
-}
-
-RENOMEAR_DURACAO = {
-    "Mais rápido possível": "Agora",
-    "Pra hoje": "Hoje",
-    "Concluido": "Concluída",
-}
-
-RENOMEAR_AREAS = {
-    "Money": "Finanças",
-    "Projects": "Projetos",
-    "Shoppe": "Compras",
-}
 
 
 class CLIError(RuntimeError):
@@ -137,294 +101,6 @@ def _database_titulo(item: dict[str, Any]) -> str:
 
 def _database_dict(item: dict[str, Any]) -> dict[str, Any]:
     return {"id": item.get("id", ""), "titulo": _database_titulo(item), "url": item.get("url")}
-
-
-def _titulo_database_resposta(database: dict[str, Any]) -> str:
-    return "".join(parte.get("plain_text", "") for parte in database.get("title", [])).strip()
-
-
-def _nome_propriedade(
-    propriedades: dict[str, Any],
-    nome_antigo: str,
-    nome_novo: str,
-) -> str | None:
-    if nome_antigo in propriedades:
-        return nome_antigo
-    if nome_novo in propriedades:
-        return nome_novo
-    return None
-
-
-def _valor_status(propriedade: dict[str, Any] | None) -> str | None:
-    if not propriedade:
-        return None
-    valor = propriedade.get(propriedade.get("type", ""))
-    return valor.get("name") if isinstance(valor, dict) else None
-
-
-def _texto_title(propriedade: dict[str, Any] | None) -> str:
-    if not propriedade:
-        return ""
-    return "".join(
-        item.get("plain_text", item.get("text", {}).get("content", ""))
-        for item in propriedade.get("title", [])
-    )
-
-
-def _nome_title_property(schema: dict[str, Any]) -> str | None:
-    for nome, prop in (schema.get("properties") or {}).items():
-        if prop.get("type") == "title":
-            return nome
-    return None
-
-
-def _grupo_por_opcao(status_schema: dict[str, Any]) -> dict[str, str]:
-    grupos: dict[str, str] = {}
-    for grupo in status_schema.get("groups", []):
-        nome = grupo.get("name")
-        if not nome:
-            continue
-        for option_id in grupo.get("option_ids", []):
-            grupos[option_id] = nome
-    return grupos
-
-
-def _payload_opcao_existente(opcao: dict[str, Any]) -> dict[str, str]:
-    if opcao.get("id"):
-        return {"id": opcao["id"]}
-    return {"name": opcao.get("name", "")}
-
-
-def _adicionar_opcoes_status(
-    client: NotionClient,
-    database_id: str,
-    propriedade: str,
-    renomes: dict[str, str],
-    *,
-    aplicar: bool,
-) -> list[dict[str, str]]:
-    schema = client.get_database(database_id)
-    prop = (schema.get("properties") or {}).get(propriedade, {})
-    status_schema = prop.get("status") or {}
-    opcoes = status_schema.get("options", [])
-    por_nome = {op.get("name"): op for op in opcoes if op.get("name")}
-    grupo_por_id = _grupo_por_opcao(status_schema)
-
-    adicionadas: list[dict[str, str]] = []
-    payload = [_payload_opcao_existente(op) for op in opcoes]
-    for antigo, novo in renomes.items():
-        if antigo not in por_nome or novo in por_nome:
-            continue
-        antiga = por_nome[antigo]
-        nova_opcao = {"name": novo, "color": antiga.get("color") or "default"}
-        grupo = grupo_por_id.get(antiga.get("id", ""))
-        if grupo:
-            nova_opcao["group"] = grupo
-        payload.append(nova_opcao)
-        adicionadas.append({"de": antigo, "para": novo})
-
-    if adicionadas and aplicar:
-        client.atualizar_database(
-            database_id,
-            propriedades={propriedade: {"status": {"options": payload}}},
-        )
-    return adicionadas
-
-
-def _limpar_opcoes_antigas(
-    client: NotionClient,
-    database_id: str,
-    propriedade: str,
-    renomes: dict[str, str],
-    *,
-    aplicar: bool,
-) -> list[str]:
-    schema = client.get_database(database_id)
-    prop = (schema.get("properties") or {}).get(propriedade, {})
-    status_schema = prop.get("status") or {}
-    opcoes = status_schema.get("options", [])
-    nomes = {op.get("name") for op in opcoes}
-    antigas_para_remover = {
-        antigo for antigo, novo in renomes.items() if antigo in nomes and novo in nomes
-    }
-    if not antigas_para_remover:
-        return []
-
-    payload = [
-        _payload_opcao_existente(op) for op in opcoes if op.get("name") not in antigas_para_remover
-    ]
-    if aplicar:
-        client.atualizar_database(
-            database_id,
-            propriedades={propriedade: {"status": {"options": payload}}},
-        )
-    return sorted(antigas_para_remover)
-
-
-def _migrar_valores_paginas(
-    client: NotionClient,
-    database_id: str,
-    propriedade_status: str | None,
-    propriedade_duracao: str | None,
-    *,
-    aplicar: bool,
-) -> int:
-    alteradas = 0
-    for pagina in client.consultar_database(database_id, buscar_todos=True):
-        props = pagina.get("properties") or {}
-        atualizacoes: dict[str, dict[str, Any]] = {}
-        if propriedade_status:
-            atual = _valor_status(props.get(propriedade_status))
-            if atual in RENOMEAR_STATUS:
-                atualizacoes[propriedade_status] = properties.status(RENOMEAR_STATUS[atual])
-        if propriedade_duracao:
-            atual = _valor_status(props.get(propriedade_duracao))
-            if atual in RENOMEAR_DURACAO:
-                atualizacoes[propriedade_duracao] = properties.status(RENOMEAR_DURACAO[atual])
-        if atualizacoes:
-            alteradas += 1
-            if aplicar:
-                client.atualizar_pagina(pagina["id"], atualizacoes)
-    return alteradas
-
-
-def _renomear_propriedades(
-    client: NotionClient,
-    database_id: str,
-    renomes: dict[str, str],
-    *,
-    aplicar: bool,
-) -> list[dict[str, str]]:
-    schema = client.get_database(database_id)
-    props = schema.get("properties") or {}
-    payload: dict[str, dict[str, str]] = {}
-    feitas: list[dict[str, str]] = []
-    for antigo, novo in renomes.items():
-        if antigo in props and novo not in props:
-            payload[antigo] = {"name": novo}
-            feitas.append({"de": antigo, "para": novo})
-    if payload and aplicar:
-        client.atualizar_database(database_id, propriedades=payload)
-    return feitas
-
-
-def _normalizar_database_areas(
-    client: NotionClient,
-    database_id: str | None,
-    *,
-    aplicar: bool,
-) -> dict[str, Any]:
-    if not database_id:
-        return {"database_id": None, "paginas_renomeadas": [], "propriedades_renomeadas": []}
-
-    schema = client.get_database(database_id)
-    title_prop = _nome_title_property(schema)
-    paginas_renomeadas: list[dict[str, str]] = []
-    if title_prop:
-        for pagina in client.consultar_database(database_id, buscar_todos=True):
-            atual = _texto_title((pagina.get("properties") or {}).get(title_prop))
-            novo = RENOMEAR_AREAS.get(atual)
-            if not novo:
-                continue
-            paginas_renomeadas.append({"de": atual, "para": novo})
-            if aplicar:
-                client.atualizar_pagina(pagina["id"], {title_prop: properties.title(novo)})
-
-    propriedades_renomeadas = _renomear_propriedades(
-        client,
-        database_id,
-        {"Name": "Área"},
-        aplicar=aplicar,
-    )
-
-    titulo_atual = _titulo_database_resposta(client.get_database(database_id))
-    titulo_renomeado = titulo_atual != "Áreas da vida"
-    if titulo_renomeado and aplicar:
-        client.atualizar_database(database_id, titulo="Áreas da vida")
-
-    return {
-        "database_id": database_id,
-        "titulo_renomeado": titulo_renomeado,
-        "paginas_renomeadas": paginas_renomeadas,
-        "propriedades_renomeadas": propriedades_renomeadas,
-    }
-
-
-def _normalizar_nomes_fonte(
-    client: NotionClient,
-    database_id: str,
-    *,
-    aplicar: bool,
-) -> dict[str, Any]:
-    schema = client.get_database(database_id)
-    props = schema.get("properties") or {}
-    prop_status = _nome_propriedade(props, "Status", "Etapa")
-    prop_duracao = _nome_propriedade(props, "Duração", "Esforço")
-    prop_areas = _nome_propriedade(props, "Áreas-da-Vida", "Áreas da vida")
-    areas_db_id = ((props.get(prop_areas or "") or {}).get("relation") or {}).get("database_id")
-
-    status_adicionados = (
-        _adicionar_opcoes_status(client, database_id, prop_status, RENOMEAR_STATUS, aplicar=aplicar)
-        if prop_status
-        else []
-    )
-    duracao_adicionadas = (
-        _adicionar_opcoes_status(
-            client,
-            database_id,
-            prop_duracao,
-            RENOMEAR_DURACAO,
-            aplicar=aplicar,
-        )
-        if prop_duracao
-        else []
-    )
-    paginas_alteradas = _migrar_valores_paginas(
-        client,
-        database_id,
-        prop_status,
-        prop_duracao,
-        aplicar=aplicar,
-    )
-    status_removidos = (
-        _limpar_opcoes_antigas(client, database_id, prop_status, RENOMEAR_STATUS, aplicar=aplicar)
-        if prop_status
-        else []
-    )
-    duracao_removidas = (
-        _limpar_opcoes_antigas(
-            client,
-            database_id,
-            prop_duracao,
-            RENOMEAR_DURACAO,
-            aplicar=aplicar,
-        )
-        if prop_duracao
-        else []
-    )
-    areas = _normalizar_database_areas(client, areas_db_id, aplicar=aplicar)
-    propriedades = _renomear_propriedades(
-        client,
-        database_id,
-        RENOMEAR_PROPRIEDADES,
-        aplicar=aplicar,
-    )
-
-    return {
-        "aplicado": aplicar,
-        "database_id": database_id,
-        "opcoes_adicionadas": {
-            "status": status_adicionados,
-            "duracao": duracao_adicionadas,
-        },
-        "paginas_alteradas": paginas_alteradas,
-        "opcoes_antigas_removidas": {
-            "status": status_removidos,
-            "duracao": duracao_removidas,
-        },
-        "propriedades_renomeadas": propriedades,
-        "areas": areas,
-    }
 
 
 def _envelope(sucesso: bool, dados: Any = None, erro: str | None = None) -> dict[str, Any]:
@@ -621,10 +297,10 @@ def cmd_normalizar_nomes(args: argparse.Namespace, *, client_factory: ClientFact
     database_id = os.environ.get("NOTION_DATABASE_ID", "").strip()
     if not database_id:
         raise CLIError("NOTION_DATABASE_ID não configurado.")
-    return _normalizar_nomes_fonte(
-        client_factory(),
+    return svc_normalizacao.normalizar_nomes(
         database_id,
         aplicar=not args.dry_run,
+        cliente=client_factory(),
     )
 
 
