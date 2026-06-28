@@ -60,6 +60,39 @@ def ler_conteudo(
     return blocos_para_markdown(blocos)
 
 
+def ler_pagina_ou_database(
+    page_id: str,
+    *,
+    cliente: NotionClient | None = None,
+) -> dict[str, Any]:
+    """Lê um ID que pode ser página (corpo) ou database (linhas).
+
+    Um database não tem corpo em blocos — seu "conteúdo" são as linhas. Em vez de
+    cada borda (CLI/MCP) repetir esse fallback, este caso de uso o centraliza:
+    tenta ler o corpo; se vier vazio mas houver linhas, sinaliza que é um
+    database e já as devolve.
+
+    Args:
+        page_id: ID da página ou database.
+        cliente: Cliente Notion opcional (injeção para testes/uso alternativo).
+
+    Returns:
+        ``{"tipo": "pagina", "markdown": ...}`` para páginas; ``{"tipo":
+        "database", "markdown": "", "linhas": [...]}`` quando o ID é um database
+        com linhas. Páginas sem corpo voltam como ``"pagina"`` com markdown vazio.
+    """
+
+    cli = cliente or _cliente_padrao()
+    markdown = ler_conteudo(page_id, cliente=cli)
+    if markdown:
+        return {"id": page_id, "tipo": "pagina", "markdown": markdown}
+
+    linhas = listar_linhas(page_id, cliente=cli)
+    if linhas:
+        return {"id": page_id, "tipo": "database", "markdown": "", "linhas": linhas}
+    return {"id": page_id, "tipo": "pagina", "markdown": ""}
+
+
 def escrever_conteudo(
     page_id: str,
     markdown: str,

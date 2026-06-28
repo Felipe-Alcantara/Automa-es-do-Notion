@@ -405,21 +405,13 @@ def read_page_content(page_id: str) -> dict[str, str]:
 
     def _ler() -> dict[str, Any]:
         page_id_normalizado = _texto_obrigatorio(page_id, "page_id")
-        cliente = _criar_notion_client()
-        markdown = svc.ler_conteudo(page_id_normalizado, cliente=cliente)
-        if markdown:
-            return {"id": page_id_normalizado, "markdown": markdown}
-        # Sem corpo: pode ser um database (conteudo = linhas, nao blocos).
-        linhas = svc.listar_linhas(page_id_normalizado, cliente=cliente)
-        if linhas:
-            return {
-                "id": page_id_normalizado,
-                "markdown": "",
-                "tipo": "database",
-                "aviso": "Isto e um database: use notion.list_database_rows.",
-                "linhas": linhas,
-            }
-        return {"id": page_id_normalizado, "markdown": ""}
+        resultado = svc.ler_pagina_ou_database(
+            page_id_normalizado, cliente=_criar_notion_client()
+        )
+        if resultado["tipo"] == "database":
+            # Borda acrescenta o aviso voltado a quem consome o MCP.
+            resultado["aviso"] = "Isto e um database: use notion.list_database_rows."
+        return resultado
 
     return _executar(_ler)
 
