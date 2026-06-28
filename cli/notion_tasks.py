@@ -328,26 +328,14 @@ def cmd_mapear(args: argparse.Namespace, *, client_factory: ClientFactory) -> An
 
 def cmd_conteudo(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
     page_id = _texto_obrigatorio(args.page_id, "page_id")
-    cliente = client_factory()
-    markdown = svc_conteudo.ler_conteudo(page_id, cliente=cliente)
-    if markdown:
-        return {"id": page_id, "markdown": markdown}
-
-    # Sem corpo em blocos: pode ser um database (o conteúdo são as linhas, não
-    # blocos). Avisa e já entrega as linhas, em vez de devolver vazio em silêncio.
-    linhas = svc_conteudo.listar_linhas(page_id, cliente=cliente)
-    if linhas:
-        return {
-            "id": page_id,
-            "markdown": "",
-            "tipo": "database",
-            "aviso": (
-                "Isto é um database: o conteúdo são as linhas, não blocos. "
-                "Use 'linhas' para listá-las (já incluídas em 'linhas' abaixo)."
-            ),
-            "linhas": linhas,
-        }
-    return {"id": page_id, "markdown": ""}
+    resultado = svc_conteudo.ler_pagina_ou_database(page_id, cliente=client_factory())
+    if resultado["tipo"] == "database":
+        # Borda acrescenta o aviso voltado ao usuário da CLI.
+        resultado["aviso"] = (
+            "Isto é um database: o conteúdo são as linhas, não blocos. "
+            "Use 'linhas' para listá-las (já incluídas em 'linhas' abaixo)."
+        )
+    return resultado
 
 
 def cmd_linhas(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:

@@ -160,3 +160,75 @@ def test_listar_linhas_sem_data_source_acessivel_retorna_vazio():
         status=200,
     )
     assert svc.listar_linhas("db1", cliente=_cliente()) == []
+
+
+@responses.activate
+def test_ler_pagina_ou_database_pagina_com_corpo():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/blocks/page1/children",
+        json={
+            "results": [
+                {"type": "paragraph", "paragraph": {"rich_text": [{"plain_text": "oi"}]}}
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
+    resultado = svc.ler_pagina_ou_database("page1", cliente=_cliente())
+    assert resultado == {"id": "page1", "tipo": "pagina", "markdown": "oi"}
+
+
+@responses.activate
+def test_ler_pagina_ou_database_detecta_database():
+    # corpo vazio -> tenta linhas
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/blocks/db1/children",
+        json={"results": [], "has_more": False},
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/db1",
+        json={"data_sources": [{"id": "ds1", "name": "Principal"}]},
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/data_sources/ds1/query",
+        json={
+            "results": [
+                {
+                    "id": "r1",
+                    "url": "https://notion.so/r1",
+                    "properties": {
+                        "Name": {"type": "title", "title": [{"plain_text": "Linha 1"}]}
+                    },
+                }
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
+    resultado = svc.ler_pagina_ou_database("db1", cliente=_cliente())
+    assert resultado["tipo"] == "database"
+    assert resultado["linhas"][0]["titulo"] == "Linha 1"
+
+
+@responses.activate
+def test_ler_pagina_ou_database_pagina_sem_corpo():
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/blocks/page1/children",
+        json={"results": [], "has_more": False},
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/page1",
+        json={"data_sources": []},
+        status=200,
+    )
+    resultado = svc.ler_pagina_ou_database("page1", cliente=_cliente())
+    assert resultado == {"id": "page1", "tipo": "pagina", "markdown": ""}

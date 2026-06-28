@@ -517,7 +517,7 @@ def test_conteudo_de_pagina_sem_corpo_nao_inventa_linhas():
     client.ler_blocos = lambda *a, **k: []
     codigo, saida = _executar(["--json", "conteudo", "page1"], client=client)
     assert codigo == 0
-    assert saida["dados"] == {"id": "page1", "markdown": ""}
+    assert saida["dados"] == {"id": "page1", "tipo": "pagina", "markdown": ""}
 
 
 def test_linhas_lista_linhas_do_database():
