@@ -517,3 +517,23 @@ boundary HTTP coeso e bem seccionado, não um faz-tudo — dividir fragmentaria 
 VALIDAÇÃO: 382 testes verdes (de 375; +7 dos novos services), `ruff check` limpo
 inclusive com F/B/UP. CLI: 968 -> 632 linhas. Commits: `feat` (clonar-database),
 `refactor` (normalizacao), `refactor` (detecção página/database).
+
+[2026-06-28] CONTEXTO: O site (front React) só renderizava databases no schema fixo de
+tarefas (Etapa/Esforço/Áreas) — não mostrava qualquer outro database. Pedido: mostrar
+qualquer database, do jeito mais simples, focando na todolist principal, começando
+read-only.
+ALTERNATIVAS: (a) reescrever o app de tarefas para ser genérico; (b) views ricas
+inferidas por database; (c) manter o app de tarefas e adicionar uma aba "Explorar"
+read-only genérica.
+DECISÃO: Caminho (c), o mais simples e sem risco para a todolist. Backend: novo serviço
+read-only `services/exploracao.py` que descobre colunas de qualquer database e achata cada
+linha em `coluna -> texto`, convertendo todo tipo do Notion (status, relation->"N
+vínculo(s)", date, multi_select, formula…) sem quebrar; endpoints `GET /api/databases` e
+`GET /api/databases/<id>`. Front: aba "Explorar" (seletor + tabela genérica) ao lado de
+"Tarefas"; o app de tarefas foi extraído para `PainelTarefas` e segue intacto como aba
+padrão. Escrita genérica ficou de fora de propósito (é o passo complexo) — convite a
+contribuição futura.
+VALIDAÇÃO: 388 testes Python verdes (+6 de exploração), ruff limpo; front com oxlint
+limpo e build OK; teste end-to-end com Django real: `/api/databases` listou 113
+databases e `/api/databases/<todolist>` trouxe 14 colunas e 12 linhas corretas; regressão
+do endpoint de tarefas conferida. Commits: `feat` (API exploração), `feat` (aba Explorar).
