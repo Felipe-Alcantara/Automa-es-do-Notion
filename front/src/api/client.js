@@ -202,6 +202,65 @@ const realApi = {
   async opcoes() {
     return request('/api/opcoes')
   },
+
+  async listarDatabases(query = '') {
+    const qs = query ? `?query=${encodeURIComponent(query)}` : ''
+    return request(`/api/databases${qs}`)
+  },
+
+  async descreverDatabase(id) {
+    return request(`/api/databases/${encodeURIComponent(id)}`)
+  },
+}
+
+// ─── Mock de exploração (read-only) ───────────────────────────────────────
+
+const MOCK_DATABASES = [
+  { id: 'db-tarefas', titulo: 'Tarefas — HOME', url: null },
+  { id: 'db-livros', titulo: 'Livros', url: null },
+]
+
+const MOCK_DESCRICAO = {
+  'db-tarefas': {
+    id: 'db-tarefas',
+    colunas: [
+      { nome: 'Tarefa', tipo: 'title' },
+      { nome: 'Etapa', tipo: 'status' },
+      { nome: 'Esforço', tipo: 'status' },
+    ],
+    linhas: MOCK_TAREFAS.map((t) => ({
+      id: t.id,
+      url: t.url,
+      valores: { Tarefa: t.nome, Etapa: t.status, Esforço: t.duracao ?? '' },
+    })),
+  },
+  'db-livros': {
+    id: 'db-livros',
+    colunas: [
+      { nome: 'Título', tipo: 'title' },
+      { nome: 'Autor', tipo: 'rich_text' },
+      { nome: 'Lido', tipo: 'checkbox' },
+    ],
+    linhas: [
+      { id: 'l1', url: null, valores: { Título: 'O Hobbit', Autor: 'Tolkien', Lido: '✓' } },
+      { id: 'l2', url: null, valores: { Título: 'Duna', Autor: 'Herbert', Lido: '' } },
+    ],
+  },
+}
+
+const mockExploracao = {
+  async listarDatabases(query = '') {
+    await delay(200)
+    const q = query.trim().toLowerCase()
+    const itens = q
+      ? MOCK_DATABASES.filter((d) => d.titulo.toLowerCase().includes(q))
+      : MOCK_DATABASES
+    return { databases: itens }
+  },
+  async descreverDatabase(id) {
+    await delay(250)
+    return MOCK_DESCRICAO[id] ?? { id, colunas: [], linhas: [] }
+  },
 }
 
 // ─── Exported API (mock explícito) ────────────────────────────────────────
@@ -215,4 +274,6 @@ export const api = {
   criarTarefa: escolherApi(realApi.criarTarefa, mockApi.criarTarefa),
   editarTarefa: escolherApi(realApi.editarTarefa, mockApi.editarTarefa),
   opcoes: escolherApi(realApi.opcoes, mockApi.opcoes),
+  listarDatabases: escolherApi(realApi.listarDatabases, mockExploracao.listarDatabases),
+  descreverDatabase: escolherApi(realApi.descreverDatabase, mockExploracao.descreverDatabase),
 }

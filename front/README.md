@@ -22,6 +22,10 @@ VITE_MOCK_API=true npm run dev
 
 ## Funcionalidades
 
+- Duas abas: **Tarefas** (a todolist, com escrita) e **Explorar** (read-only).
+- **Explorar** lista os databases visíveis à integração e mostra qualquer um
+  numa tabela genérica que se adapta ao schema — não só a todolist. Usa
+  `GET /api/databases` e `GET /api/databases/{id}`. Só leitura por enquanto.
 - Visualizações em grade, lista e kanban.
 - Busca, filtros persistentes por etapa/esforço/área e ordenação. Os valores
   de etapa/esforço/área vêm do Notion e são enviados de volta sem tradução
