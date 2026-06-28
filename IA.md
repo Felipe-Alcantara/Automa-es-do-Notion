@@ -497,3 +497,23 @@ contra o workspace (clone com as 14 propriedades idênticas, relações corretas
 arquivado). LIÇÃO: nunca apagar database da HOME sem confirmação visual — leitura "vazia"
 pode ser view linkada; e validar diagnóstico antes de afirmar (as relações eram da home,
 não da Vitis).
+
+[2026-06-28] CONTEXTO: Revisão de qualidade do código contra o Felixo System Design
+(Guia Mínimo + DESIGN_SYSTEM_BACKEND + política de git), com autorização para refatorar
+conexão Notion/CLI/MCP onde necessário.
+ALTERNATIVAS: (a) só rodar linters; (b) refatorar tudo de uma vez numa branch grande;
+(c) refatorações pequenas e coesas direto no main, uma por commit, guiadas pelos
+princípios de separação de camadas e DRY.
+DECISÃO: Caminho (c), seguindo a política de git (commits pequenos `tipo: descrição` no
+main, sem branch — eram refatorações seguras sem mudança de comportamento). Dois desvios
+do padrão corrigidos: (1) ~280 linhas de regra de negócio de `normalizar-nomes` viviam na
+borda CLI (controller gordo) -> movidas para `services/normalizacao.py` com cliente
+injetável; CLI virou controller fino. (2) CLI e MCP duplicavam o fallback de detecção
+"página vs database" -> centralizado em `services.conteudo.ler_pagina_ou_database`, com
+`tipo` explícito no contrato. Revisão confirmou que client/integrations, api/views e os
+demais services já respeitavam as fronteiras (sem HTTP/Django vazando para services, sem
+módulos faz-tudo além dos dois tratados). `client.py` (1011 linhas) foi mantido: é um
+boundary HTTP coeso e bem seccionado, não um faz-tudo — dividir fragmentaria sem ganho.
+VALIDAÇÃO: 382 testes verdes (de 375; +7 dos novos services), `ruff check` limpo
+inclusive com F/B/UP. CLI: 968 -> 632 linhas. Commits: `feat` (clonar-database),
+`refactor` (normalizacao), `refactor` (detecção página/database).
