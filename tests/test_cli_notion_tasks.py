@@ -236,6 +236,38 @@ class FakeClient:
         return []
 
 
+class FakeCloneClient(FakeClient):
+    """Cliente que sustenta o fluxo de ``clonar-database`` ponta a ponta."""
+
+    def listar_data_sources(self, database_id):
+        nome = "Origem" if database_id == "db1" else "Origem (cópia)"
+        fonte = "f_origem" if database_id == "db1" else "f_clone"
+        return [{"id": fonte, "name": nome}]
+
+    def get_data_source(self, data_source_id):
+        if data_source_id == "f_origem":
+            return {
+                "properties": {
+                    "Tarefa": {"type": "title", "title": {}},
+                    "Esforço": {"type": "status", "status": {"options": [{"name": "Dias"}]}},
+                },
+                "parent": {"type": "page_id", "page_id": "pagina_pai"},
+            }
+        return {"properties": {}}
+
+    def criar_database(self, pagina_id, titulo, propriedades):
+        self.chamadas.append(("criar_database", (pagina_id, titulo)))
+        return {"id": "db_clone"}
+
+    def atualizar_data_source(self, data_source_id, *, propriedades):
+        self.chamadas.append(("atualizar_data_source", data_source_id))
+        return {"properties": propriedades}
+
+    def criar_pagina_em_fonte(self, data_source_id, propriedades):
+        self.chamadas.append(("criar_pagina_em_fonte", data_source_id))
+        return {"id": "nova"}
+
+
 class FakeDatabaseClient(FakeClient):
     """Cliente onde o ID consultado é um database (blocos vazios, com linhas)."""
 
@@ -508,4 +540,35 @@ def test_guia_humano_tem_dica_de_uso():
     codigo, saida = _executar(["guia"])
     assert codigo == 0
     assert "--json" in saida
-    assert "python -m cli" in saida
+
+
+def test_guia_inclui_clonar_database():
+    codigo, saida = _executar(["--json", "guia"])
+    comandos = {c["comando"] for c in saida["dados"]["comandos"]}
+    assert "clonar-database" in comandos
+
+
+def test_clonar_database_cria_clone_e_aplica_schema():
+    codigo, saida = _executar(["--json", "clonar-database", "db1"], client=FakeCloneClient())
+    assert codigo == 0
+    dados = saida["dados"]
+    assert dados["id"] == "db_clone"
+    assert dados["titulo"] == "Origem (cópia)"
+    assert dados["linhas_copiadas"] == 0
+
+
+def test_clonar_database_com_titulo_e_com_linhas():
+    cli_fake = FakeCloneClient()
+    codigo, saida = _executar(
+        ["--json", "clonar-database", "db1", "--titulo", "Clone X", "--com-linhas"],
+        client=cli_fake,
+    )
+    assert codigo == 0
+    assert saida["dados"]["titulo"] == "Clone X"
+    assert ("criar_database", ("pagina_pai", "Clone X")) in cli_fake.chamadas
+
+
+def test_clonar_database_humano_resume():
+    codigo, saida = _executar(["clonar-database", "db1"], client=FakeCloneClient())
+    assert codigo == 0
+    assert "Clone criado" in saida

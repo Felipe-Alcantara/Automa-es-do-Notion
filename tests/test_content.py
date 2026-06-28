@@ -237,6 +237,37 @@ def test_get_data_source_le_schema():
 
 
 @responses.activate
+def test_atualizar_data_source_usa_versao_nova_e_envia_propriedades():
+    responses.add(
+        responses.PATCH,
+        f"{NOTION_BASE_URL}/data_sources/ds1",
+        json={"object": "data_source", "properties": {"Etapa": {"type": "status"}}},
+        status=200,
+    )
+    props = {"Etapa": {"status": {"options": [{"name": "Entrada"}]}}}
+    criar_client().atualizar_data_source("ds1", propriedades=props)
+    chamada = responses.calls[0].request
+    assert chamada.headers["Notion-Version"] == "2025-09-03"
+    assert json.loads(chamada.body) == {"properties": props}
+
+
+@responses.activate
+def test_criar_pagina_em_fonte_usa_parent_data_source():
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/pages",
+        json={"id": "nova"},
+        status=200,
+    )
+    props = {"Name": {"title": [{"type": "text", "text": {"content": "X"}}]}}
+    criar_client().criar_pagina_em_fonte("ds1", props)
+    corpo = json.loads(responses.calls[0].request.body)
+    assert corpo["parent"] == {"type": "data_source_id", "data_source_id": "ds1"}
+    assert corpo["properties"] == props
+    assert responses.calls[0].request.headers["Notion-Version"] == "2025-09-03"
+
+
+@responses.activate
 def test_versao_padrao_nao_muda_nas_rotas_antigas():
     responses.add(
         responses.GET,

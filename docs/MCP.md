@@ -51,6 +51,7 @@ ferramentas; o Felixo-AI-Core decide qual agente usa qual ferramenta.
 | `notion.search` | read | não | Pesquisa páginas e databases visíveis à integração |
 | `notion.read_page_content` | read | não | Lê o conteúdo (corpo) de uma página como Markdown; se o ID for um database, avisa e já traz as linhas |
 | `notion.list_database_rows` | read | não | Lista as linhas de um database (resolve *data sources* do modelo novo do Notion) |
+| `notion.clone_database` | write | sim | Clona um database com todas as propriedades, sem vínculo com a origem (auto-relações apontam pro clone, externas são preservadas; copia linhas opcionalmente) |
 | `notion.append_content` | write | sim | Anexa conteúdo (Markdown) ao final de uma página |
 | `notion.edit_block` | write | sim | Substitui o texto de um bloco existente |
 | `notion.delete_block` | **delete** | **sim** | Apaga (arquiva) um bloco — **destrutivo** |

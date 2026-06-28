@@ -224,6 +224,8 @@ python -m cli --json mapear
 python -m cli --json buscar "nota de reunião"
 python -m cli --json conteudo <page_id>
 python -m cli --json linhas <database_id>   # linhas de um database
+python -m cli --json clonar-database <database_id>   # copia o schema p/ um database novo, sem vínculo
+python -m cli --json clonar-database <database_id> --titulo "Cópia" --com-linhas
 python -m cli --json escrever <page_id> $'# Resumo\n\n- ponto um\n- ponto dois'
 python -m cli --json editar-bloco <block_id> "## Novo título"
 python -m cli --json apagar-bloco <block_id> --sim   # destrutivo: exige --sim
@@ -234,7 +236,11 @@ para qualquer página visível à integração — pesquisar, ler, escrever, edi
 apagar. `apagar-bloco` é destrutivo e só executa com `--sim`. Para databases, o
 conteúdo são as **linhas**: use `linhas <database_id>` (e `conteudo` num database
 avisa e já traz as linhas). O `linhas` resolve os *data sources* do modelo novo
-do Notion, então lê inclusive databases criados recentemente. O `conteudo` lê a
+do Notion, então lê inclusive databases criados recentemente. `clonar-database`
+recria um database **com todas as propriedades** (status, select, relações) num
+database novo, sem vínculo com a origem: relações que a origem fazia consigo
+mesma viram auto-relações do clone, relações para outros databases são
+preservadas; `--com-linhas` copia também as linhas. O `conteudo` lê a
 página **em profundidade**: desce em colunas, toggles e blocos sincronizados, e
 marca cada database embutido como `**[database: Nome]**` — nada de conteúdo
 aninhado fica de fora.

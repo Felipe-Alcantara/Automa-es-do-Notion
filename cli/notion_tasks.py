@@ -20,6 +20,7 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from core.config import carregar_env_file  # noqa: E402
+from services import clonagem as svc_clonagem  # noqa: E402
 from services import conteudo as svc_conteudo  # noqa: E402
 from services import tarefas as svc  # noqa: E402
 
@@ -489,6 +490,12 @@ def _formatar_humano(comando: str, dados: Any) -> str:
         return dados["markdown"] or "(página sem conteúdo)"
     if comando == "linhas":
         return "\n".join(_linhas_tabela(dados["linhas"], ("id", "titulo", "url")))
+    if comando == "clonar-database":
+        return (
+            f"Clone criado: {dados['titulo']} ({dados['id']})\n"
+            f"Propriedades: {len(dados['propriedades'])} | "
+            f"linhas copiadas: {dados['linhas_copiadas']}"
+        )
     if comando == "database-atual":
         return f"Database atual: {dados['database_id'] or '(não configurado)'}"
     if comando == "normalizar-nomes":
@@ -702,6 +709,18 @@ def cmd_buscar(args: argparse.Namespace, *, client_factory: ClientFactory) -> An
     return svc_conteudo.buscar(_normalizar_texto(args.query), cliente=client_factory())
 
 
+def cmd_clonar_database(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
+    database_id = _texto_obrigatorio(args.database_id, "database_id")
+    return svc_clonagem.clonar_database(
+        database_id,
+        titulo=_normalizar_texto(args.titulo) or None,
+        pagina_destino=_normalizar_texto(args.pagina) or None,
+        com_linhas=args.com_linhas,
+        relacoes=args.relacoes,
+        cliente=client_factory(),
+    )
+
+
 #: Exemplos de uso por comando, mostrados pelo ``guia``. Texto curto e copiável.
 EXEMPLOS_GUIA: dict[str, list[str]] = {
     "listar": ['python -m cli --json listar --status "Entrada"'],
@@ -722,6 +741,10 @@ EXEMPLOS_GUIA: dict[str, list[str]] = {
     "escrever": ["python -m cli --json escrever <page_id> $'# Título\\n\\nTexto'"],
     "editar-bloco": ['python -m cli --json editar-bloco <block_id> "## Novo título"'],
     "apagar-bloco": ["python -m cli --json apagar-bloco <block_id> --sim"],
+    "clonar-database": [
+        "python -m cli --json clonar-database <database_id>",
+        'python -m cli --json clonar-database <database_id> --titulo "Cópia" --com-linhas',
+    ],
     "guia": ["python -m cli --json guia"],
 }
 
@@ -846,6 +869,26 @@ def construir_parser() -> argparse.ArgumentParser:
     buscar = sub.add_parser("buscar", help="pesquisa páginas e databases visíveis")
     buscar.add_argument("query", nargs="?", help="texto do título; vazio lista tudo")
 
+    clonar = sub.add_parser(
+        "clonar-database",
+        help="clona um database com todas as propriedades, sem vínculo com a origem",
+    )
+    clonar.add_argument("database_id")
+    clonar.add_argument("--titulo", help="título do clone (padrão: '<origem> (cópia)')")
+    clonar.add_argument("--pagina", help="página onde criar o clone (padrão: a pai da origem)")
+    clonar.add_argument(
+        "--com-linhas",
+        action="store_true",
+        help="copia também as linhas da origem",
+    )
+    clonar.add_argument(
+        "--relacoes",
+        choices=("auto-novo", "texto"),
+        default="auto-novo",
+        help="auto-novo: auto-relações apontam pro clone, externas preservam; "
+        "texto: relações viram texto sem vínculo",
+    )
+
     sub.add_parser("guia", help="lista todos os comandos com o que fazem e exemplos")
     return parser
 
@@ -898,6 +941,8 @@ def executar(
             dados = cmd_apagar_bloco(args, client_factory=client_factory)
         elif comando == "buscar":
             dados = cmd_buscar(args, client_factory=client_factory)
+        elif comando == "clonar-database":
+            dados = cmd_clonar_database(args, client_factory=client_factory)
         else:
             raise CLIError(f"Comando desconhecido: {comando}")
         return 0, _envelope(True, dados=dados) if args.json else _formatar_humano(comando, dados)
