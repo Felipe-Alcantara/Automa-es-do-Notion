@@ -537,3 +537,24 @@ VALIDAÇÃO: 388 testes Python verdes (+6 de exploração), ruff limpo; front co
 limpo e build OK; teste end-to-end com Django real: `/api/databases` listou 113
 databases e `/api/databases/<todolist>` trouxe 14 colunas e 12 linhas corretas; regressão
 do endpoint de tarefas conferida. Commits: `feat` (API exploração), `feat` (aba Explorar).
+
+[2026-06-29] CONTEXTO: Pedido de materializar um inventário de repositórios GitHub de
+várias contas em um database do Notion, com propriedades úteis e o README de cada repo
+dentro de uma subpágina filha (para a linha do database ficar organizável).
+ALTERNATIVAS: (a) reusar `services/sincronizar_github` (orientado a *tarefas*, exige
+tasklist, não materializa inventário); (b) script pontual fora do código; (c) novo
+serviço reutilizável de inventário sobre o `GitHubClient` e o `NotionClient` existentes.
+DECISÃO: Caminho (c). Novo `services/inventario_github.py` com `garantir_database`
+(cria o database) e `exportar_repos` (multi-conta, upsert sem duplicar). README vai para
+uma subpágina filha "README", não para o corpo da linha. Para isso, três peças
+reutilizáveis: (1) `RepoInfo` enriquecido (dono, issues, observadores, tamanho, fork,
+arquivado, licença, último push); (2) `NotionClient.criar_subpagina` (página filha, com
+quebra automática em lotes de 100 blocos); (3) fix em `content.py` normalizando a
+linguagem de blocos de código para um valor aceito pelo Notion — antes, READMEs com
+cercas de código em linguagem fora da lista do Notion falhavam com HTTP 400.
+VALIDAÇÃO: 407 testes verdes (+24: inventário, criar_subpagina, normalização de
+linguagem, campos novos do RepoInfo), `ruff check` limpo. Teste real: database "GITHUB"
+criado na HOME pessoal com 85 repositórios das contas Felipe-Alcantara (inclui privados,
+via token próprio) e flaviavs-commits; READMEs exportados em subpágina por repo (só os
+repos sem README no GitHub ficam sem subpágina). Commits: `feat` (RepoInfo),
+`feat` (criar_subpagina), `fix` (linguagem de código), `feat` (serviço de inventário).
