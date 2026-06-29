@@ -280,15 +280,25 @@ def _tentar_link(
 
     rotulo = texto[abre:fecha]
     url = texto[fecha + 2 : fim_url].strip()
+    valida = _url_valida(url)
     descarregar()
     if imagem:
-        # Imagem inline dentro de texto: vira link para a URL, com o alt como rótulo.
-        itens.append(_item_texto(rotulo or url, annotations=annotations or None, link=url))
+        # Imagem inline dentro de texto: vira link (se a URL for válida) com o alt.
+        link = url if valida else None
+        itens.append(_item_texto(rotulo or url, annotations=annotations or None, link=link))
     else:
         _parse_inline_em(rotulo, {**annotations}, itens)
-        # Aplica o link ao(s) item(ns) recém-adicionado(s) do rótulo.
-        _aplicar_link(itens, url, rotulo)
+        # Só aplica o link quando a URL é absoluta http(s)/mailto — o Notion
+        # rejeita âncoras (#secao) e caminhos relativos; nesses casos fica só o texto.
+        if valida:
+            _aplicar_link(itens, url, rotulo)
     return fim_url + 1
+
+
+def _url_valida(url: str) -> bool:
+    """Indica se a URL é aceita pelo Notion como link (http/https/mailto absolutos)."""
+
+    return url.startswith(("http://", "https://", "mailto:"))
 
 
 def _aplicar_link(itens: list[dict[str, Any]], url: str, rotulo: str) -> None:
@@ -455,10 +465,10 @@ def _extrair_imagens_bloco(linha: str) -> list[dict[str, Any]] | None:
 
     blocos: list[dict[str, Any]] = []
     for m in _RE_IMG_OU_BADGE.finditer(linha):
-        if m.group(2):  # badge: alt=1, img=2 (href=3 descartado: Notion não linka imagem)
-            blocos.append(_bloco_imagem(m.group(2).strip(), m.group(1).strip()))
-        else:  # imagem simples: alt=4, url=5
-            blocos.append(_bloco_imagem(m.group(5).strip(), m.group(4).strip()))
+        url = (m.group(2) or m.group(5) or "").strip()
+        alt = (m.group(1) or m.group(4) or "").strip()
+        if _url_valida(url):  # Notion só aceita imagem externa com URL absoluta
+            blocos.append(_bloco_imagem(url, alt))
     return blocos or None
 
 
