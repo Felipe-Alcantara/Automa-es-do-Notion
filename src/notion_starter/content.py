@@ -91,23 +91,45 @@ def _normalizar_linguagem(lingua: str) -> str:
     return _ALIAS_LINGUAGEM.get(chave, "plain text")
 
 
-# O Notion limita o conteúdo de cada item de rich_text a 2000 caracteres.
+# O Notion limita o conteúdo de cada item de rich_text a 2000 "caracteres",
+# contados em unidades de código UTF-16: um caractere fora do BMP (ex.: emoji)
+# ocupa 2 unidades. Por isso o corte é feito por contagem UTF-16, não por
+# len() (code points), senão texto com emoji estoura o limite.
 _MAX_RICH_TEXT = 2000
+
+
+def _fatiar_utf16(texto: str, limite: int) -> list[str]:
+    """Fatia ``texto`` em pedaços de no máximo ``limite`` unidades UTF-16."""
+
+    pedacos: list[str] = []
+    atual: list[str] = []
+    custo = 0
+    for ch in texto:
+        # Caracteres acima de U+FFFF usam um par substituto (2 unidades UTF-16).
+        peso = 2 if ord(ch) > 0xFFFF else 1
+        if custo + peso > limite and atual:
+            pedacos.append("".join(atual))
+            atual, custo = [], 0
+        atual.append(ch)
+        custo += peso
+    if atual:
+        pedacos.append("".join(atual))
+    return pedacos
 
 
 def _rich_text(texto: str) -> list[dict[str, Any]]:
     """Monta o *rich text* de um bloco a partir de texto simples.
 
-    Textos acima de 2000 caracteres são fatiados em vários itens de rich text —
-    o Notion os concatena no mesmo bloco —, evitando o HTTP 400 que a API
-    retorna quando um único item excede o limite (comum em blocos de código).
+    Textos acima do limite são fatiados em vários itens de rich text — o Notion
+    os concatena no mesmo bloco —, evitando o HTTP 400 que a API retorna quando
+    um único item excede 2000 unidades UTF-16 (comum em blocos de código).
     """
 
     if not texto:
         return []
     return [
-        {"type": "text", "text": {"content": texto[i : i + _MAX_RICH_TEXT]}}
-        for i in range(0, len(texto), _MAX_RICH_TEXT)
+        {"type": "text", "text": {"content": pedaco}}
+        for pedaco in _fatiar_utf16(texto, _MAX_RICH_TEXT)
     ]
 
 
