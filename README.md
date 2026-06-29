@@ -229,6 +229,9 @@ python -m cli --json clonar-database <database_id> --titulo "Cópia" --com-linha
 python -m cli --json escrever <page_id> $'# Resumo\n\n- ponto um\n- ponto dois'
 python -m cli --json editar-bloco <block_id> "## Novo título"
 python -m cli --json apagar-bloco <block_id> --sim   # destrutivo: exige --sim
+
+# Inventário de repositórios GitHub num database (cria/atualiza + README rico)
+python -m cli --json atualizar-github --contas conta-um,conta-dois
 ```
 
 Os comandos de conteúdo dão à IA acesso ao **corpo** das páginas (em Markdown),
@@ -422,8 +425,39 @@ print(resumo.paginas_criadas, resumo.readmes_escritos, resumo.total_erros)
 
 Os nomes das colunas são configuráveis por `CamposGitHub` (Open/Closed), sem mexer no
 mapeamento. A subpágina README usa `NotionClient.criar_subpagina`, que quebra READMEs
-longos em lotes de 100 blocos automaticamente e normaliza a linguagem de blocos de
-código para um valor aceito pelo Notion.
+longos em lotes de 100 blocos automaticamente. O Markdown do README é convertido de
+forma **rica**: formatação inline (negrito, itálico, código, `[link](url)`), badges e
+imagens viram blocos de imagem, tabelas viram blocos de tabela e o HTML de layout comum
+em READMEs é limpo preservando o conteúdo.
+
+**Manter o inventário em dia.** `atualizar_repos` re-sincroniza tudo: adiciona
+repositórios novos, atualiza as propriedades dos existentes e **substitui a subpágina
+README quando o conteúdo mudou** — a mudança é detectada por um hash gravado na própria
+página (coluna `README hash`), sem reler os blocos.
+
+```python
+from services.inventario_github import atualizar_repos
+
+resumo = atualizar_repos(
+    ["conta-um", "conta-dois"],
+    database_id,
+    github_client=github,
+    notion_client=notion,
+)
+print(resumo.paginas_atualizadas, resumo.readmes_atualizados, resumo.total_erros)
+```
+
+Pela CLI, o comando `atualizar-github` faz o mesmo (e há a opção
+**"Atualizar inventário GitHub"** no menu do `start_app.py`):
+
+```bash
+python -m cli --json atualizar-github --contas conta-um,conta-dois
+python -m cli --json atualizar-github --database <database_id> --sem-readme
+```
+
+As contas saem de `--contas` (CSV) ou da variável `GITHUB_CONTAS`; o database de
+`--database` ou de `NOTION_DATABASE_ID`. Defina `GITHUB_TOKEN` para incluir os
+repositórios privados da sua própria conta.
 
 ## 🧩 Helpers de Propriedades
 
