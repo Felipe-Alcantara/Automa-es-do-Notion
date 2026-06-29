@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
 ![Boilerplate](https://img.shields.io/badge/tipo-boilerplate-8A2BE2?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-285%20passing-success?style=for-the-badge)
+![Quality](https://img.shields.io/badge/quality-ruff%20%2B%20pytest%20%2B%20front-success?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Ponto de partida tipado para construir projetos sobre a API do Notion — clone, adapte e construa em cima.**
@@ -47,6 +47,7 @@ e constrói a lógica do seu projeto em cima da base.
 - [📊 Logging](#-logging)
 - [⚠️ Exceções](#-exceções)
 - [💡 Exemplos](#-exemplos)
+- [✅ Qualidade](#-qualidade)
 - [🧪 Desenvolvimento](#-desenvolvimento)
 - [📝 Licença](#-licença)
 - [👤 Autor](#-autor)
@@ -101,7 +102,9 @@ notion-starter-boilerplate/
 ├── 📁 tests/                     # Testes (HTTP mockado + Django test client)
 ├── 📁 examples/                  # Scripts de exemplo executáveis (ponto de partida)
 ├── 📁 docs/                      # Visão e estratégia: roadmap, SaaS, escala, otimização
+├── 📁 scripts/                   # Automação local de qualidade e manutenção
 │
+├── AGENTS.md                     # Roteiro operacional para agentes e mantenedores
 ├── start_app.py                  # Menu de entrada interativo (instala, configura, roda)
 ├── .env.example                  # Modelo de variáveis de ambiente
 ├── pyproject.toml                # Build, dependências e config de tooling
@@ -178,6 +181,7 @@ No menu você escolhe:
   Streamable HTTP para depuração local.
 - **CLI para IA** — mostra os comandos disponíveis e exemplos de saída JSON.
 - **Mapear workspace** — coleta o `mapa.json` e gera o `mapa.html` navegável do seu Notion.
+- **Qualidade** — roda o gate local (`Ruff`, `Pytest`, `Oxlint` e build Vite).
 - **Instalar / Setup** — instala o pacote com as deps de dev e cria o `.env`.
 - **Configurar** — aponta o token do Notion ou escolhe o database de tarefas
   (ambos gravados no `.env`, fora do git). Use "Escolher database de tarefas"
@@ -539,6 +543,19 @@ detalhado em [`docs/PLANO.md`](docs/PLANO.md) (*Ciclo 2*), com as frentes separa
 agente em [`docs/AGENTES.md`](docs/AGENTES.md) e o contrato em
 [`docs/CONTRATOS.md`](docs/CONTRATOS.md). São documentos de direção, abertos à contribuição.
 
+## ✅ Qualidade
+
+O gate local fica em um comando único:
+
+```bash
+python3 scripts/quality_check.py
+```
+
+Ele executa `ruff check .`, `pytest -q`, `npm run lint` e `npm run build`. Use
+`--python-only` ou `--front-only` para depurar uma frente isolada. O contrato completo
+está em [`docs/QUALIDADE.md`](docs/QUALIDADE.md), e o roteiro para agentes/mantenedores
+está em [`AGENTS.md`](AGENTS.md).
+
 ## 🧪 Desenvolvimento
 
 ```bash
@@ -552,8 +569,7 @@ pip install -e ".[server]"
 pip install -e ".[mcp]"
 
 # Rode os testes e o lint
-pytest -q
-ruff check .
+python3 scripts/quality_check.py
 ```
 
 Os testes do core mockam todo o HTTP com [`responses`](https://github.com/getsentry/responses);

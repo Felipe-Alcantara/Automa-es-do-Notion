@@ -36,6 +36,7 @@ SERVIDOR = RAIZ / "server"
 MANAGE_PY = SERVIDOR / "manage.py"
 FRONT = RAIZ / "front"
 FRONT_NODE_MODULES = FRONT / "node_modules"
+QUALITY_SCRIPT = RAIZ / "scripts" / "quality_check.py"
 TOKEN_ENV = "NOTION_TOKEN"
 DATABASE_ENV = "NOTION_DATABASE_ID"
 TOKEN_PREFIXO = "ntn_"
@@ -1302,6 +1303,17 @@ def acao_mapear(console) -> None:
         console.print(f"[red]✗[/red] Falha ao gerar o HTML (código {codigo}).")
 
 
+def acao_qualidade(console) -> None:
+    """Roda o gate local de qualidade: Python + front."""
+
+    console.rule("[bold]Qualidade")
+    console.print(
+        "Executando o gate local: Ruff, Pytest, Oxlint e build Vite.\n"
+        "[dim]Se alguma dependência faltar, rode Instalar/Setup e npm install em front/.[/dim]\n"
+    )
+    subprocess.run([sys.executable, str(QUALITY_SCRIPT)], cwd=RAIZ, check=False)
+
+
 def acao_status(console) -> None:
     """Status: mostra o estado real do ambiente, sem expor segredo."""
 
@@ -1385,6 +1397,7 @@ def _acoes_menu():
             acao_atualizar_github,
         ),
         "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),
+        "qualidade": ("✅  Qualidade — roda Ruff, Pytest, lint e build do front", acao_qualidade),
         "instalar": ("⬇  Instalar / Setup — instala deps e cria o .env", acao_instalar),
         "configurar": ("⚙  Configurar — aponta o token do Notion", acao_configurar),
         "status": ("ℹ  Status — mostra o estado real do ambiente", acao_status),
@@ -1403,7 +1416,10 @@ def _categorias_menu() -> list[tuple[str, list[str]]]:
     return [
         ("🚀  Usar o app — abrir e rodar", ["tudo", "rodar"]),
         ("🤖  Para IA e integrações — CLI, GitHub, MCP, mapa", ["cli", "github", "mcp", "mapear"]),
-        ("⚙  Configurar e instalar — token, deps, API", ["configurar", "instalar", "servidor"]),
+        (
+            "⚙  Configurar e instalar — token, deps, API, qualidade",
+            ["configurar", "instalar", "servidor", "qualidade"],
+        ),
     ]
 
 

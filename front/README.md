@@ -20,6 +20,19 @@ o front mostra erro; mock só roda quando você ativar explicitamente:
 VITE_MOCK_API=true npm run dev
 ```
 
+## Qualidade
+
+```bash
+npm run lint
+npm run build
+```
+
+O gate completo do repositório roda a partir da raiz:
+
+```bash
+python3 scripts/quality_check.py
+```
+
 ## Funcionalidades
 
 - Duas abas: **Tarefas** (a todolist, com escrita) e **Explorar** (read-only).
