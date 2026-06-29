@@ -106,6 +106,144 @@ def test_markdown_para_blocos_ignora_linhas_em_branco():
     assert [b["type"] for b in blocos] == ["paragraph", "paragraph"]
 
 
+# -- Formatação inline (negrito, itálico, código, link) --------------------
+
+
+def _itens(bloco):
+    return bloco[bloco["type"]]["rich_text"]
+
+
+def test_inline_negrito_italico_codigo():
+    itens = _itens(markdown_para_blocos("um **negrito**, *itálico* e `code` aqui")[0])
+    por_texto = {i["text"]["content"]: i.get("annotations", {}) for i in itens}
+    assert por_texto["negrito"]["bold"] is True
+    assert por_texto["itálico"]["italic"] is True
+    assert por_texto["code"]["code"] is True
+    assert "annotations" not in itens[0]  # "um " sem formatação
+
+
+def test_inline_link_vira_href():
+    itens = _itens(markdown_para_blocos("veja [o site](https://x.com) agora")[0])
+    link = next(i for i in itens if i["text"]["content"] == "o site")
+    assert link["text"]["link"] == {"url": "https://x.com"}
+
+
+def test_inline_negrito_com_link_combinados():
+    itens = _itens(markdown_para_blocos("**[bold link](https://y.com)**")[0])
+    assert itens[0]["text"]["content"] == "bold link"
+    assert itens[0]["annotations"]["bold"] is True
+    assert itens[0]["text"]["link"] == {"url": "https://y.com"}
+
+
+def test_inline_marcador_sem_par_vira_literal():
+    itens = _itens(markdown_para_blocos("um * solto sem par")[0])
+    assert "".join(i["text"]["content"] for i in itens) == "um * solto sem par"
+
+
+def test_codigo_em_bloco_nao_parseia_inline():
+    # Dentro de um bloco de código, ** e ` são literais, não viram formatação.
+    itens = markdown_para_blocos("```\nx = **a**\n```")[0]["code"]["rich_text"]
+    assert itens[0]["text"]["content"] == "x = **a**"
+    assert "annotations" not in itens[0]
+
+
+# -- Imagens, badges, HTML, headings, tabelas ------------------------------
+
+
+def test_imagem_vira_bloco_image():
+    blocos = markdown_para_blocos("![alt](https://img.com/x.png)")
+    assert blocos[0]["type"] == "image"
+    assert blocos[0]["image"]["external"]["url"] == "https://img.com/x.png"
+
+
+def test_badge_com_link_vira_bloco_image():
+    blocos = markdown_para_blocos("[![Tests](https://img/badge.svg)](https://ci.com)")
+    assert blocos[0]["type"] == "image"
+    assert blocos[0]["image"]["external"]["url"] == "https://img/badge.svg"
+
+
+def test_varias_badges_na_mesma_linha_viram_varios_blocos():
+    blocos = markdown_para_blocos("![a](https://i/a.png) ![b](https://i/b.png)")
+    assert [b["type"] for b in blocos] == ["image", "image"]
+
+
+def test_imagem_com_texto_na_linha_nao_vira_bloco_image():
+    # Há texto além da imagem: a linha vira parágrafo (imagem como link inline).
+    blocos = markdown_para_blocos("veja ![logo](https://i/l.png) aqui")
+    assert blocos[0]["type"] == "paragraph"
+
+
+def test_html_div_e_center_sao_removidos_preservando_conteudo():
+    blocos = markdown_para_blocos('<div align="center">\n\n# Título\n\n</div>')
+    assert [b["type"] for b in blocos] == ["heading_1"]
+    assert blocos[0]["heading_1"]["rich_text"][0]["text"]["content"] == "Título"
+
+
+def test_html_a_e_img_viram_markdown():
+    a = markdown_para_blocos('<a href="https://x.com">site</a>')[0]
+    item = a["paragraph"]["rich_text"][0]
+    assert item["text"]["content"] == "site"
+    assert item["text"]["link"] == {"url": "https://x.com"}
+    img = markdown_para_blocos('<img src="https://i/x.png">')[0]
+    assert img["type"] == "image"
+
+
+def test_heading_4_a_6_viram_heading_3():
+    for prefixo in ("#### ", "##### ", "###### "):
+        bloco = markdown_para_blocos(f"{prefixo}Sub")[0]
+        assert bloco["type"] == "heading_3"
+        assert bloco["heading_3"]["rich_text"][0]["text"]["content"] == "Sub"
+
+
+def test_setext_headings():
+    assert markdown_para_blocos("Título\n======")[0]["type"] == "heading_1"
+    assert markdown_para_blocos("Subtítulo\n------")[0]["type"] == "heading_2"
+
+
+def test_tabela_vira_bloco_table():
+    md = "| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |"
+    bloco = markdown_para_blocos(md)[0]
+    assert bloco["type"] == "table"
+    assert bloco["table"]["table_width"] == 2
+    assert bloco["table"]["has_column_header"] is True
+    linhas = bloco["table"]["children"]
+    assert len(linhas) == 3  # cabeçalho + 2 linhas de dados
+    assert linhas[0]["table_row"]["cells"][0][0]["text"]["content"] == "A"
+
+
+# -- Round-trip da formatação rica -----------------------------------------
+
+
+def _reidratar(blocos):
+    """Adiciona plain_text como a API faria, para exercitar a leitura."""
+    for bloco in blocos:
+        corpo = bloco.get(bloco["type"], {})
+        for rt in corpo.get("rich_text", []):
+            rt["plain_text"] = rt["text"]["content"]
+        for filho in corpo.get("children", []):
+            for cel in filho.get("table_row", {}).get("cells", []):
+                for rt in cel:
+                    rt["plain_text"] = rt["text"]["content"]
+    return blocos
+
+
+def test_round_trip_inline_preserva_formatacao():
+    md = "um **negrito** e [link](https://x.com) e `code`"
+    saida = blocos_para_markdown(_reidratar(markdown_para_blocos(md)))
+    assert "**negrito**" in saida
+    assert "[link](https://x.com)" in saida
+    assert "`code`" in saida
+
+
+def test_round_trip_imagem_e_tabela():
+    img = blocos_para_markdown(_reidratar(markdown_para_blocos("![alt](https://i/x.png)")))
+    assert "![alt](https://i/x.png)" in img
+    md_tab = "| A | B |\n|---|---|\n| 1 | 2 |"
+    tab = blocos_para_markdown(_reidratar(markdown_para_blocos(md_tab)))
+    assert "| A | B |" in tab
+    assert "| 1 | 2 |" in tab
+
+
 # -- Conversor blocos -> Markdown (ida e volta) ----------------------------
 
 
