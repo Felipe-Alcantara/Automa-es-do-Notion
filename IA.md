@@ -16,6 +16,11 @@ Público: desenvolvedores que vão começar uma integração com o Notion.
 Distribuição: como TEMPLATE (clone/"Use this template" e renomeie), não como pacote
 PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
 
+[2026-06-29] O repositório público `Automa-es-do-Notion` passou a ser documentado como
+aplicação local de automações para Notion, GitHub e IA, não como template genérico.
+O core `notion_starter` continua sendo a base importável, mas README, metadados do
+`pyproject.toml`, CONTRIBUTING e `start_app.py` agora descrevem o produto real.
+
 ---
 
 ## 🏁 METAS & MILESTONES
@@ -258,6 +263,14 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   edição manual, `IA.md` como linha do tempo preservada, documentação viva durante a
   execução e git direto no `main` por padrão. `AGENTS.md` e `docs/QUALIDADE.md`
   passaram a registrar essas regras explicitamente para próximos mantenedores/agentes.
+- [2026-06-29] ✅ **README reescrito para o produto real** — a raiz deixou de vender o
+  projeto como `notion-starter-boilerplate` e passou a apresentar `Automações do
+  Notion`: menu, SPA React, API Django, CLI/MCP para IA, inventário GitHub, segurança,
+  qualidade e documentação. Metadados públicos do `pyproject.toml`, título do menu e
+  CONTRIBUTING foram alinhados. Também foi corrigida documentação MCP antiga que ainda
+  dizia "sem delete", preservando a política atual: `notion.delete_block` é destrutiva
+  e exige confirmação no host. Descrição planejada para GitHub: "Aplicação local para
+  operar o Notion com API Django, SPA React, CLI/MCP para IA e inventário GitHub."
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 mais tipos de bloco no conversor Markdown (tabelas), escrita de linhas em data

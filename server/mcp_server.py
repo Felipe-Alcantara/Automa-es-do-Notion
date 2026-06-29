@@ -10,7 +10,8 @@ Guarda-corpos
 - Ferramentas de escrita sinalizam ``readOnlyHint=False`` e
   ``openWorldHint=True`` — o cliente (Felixo-AI-Core) decide se pede
   confirmacao com base no seu catalogo (``requiresConfirmation``).
-- Nenhuma ferramenta apaga dados (nao ha ``delete``).
+- ``notion.delete_block`` e destrutiva e sinaliza ``destructiveHint=True``;
+  o host deve exigir confirmacao antes de executar.
 - Segredos (token, database ID) vem do ambiente, nunca hardcoded.
 
 A ``TaskList`` e criada diretamente do ``notion_starter`` (sem Django),
@@ -19,8 +20,8 @@ que os testes usam.
 
 Uso::
 
-    python server/mcp_server.py            # stdio (padrao — Felixo-AI-Core spawna assim)
-    python server/mcp_server.py --transport streamable-http  # debug HTTP local
+    python3 server/mcp_server.py            # stdio (padrao — Felixo-AI-Core spawna assim)
+    python3 server/mcp_server.py --transport streamable-http  # debug HTTP local
 """
 
 from __future__ import annotations

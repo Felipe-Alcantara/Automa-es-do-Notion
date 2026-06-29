@@ -142,16 +142,16 @@ O servidor MCP lê do ambiente (ou do `.env` na raiz):
 
 ```bash
 # stdio (padrão — o Felixo-AI-Core spawna assim)
-python server/mcp_server.py
+python3 server/mcp_server.py
 
 # Streamable HTTP para debug local (endpoint http://127.0.0.1:8000/mcp)
-python server/mcp_server.py --transport streamable-http
+python3 server/mcp_server.py --transport streamable-http
 ```
 
 Ou pelo menu interativo:
 
 ```bash
-python start_app.py
+python3 start_app.py
 # → "Subir servidor MCP"
 ```
 
@@ -244,8 +244,10 @@ do Felixo-AI-Core; até lá, o servidor deste projeto pode ser validado diretame
    `tasklist` injetável. O MCP server cria a `TaskList` e injeta, seguindo o
    mesmo padrão que os testes usam.
 
-3. **Sem delete**: nenhuma ferramenta apaga dados. Mudanças de tarefa e atualização
-   de página de projeto requerem confirmação no host.
+3. **Delete protegido**: `notion.delete_block` arquiva blocos e é destrutiva. A
+   ferramenta declara `destructiveHint=True`; o host deve exigir confirmação antes
+   de executar. Mudanças de tarefa, conteúdo e páginas de projeto também requerem
+   confirmação no host.
 
 4. **Transportes**: `stdio` é o padrão local para o Felixo-AI-Core. Streamable HTTP
    existe apenas para depuração local. SSE legado não é exposto.
@@ -260,7 +262,7 @@ do Felixo-AI-Core; até lá, o servidor deste projeto pode ser validado diretame
 ## Testes
 
 ```bash
-python -m pytest tests/test_mcp_server.py tests/test_services_projetos.py tests/test_cli_notion_tasks.py -v
+python3 -m pytest tests/test_mcp_server.py tests/test_services_projetos.py tests/test_cli_notion_tasks.py -v
 ```
 
 Os testes cobrem:

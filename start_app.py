@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Menu de entrada do notion-starter-boilerplate — a porta de entrada única do projeto.
+"""Menu de entrada do Automações do Notion — a porta de entrada única do projeto.
 
 Rode ``python start_app.py`` para abrir um menu interativo onde você instala
 as dependências, configura o token do Notion, vê o estado do ambiente e roda
@@ -1492,8 +1492,8 @@ def _menu_loop() -> None:
     console = Console()
     console.print(
         Panel.fit(
-            "[bold cyan]notion-starter-boilerplate[/bold cyan]\n"
-            "Ponto de partida tipado para construir projetos sobre a API do Notion.\n"
+            "[bold cyan]Automações do Notion[/bold cyan]\n"
+            "Aplicação local para operar Notion, GitHub, IA e MCP.\n"
             "[dim]Escolha uma categoria; cada uma abre suas opções.[/dim]",
             border_style="cyan",
         )

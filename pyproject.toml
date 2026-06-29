@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "notion-starter-boilerplate"
+name = "automacoes-do-notion"
 version = "0.1.0"
-description = "Boilerplate tipado para iniciar projetos sobre a API do Notion: cliente HTTP, helpers de propriedades e validação de schema, prontos para clonar e adaptar."
+description = "Aplicação local para operar o Notion com API Django, SPA React, CLI/MCP para IA e inventário GitHub."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
-authors = [{ name = "notion-starter-boilerplate contributors" }]
-keywords = ["notion", "notion-api", "client", "boilerplate", "starter", "template", "integration"]
+authors = [{ name = "Automações do Notion contributors" }]
+keywords = ["notion", "notion-api", "automation", "django", "react", "mcp", "github"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -44,9 +44,9 @@ mcp = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/flaviavs-commits/notion-starter-boilerplate"
-Repository = "https://github.com/flaviavs-commits/notion-starter-boilerplate"
-Issues = "https://github.com/flaviavs-commits/notion-starter-boilerplate/issues"
+Homepage = "https://github.com/Felipe-Alcantara/Automa-es-do-Notion"
+Repository = "https://github.com/Felipe-Alcantara/Automa-es-do-Notion"
+Issues = "https://github.com/Felipe-Alcantara/Automa-es-do-Notion/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/notion_starter"]

@@ -1,603 +1,379 @@
-# 🧱 notion-starter-boilerplate
+# 🧠 Automações do Notion
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-5-0C4B33?style=for-the-badge&logo=django&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
-![Boilerplate](https://img.shields.io/badge/tipo-boilerplate-8A2BE2?style=for-the-badge)
 ![Quality](https://img.shields.io/badge/quality-ruff%20%2B%20pytest%20%2B%20front-success?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-**Ponto de partida tipado para construir projetos sobre a API do Notion — clone, adapte e construa em cima.**
+**Aplicação local para operar o Notion com API Django, SPA React, CLI/MCP para IA e inventário GitHub.**
 
-[📖 API do Notion](https://developers.notion.com/) • [▶️ Menu de Entrada](#️-menu-de-entrada) • [🧩 Como Usar o Template](#-como-usar-este-template) • [🤝 Contribuir](#-contribuições)
+[🚀 Ferramentas](#-ferramentas-disponíveis) • [🎯 Como Usar](#-como-usar) • [⌘ CLI para IA](#-cli-para-ia) • [✅ Qualidade](#-qualidade) • [📚 Docs](docs/README.md)
 
 </div>
 
 ---
 
-Um **boilerplate** (esqueleto inicial) com opinião para quem vai começar um projeto
-que conversa com o **Notion**. Em vez de começar do zero, você clona este repositório
-e já tem um cliente HTTP tipado, helpers para montar propriedades sem decorar o JSON
-do Notion, validação de schema, exceções claras, testes, CI e um menu de entrada.
-
-O core (`notion_starter`) é independente de framework: uma única dependência de
-runtime (`requests`), sem estado global. O projeto também inclui um **servidor
-Django opcional** (`server/`) com API REST para tarefas, pronto para subir com
-`python start_app.py` → "Iniciar tudo". Você traz a sua própria fonte de dados
-e constrói a lógica do seu projeto em cima da base.
-
-> Este projeto começou como um módulo interno de empresa e foi generalizado para
-> servir de ponto de partida aberto: clone, renomeie o pacote para o seu projeto e
-> construa a partir daí. Não é uma dependência fechada — é o seu esqueleto.
-
 ## 📋 Índice
 
+- [🌟 Destaque Principal](#-destaque-principal)
 - [📋 Sobre o Projeto](#-sobre-o-projeto)
 - [📁 Estrutura do Projeto](#-estrutura-do-projeto)
-- [✨ O que já vem pronto](#-o-que-já-vem-pronto)
-- [▶️ Menu de Entrada](#️-menu-de-entrada)
-- [🧩 Como Usar Este Template](#-como-usar-este-template)
-- [🚀 Usando o Cliente em Código](#-usando-o-cliente-em-código)
-- [📖 Lendo com Paginação](#-lendo-com-paginação)
-- [🛡️ Validando o Schema Primeiro](#-validando-o-schema-primeiro)
-- [🔄 GitHub e Ingestão](#-github-e-ingestão)
-- [🧩 Helpers de Propriedades](#-helpers-de-propriedades)
-- [🔧 Superfície da API](#-superfície-da-api)
-- [📊 Logging](#-logging)
-- [⚠️ Exceções](#-exceções)
-- [💡 Exemplos](#-exemplos)
+- [🚀 Ferramentas Disponíveis](#-ferramentas-disponíveis)
+- [🎯 Como Usar](#-como-usar)
+- [⌘ CLI para IA](#-cli-para-ia)
+- [🔌 API, MCP e Integrações](#-api-mcp-e-integrações)
+- [🔒 Segurança e Dados](#-segurança-e-dados)
 - [✅ Qualidade](#-qualidade)
-- [🧪 Desenvolvimento](#-desenvolvimento)
+- [📚 Documentação](#-documentação)
 - [📝 Licença](#-licença)
 - [👤 Autor](#-autor)
 - [🤝 Contribuições](#-contribuições)
 
 ---
 
+## 🌟 Destaque Principal
+
+> **RODE TUDO POR UM MENU, SEM DECORAR COMANDOS**
+>
+> ```bash
+> python3 start_app.py
+> ```
+
+O projeto centraliza automações reais em cima do Notion: escolhe o database de tarefas,
+sobe a API Django, abre a SPA React, expõe uma CLI estável para IA, publica ferramentas
+MCP e sincroniza inventários de repositórios GitHub.
+
+### 💡 Por que usar?
+
+- **Entrada única:** `start_app.py` instala, configura, sobe e diagnostica o ambiente.
+- **Notion como fonte de verdade:** tarefas, páginas, databases e conteúdo continuam no workspace.
+- **IA com contrato estável:** CLI JSON e MCP evitam que agentes mexam direto no JSON cru do Notion.
+- **Qualidade verificável:** um gate único roda lint, testes Python e build do front.
+
+---
+
 ## 📋 Sobre o Projeto
 
-`notion-starter-boilerplate` resolve o "dia 1" de quem vai integrar com o **Notion**:
-em vez de montar do zero a estrutura, o tratamento de erro e a tipagem, você parte de
-uma base que já resolve três dores comuns:
+`Automações do Notion` é uma aplicação local para controlar e explorar um workspace do
+Notion com menos atrito. Ela combina um core Python tipado (`notion_starter`), serviços
+Django, SPA React, CLI para automações/IA e servidor MCP. O objetivo é permitir que uma
+pessoa ou um agente leia, edite, clone, organize e inventarie conteúdo do Notion por
+interfaces seguras e testáveis.
 
-- **Montar payloads de propriedade** sem decorar o formato JSON do Notion.
-- **Falhar cedo e com clareza** — exceções explícitas em vez de erros crus de HTTP.
-- **Confiar no destino** — validar o schema de um database antes de escrever nele.
+O projeto nasceu como um starter para integrações com a API do Notion e evoluiu para uma
+central operacional: tarefas, conteúdo de páginas, exploração de databases genéricos,
+inventário GitHub com README rico e ponte MCP para o Felixo-AI-Core.
 
-Tudo isso com **tipagem forte** (`TypedDict`/`dataclass`), **uma única dependência**
-de runtime e estrutura modular pronta para você estender com a lógica do seu projeto.
+---
 
 ## 📁 Estrutura do Projeto
 
-```
-notion-starter-boilerplate/
+```text
+Automa-es-do-Notion/
 │
-├── 📁 src/notion_starter/        # O core reutilizável (renomeie para o seu projeto)
-│   ├── client.py                 # NotionClient — wrapper HTTP tipado
-│   ├── schema.py                 # comparar_schema / SchemaComparison
-│   ├── properties.py             # Helpers de escrita de propriedade (title, email, date...)
-│   ├── readers.py                # Helpers de leitura de propriedade (ler_title, extrair_valores...)
-│   ├── tasks.py                  # TaskList — camada de alto nível para databases de tarefas
-│   ├── inventory.py              # Mapeamento/inventário do workspace (lógica pura)
-│   ├── exceptions.py             # Hierarquia de exceções (NotionSyncError)
-│   ├── logging.py                # Logging opcional, silencioso por padrão
-│   ├── constants.py              # URL base, timeout, versão da API, env var
-│   └── __init__.py               # API pública
-│
-├── 📁 server/                    # Servidor Django (opcional — pip install -e ".[server]")
-│   ├── manage.py                 # CLI do Django
-│   ├── mcp_server.py             # Servidor MCP de ferramentas notion.*
-│   ├── config/                   # Projeto Django: settings, urls, wsgi, asgi
-│   ├── core/                     # Config por ambiente (sem HTTP, sem regra de negócio)
-│   ├── integrations/             # Fábrica fina sobre o notion_starter + OpenRouter
-│   ├── services/                 # Casos de uso (tarefas, IA copiloto)
-│   ├── api/                      # Borda HTTP: rotas REST + health
-│   ├── operations/               # Estado operacional em SQLite (jobs, locks)
-│   ├── templates/                # Front legado/fallback servido pelo Django
-│   └── static/                   # CSS e JS do front legado
-│
-├── 📁 front/                     # SPA React + Tailwind + Vite do Ciclo 2
-├── 📁 cli/                       # CLI para IA/scripts sobre os mesmos services
-├── 📁 tests/                     # Testes (HTTP mockado + Django test client)
-├── 📁 examples/                  # Scripts de exemplo executáveis (ponto de partida)
-├── 📁 docs/                      # Visão e estratégia: roadmap, SaaS, escala, otimização
-├── 📁 scripts/                   # Automação local de qualidade e manutenção
+├── 📁 src/notion_starter/        # Core Python: cliente Notion, propriedades, readers, conteúdo
+├── 📁 server/                    # API Django, services, integrations e servidor MCP
+├── 📁 front/                     # SPA React + Tailwind + Vite
+├── 📁 cli/                       # CLI para scripts e agentes de IA
+├── 📁 examples/                  # Exemplos executáveis de leitura, sync e mapeamento
+├── 📁 tests/                     # Testes Python/Django/MCP/CLI com HTTP mockado
+├── 📁 docs/                      # Roadmap, contratos, qualidade, integrações e arquitetura
+├── 📁 scripts/                   # Automação local de qualidade
 │
 ├── AGENTS.md                     # Roteiro operacional para agentes e mantenedores
-├── start_app.py                  # Menu de entrada interativo (instala, configura, roda)
-├── .env.example                  # Modelo de variáveis de ambiente
-├── pyproject.toml                # Build, dependências e config de tooling
-├── IA.md                         # Contexto operacional para IA / mantenedores
+├── IA.md                         # Memória técnica e linha do tempo do projeto
+├── start_app.py                  # Menu principal de instalação, configuração e execução
+├── pyproject.toml                # Metadados, extras e tooling Python
+├── .env.example                  # Variáveis de ambiente sem segredos
 ├── CONTRIBUTING.md               # Guia de contribuição
 ├── README.md                     # Este arquivo
 └── LICENSE
 ```
 
-## ✨ O que já vem pronto
+---
 
-- **`NotionClient`** — cria/consulta databases, cria/atualiza/arquiva páginas, com
-  paginação automática, retry/backoff seguro para operações idempotentes e cache
-  de schema com TTL. Criações repetem apenas rate limit confirmado (429/529), não
-  falhas ambíguas de rede/5xx que poderiam gerar duplicatas.
-- **Payloads tipados** (`TypedDict`) e exceções explícitas e capturáveis.
-- **Helpers de `properties`** (`title`, `email`, `select`, `date`, …) para montar
-  valores de propriedade.
-- **Helpers de `readers`** (`ler_title`, `ler_select`, `extrair_valores`, …) para
-  ler propriedades de páginas sem mexer no JSON cru.
-- **`TaskList`** — camada de alto nível para databases de tarefas (listar, criar,
-  atualizar status, concluir), com colunas configuráveis.
-- **`comparar_schema`** para checar se um database tem as colunas que você espera.
-- **`construir_inventario`** para mapear o workspace (árvore, duplicatas, órfãos).
-- **Servidor Django** (opcional) — API REST de tarefas (`GET/POST /api/tarefas`,
-  `PATCH /api/tarefas/{id}`), com config por ambiente, envelope de erro padronizado
-  e estado operacional em SQLite. Instale com `pip install -e ".[server]"`.
-- **Front web** — interface no navegador para ver e editar tarefas reais, servida
-  pelo Django em `/`. Lista com filtro por status, criação, movimentação e conclusão
-  por mudança de status, com estados de carregando/vazio/erro e feedback acessível.
-  JS vanilla consumindo a API REST, sem framework.
-- **IA copiloto** — camada de IA plugável (OpenRouter) para linguagem natural →
-  operações de tasklist. Sugere ações, pessoa confirma antes de escrever.
-- **CLI para IA** — `python -m cli` lista, lê, cria, edita, move, conclui,
-  mapeia e escolhe database; e ainda **pesquisa, lê, escreve, edita e apaga o
-  conteúdo** das páginas (em Markdown), usando os mesmos `services/` da API/MCP.
-  Use `--json` para saída estruturada estável.
-- **Servidor MCP** — expõe `notion.list_tasks`, `notion.create_task`,
-  `notion.move_status`, `notion.conclude_task`, `notion.update_project_page` e as
-  ferramentas de conteúdo (`notion.search`, `notion.read_page_content`,
-  `notion.append_content`, `notion.edit_block`, `notion.delete_block`) como
-  invólucros dos casos de uso. Escritas são anotadas para confirmação e o delete
-  é destrutivo (`destructiveHint`); a política obrigatória fica no catálogo do
-  host Felixo-AI-Core. Instale com `pip install -e ".[mcp]"`.
-- **Logging opcional**; silencioso por padrão (`NullHandler`, amigável a bibliotecas).
-- **Exemplos executáveis**, testes com HTTP mockado, CI e um menu de entrada — a base
-  para você só adicionar a lógica do seu projeto.
+## 🚀 Ferramentas Disponíveis
+
+### ▶️ Menu de Entrada (`start_app.py`)
+
+**`python3 start_app.py`**
+
+- Abre um menu interativo com categorias para uso normal, IA/integrações e configuração.
+- Instala dependências, cria `.env`, configura token/database, mostra status e roda exemplos.
+- Sobe API Django e front React juntos em modo local.
+- Executa o gate de qualidade pelo próprio menu.
 
 ---
 
-## ▶️ Menu de Entrada
+### 🌐 SPA React (`front/`)
 
-Forma mais simples de começar — abre um menu interativo onde você instala as
-dependências, configura o token, vê o estado do ambiente e roda os exemplos,
-sem decorar comando nenhum:
+**`front/src/App.jsx`**
+
+- Interface web para tarefas do Notion com visualizações de grade, lista e kanban.
+- Aba **Explorar** para visualizar qualquer database compartilhado com a integração.
+- Filtros persistentes por etapa, esforço e área, usando opções vindas do Notion.
+- Build Vite e lint com Oxlint.
+
+---
+
+### 🧱 API Django (`server/api/`)
+
+**`server/api/views.py`**
+
+- Rotas REST para tarefas, opções, databases e exploração.
+- Views finas: validação HTTP na borda, regra de negócio em `server/services/`.
+- Envelope de erro padronizado para validação, não encontrado, upstream e erro interno.
+- SQLite usado só para estado operacional; o conteúdo fica no Notion.
+
+---
+
+### ⌘ CLI para IA (`cli/`)
+
+**`python3 -m cli --json guia`**
+
+- Saída humana ou JSON estável `{ "ok": true, "dados": ... }`.
+- Lista, lê, cria, edita, move e conclui tarefas.
+- Pesquisa, lê, escreve, edita e apaga blocos de páginas.
+- Clona databases com schema e, opcionalmente, linhas.
+
+---
+
+### 🔗 Servidor MCP (`server/mcp_server.py`)
+
+**`python3 server/mcp_server.py`**
+
+- Expõe ferramentas `notion.*` para hosts MCP.
+- Reusa os mesmos services da API e da CLI.
+- Marca operações de escrita/destrutivas para confirmação no host.
+- Pode rodar em `stdio` ou Streamable HTTP para depuração local.
+
+---
+
+### 🐙 Inventário GitHub (`server/services/inventario_github.py`)
+
+**`python3 -m cli --json atualizar-github --contas conta-um,conta-dois`**
+
+- Cria ou atualiza um database de repositórios no Notion.
+- Materializa propriedades úteis: linguagem, estrelas, issues, licença, datas e flags.
+- Escreve o README de cada repositório numa subpágina filha.
+- Usa hash para reescrever README apenas quando o conteúdo mudou.
+
+---
+
+### ✅ Gate de Qualidade (`scripts/quality_check.py`)
+
+**`python3 scripts/quality_check.py`**
+
+- Roda Ruff, Pytest, Oxlint e build Vite.
+- Tem modos parciais `--python-only` e `--front-only`.
+- É o comando local obrigatório antes de fechar mudanças.
+
+---
+
+## 🎯 Como Usar
+
+### Opção 1: Menu interativo (recomendado)
 
 ```bash
-python start_app.py
+# Instale o pacote local e abra o menu
+python3 start_app.py
 ```
 
-No menu você escolhe:
+No menu, use:
 
-- **Iniciar tudo** — opção principal: prepara e sobe a API Django em
-  `http://127.0.0.1:8000/` e a SPA React/Vite em `http://127.0.0.1:5173/`,
-  abrindo o navegador no front React automaticamente. Sempre pergunta
-  qual database usar (com o atual já pré-selecionado — basta dar Enter para
-  manter), listando **todos** os databases compartilhados com a integração: os
-  que já têm o schema de tarefas aparecem com `✓` no topo, os demais com `⚠`
-  (dá para escolhê-los, mas o menu avisa quais colunas faltam e pede confirmação).
-  A escolha é gravada no `.env` (`NOTION_DATABASE_ID`).
-- **Iniciar / Rodar** — executa um exemplo (`export_rows`, `check_schema`, `sync_from_csv`, `gerenciar_tarefas`).
-- **Subir API Django** — instala o Django (se necessário), aplica migrações e sobe só a API REST local (`/api/health`, `/api/tarefas`).
-- **Subir servidor MCP** — instala o SDK MCP e inicia a ponte em `stdio` ou
-  Streamable HTTP para depuração local.
-- **CLI para IA** — mostra os comandos disponíveis e exemplos de saída JSON.
-- **Mapear workspace** — coleta o `mapa.json` e gera o `mapa.html` navegável do seu Notion.
-- **Qualidade** — roda o gate local (`Ruff`, `Pytest`, `Oxlint` e build Vite).
-- **Instalar / Setup** — instala o pacote com as deps de dev e cria o `.env`.
-- **Configurar** — aponta o token do Notion ou escolhe o database de tarefas
-  (ambos gravados no `.env`, fora do git). Use "Escolher database de tarefas"
-  para trocar depois sem editar o `.env` na mão.
-- **Status / Sair** — mostra o estado real (Python, pacote, `.env`, token) e sai.
+- **Iniciar tudo** para subir API Django e SPA React.
+- **Configurar** para apontar token do Notion e escolher database.
+- **Para IA e integrações** para acessar CLI, MCP, mapa e inventário GitHub.
+- **Qualidade** para rodar o gate local.
 
-Cada opção abre um **terminal dedicado**. O menu principal continua disponível
-para iniciar outras ações em paralelo — por exemplo, manter o servidor web e o
-MCP ativos enquanto executa um exemplo ou consulta o status.
+### Opção 2: Setup manual para desenvolvimento
 
-Para o uso normal, escolha **Iniciar tudo**. O MCP é uma integração avançada e
-continua disponível separadamente para conexão com o Felixo-AI-Core.
+```bash
+# Instale dependências Python de desenvolvimento
+pip install -e ".[dev]"
 
-Na primeira execução, se as bibliotecas do menu (`questionary`, `rich`) não
-estiverem instaladas, o script se oferece para instalá-las. Funciona em Windows,
-Linux e macOS, e nenhum segredo é guardado no script — o token continua só em
-variável de ambiente ou no `.env`.
+# Instale extras opcionais do servidor e MCP
+pip install -e ".[server,mcp]"
+
+# Instale dependências do front
+cd front
+npm install
+cd ..
+```
+
+```bash
+# Configure variáveis locais
+cp .env.example .env
+```
+
+Edite `.env` com valores reais apenas no seu ambiente local. Nunca versione esse arquivo.
+
+### Variáveis principais
+
+| Variável | Obrigatória? | Uso |
+|---|---:|---|
+| `NOTION_TOKEN` | Sim | Token da integração do Notion. |
+| `NOTION_DATABASE_ID` | Para tarefas | Database usado pela todolist. |
+| `OPENROUTER_API_KEY` | Opcional | Camada de IA copiloto. |
+| `GITHUB_TOKEN` | Opcional | Repositórios privados da própria conta. |
+| `GITHUB_CONTAS` | Opcional | Contas GitHub padrão para inventário. |
+
+---
 
 ## ⌘ CLI para IA
 
-A CLI em `cli/` é a borda de linha de comando sobre os mesmos `services/` usados
-pela API REST e pelo MCP. Ela serve para scripts e IAs locais consumirem uma saída
-estável, sem conhecer o JSON cru do Notion.
-
-> **Para IAs:** comece por `python -m cli --json guia` — ele lista todos os
-> comandos, o que cada um faz e um exemplo. Use a CLI em vez de chamar a API do
-> Notion na mão; é mais rápido e estável.
+Comece pelo guia automático:
 
 ```bash
-python -m cli guia            # descobre todos os comandos e exemplos
-python -m cli listar
-python -m cli --json listar --status "Entrada" --duracao "Dias" --area <area_id>
-python -m cli --json criar "Estudar a API do Notion" --status "Entrada" --duracao "Dias"
-python -m cli --json editar <task_id> --status "Assim que possível" --area <area_id>
-python -m cli --json mover <task_id> "Concluída"
-python -m cli --json concluir <task_id> "Concluída"
-python -m cli --json opcoes
-python -m cli --json databases
-python -m cli --json escolher-database <database_id>
-python -m cli --json normalizar-nomes --dry-run
-python -m cli --json mapear
-
-# Conteúdo das páginas (corpo, não só propriedades)
-python -m cli --json buscar "nota de reunião"
-python -m cli --json conteudo <page_id>
-python -m cli --json linhas <database_id>   # linhas de um database
-python -m cli --json clonar-database <database_id>   # copia o schema p/ um database novo, sem vínculo
-python -m cli --json clonar-database <database_id> --titulo "Cópia" --com-linhas
-python -m cli --json escrever <page_id> $'# Resumo\n\n- ponto um\n- ponto dois'
-python -m cli --json editar-bloco <block_id> "## Novo título"
-python -m cli --json apagar-bloco <block_id> --sim   # destrutivo: exige --sim
-
-# Inventário de repositórios GitHub num database (cria/atualiza + README rico)
-python -m cli --json atualizar-github --contas conta-um,conta-dois
+python3 -m cli --json guia
 ```
 
-Os comandos de conteúdo dão à IA acesso ao **corpo** das páginas (em Markdown),
-para qualquer página visível à integração — pesquisar, ler, escrever, editar e
-apagar. `apagar-bloco` é destrutivo e só executa com `--sim`. Para databases, o
-conteúdo são as **linhas**: use `linhas <database_id>` (e `conteudo` num database
-avisa e já traz as linhas). O `linhas` resolve os *data sources* do modelo novo
-do Notion, então lê inclusive databases criados recentemente. `clonar-database`
-recria um database **com todas as propriedades** (status, select, relações) num
-database novo, sem vínculo com a origem: relações que a origem fazia consigo
-mesma viram auto-relações do clone, relações para outros databases são
-preservadas; `--com-linhas` copia também as linhas. O `conteudo` lê a
-página **em profundidade**: desce em colunas, toggles e blocos sincronizados, e
-marca cada database embutido como `**[database: Nome]**` — nada de conteúdo
-aninhado fica de fora.
+Comandos comuns:
 
-O envelope JSON é sempre `{ "ok": true, "dados": ... }` em sucesso e
-`{ "ok": false, "erro": { "mensagem": ... } }` em erro. A CLI lê `NOTION_TOKEN`
-e `NOTION_DATABASE_ID` do ambiente ou do `.env`; `escolher-database` grava o
-database escolhido no `.env`.
+```bash
+# Tarefas
+python3 -m cli --json listar
+python3 -m cli --json criar "Estudar API do Notion" --status "Entrada"
+python3 -m cli --json editar <task_id> --status "Assim que possível"
+python3 -m cli --json concluir <task_id> "Concluída"
+python3 -m cli --json opcoes
+
+# Workspace e databases
+python3 -m cli --json databases
+python3 -m cli --json escolher-database <database_id>
+python3 -m cli --json mapear
+python3 -m cli --json linhas <database_id>
+
+# Conteúdo de páginas
+python3 -m cli --json buscar "nota de reunião"
+python3 -m cli --json conteudo <page_id>
+python3 -m cli --json escrever <page_id> $'# Resumo\n\n- ponto um'
+python3 -m cli --json editar-bloco <block_id> "## Novo título"
+python3 -m cli --json apagar-bloco <block_id> --sim
+
+# Clonagem e GitHub
+python3 -m cli --json clonar-database <database_id> --titulo "Cópia" --com-linhas
+python3 -m cli --json atualizar-github --contas conta-um,conta-dois
+```
+
+`apagar-bloco` é destrutivo e exige `--sim`. No Notion, a exclusão arquiva o bloco; a
+recuperação depende da lixeira/permissões do workspace.
 
 ---
 
-## 🧩 Como Usar Este Template
+## 🔌 API, MCP e Integrações
 
-Este repositório é feito para ser **clonado e adaptado**, não instalado como
-dependência fechada. O fluxo típico:
+### API local
 
-```bash
-# 1. Use como template (botão "Use this template" no GitHub) ou clone:
-git clone https://github.com/flaviavs-commits/notion-starter-boilerplate.git meu-projeto
-cd meu-projeto
+Quando o menu sobe tudo, a API fica em:
 
-# 2. Prepare o ambiente (ou use o menu: python start_app.py → Instalar/Setup)
-pip install -e ".[dev]"
-
-# 3. Configure o token (ou use o menu → Configurar)
-cp .env.example .env   # edite e coloque seu NOTION_TOKEN
+```text
+http://127.0.0.1:8000/
 ```
 
-A partir daí, **o que você adapta**:
+Rotas principais:
 
-1. **Renomeie o pacote** `src/notion_starter/` para o nome do seu projeto e ajuste
-   `name`/`packages` no [`pyproject.toml`](pyproject.toml).
-2. **Defina o seu schema** — o mapa de colunas → tipos do seu database (veja
-   [`examples/sync_from_csv.py`](examples/sync_from_csv.py)).
-3. **Troque a fonte de dados** — os exemplos leem listas/CSV; aponte para o seu banco,
-   API ou arquivo.
-4. **Construa a sua lógica** em cima do `NotionClient` (uma camada de serviço, um job
-   agendado, um comando, etc.).
-
-Requer Python 3.10+.
-
----
-
-## 🚀 Usando o Cliente em Código
-
-```python
-from notion_starter import NotionClient
-from notion_starter import properties as p
-
-client = NotionClient()  # lê NOTION_TOKEN do ambiente
-# ou: NotionClient(token="ntn_...")
-
-client.criar_pagina(
-    database_id="seu_database_id",
-    propriedades={
-        "Nome": p.title("Ada Lovelace"),
-        "Email": p.email("ada@example.com"),
-        "Perfil": p.select("Engenharia"),
-        "Cadastro": p.date("2026-06-24"),
-    },
-)
-```
-
----
-
-## 📖 Lendo com Paginação
-
-```python
-linhas = client.consultar_database("seu_database_id", buscar_todos=True)
-for linha in linhas:
-    print(linha["id"])
-```
-
-## 🛡️ Validando o Schema Primeiro
-
-```python
-from notion_starter import NotionClient, comparar_schema
-
-client = NotionClient()
-database = client.get_database("seu_database_id")
-
-resultado = comparar_schema(database, {
-    "Nome": "title",
-    "Email": "email",
-    "Cadastro": "date",
-})
-
-if resultado.compativel:
-    ...  # pode exportar
-else:
-    print("faltando:", resultado.faltando)
-    print("tipo errado:", resultado.tipo_errado)
-    # resultado.levantar_se_incompativel()  # ou levanta NotionSchemaError
-```
-
-## 🗺️ Mapeando o Workspace
-
-`construir_inventario` recebe os itens crus de `buscar()` e reconstrói a
-estrutura: árvore de páginas/databases, duplicatas por nome, itens vazios e
-órfãos (cujo parent não está visível). É lógica pura — sem rede.
-
-```python
-from notion_starter import NotionClient, construir_inventario
-
-client = NotionClient()
-itens = client.buscar(buscar_todos=True)
-inv = construir_inventario(itens)
-
-print(inv.total_paginas, inv.total_databases)
-for titulo, repetidos in inv.duplicatas.items():
-    print("duplicado:", titulo, "->", len(repetidos))
-```
-
-## ✅ Tasklist de Alto Nível
-
-`TaskList` envolve um database de tarefas: lê, cria e atualiza tarefas com um
-objeto `Tarefa` simples, sem mexer no JSON da API. Os nomes das colunas são
-configuráveis (`CamposTarefa`) porque variam entre workspaces.
-
-```python
-from notion_starter import NotionClient, TaskList
-
-tl = TaskList(NotionClient(), "seu_database_id")
-
-for t in tl.listar(status="Entrada"):
-    print(t.nome, "->", t.status)
-
-tl.criar("Revisar PR", status="Assim que possível", prazo="2026-07-01")
-tl.atualizar_status("id_da_tarefa", "Concluída")
-```
-
-## 🔄 GitHub e Ingestão
-
-O servidor inclui um cliente GitHub resiliente e fontes extensíveis para transformar
-repositórios ou arquivos locais em páginas do Notion. A sincronização atualiza páginas
-existentes e evita duplicar tarefas.
-
-```python
-from services.ingestao import FonteArquivos, ingerir
-from services.sincronizar_github import sincronizar
-
-ingerir(FonteArquivos("./documentos", extensoes=[".md", ".txt"]))
-sincronizar("usuario", status_tarefa="Backlog")
-```
-
-Tokens ficam no ambiente; repositórios privados só são coletados quando o token pertence
-ao mesmo usuário consultado. Schemas, variáveis e limites estão detalhados em
-[`docs/INTEGRACOES.md`](docs/INTEGRACOES.md).
-
-### Inventário de repositórios em um database
-
-`services.inventario_github` materializa um **inventário**: cria (ou reusa) um
-database com **uma página por repositório**, com propriedades ricas (conta, estrelas,
-linguagem, licença, issues, datas, flags de fork/arquivado…) e o **README exportado
-numa subpágina filha** chamada `README` — deixando a linha do database limpa para
-organizar. Aceita **várias contas** numa só passada e faz *upsert* (cria ou atualiza,
-sem duplicar). README só é (re)escrito em páginas novas.
-
-```python
-from integrations.github import GitHubClient
-from services.inventario_github import exportar_repos, garantir_database
-
-from notion_starter import NotionClient
-
-notion = NotionClient()
-github = GitHubClient()
-
-# Cria o database "GITHUB" como filho de uma página (ex.: sua HOME):
-database_id = garantir_database("ID_DA_PAGINA", cliente=notion, titulo="GITHUB")
-
-resumo = exportar_repos(
-    ["conta-um", "conta-dois"],
-    database_id,
-    github_client=github,
-    notion_client=notion,
-)
-print(resumo.paginas_criadas, resumo.readmes_escritos, resumo.total_erros)
-```
-
-Os nomes das colunas são configuráveis por `CamposGitHub` (Open/Closed), sem mexer no
-mapeamento. A subpágina README usa `NotionClient.criar_subpagina`, que quebra READMEs
-longos em lotes de 100 blocos automaticamente. O Markdown do README é convertido de
-forma **rica**: formatação inline (negrito, itálico, código, `[link](url)`), badges e
-imagens viram blocos de imagem, tabelas viram blocos de tabela e o HTML de layout comum
-em READMEs é limpo preservando o conteúdo.
-
-**Manter o inventário em dia.** `atualizar_repos` re-sincroniza tudo: adiciona
-repositórios novos, atualiza as propriedades dos existentes e **substitui a subpágina
-README quando o conteúdo mudou** — a mudança é detectada por um hash gravado na própria
-página (coluna `README hash`), sem reler os blocos.
-
-```python
-from services.inventario_github import atualizar_repos
-
-resumo = atualizar_repos(
-    ["conta-um", "conta-dois"],
-    database_id,
-    github_client=github,
-    notion_client=notion,
-)
-print(resumo.paginas_atualizadas, resumo.readmes_atualizados, resumo.total_erros)
-```
-
-Pela CLI, o comando `atualizar-github` faz o mesmo (e há a opção
-**"Atualizar inventário GitHub"** no menu do `start_app.py`):
-
-```bash
-python -m cli --json atualizar-github --contas conta-um,conta-dois
-python -m cli --json atualizar-github --database <database_id> --sem-readme
-```
-
-As contas saem de `--contas` (CSV) ou da variável `GITHUB_CONTAS`; o database de
-`--database` ou de `NOTION_DATABASE_ID`. Defina `GITHUB_TOKEN` para incluir os
-repositórios privados da sua própria conta. Em databases criados antes da coluna
-`README hash`, ela é adicionada automaticamente na primeira atualização — nada de
-configurar o schema na mão.
-
-## 🧩 Helpers de Propriedades
-
-| Helper | Tipo Notion |
+| Rota | Uso |
 |---|---|
-| `title(str)` | `title` |
-| `rich_text(str)` | `rich_text` |
-| `email(str)` | `email` |
-| `phone_number(str)` | `phone_number` |
-| `url(str)` | `url` |
-| `number(int \| float)` | `number` |
-| `checkbox(bool)` | `checkbox` |
-| `select(str)` | `select` |
-| `status(str)` | `status` |
-| `multi_select(list[str])` | `multi_select` |
-| `date(inicio, fim=None)` | `date` (aceita `str`, `date`, `datetime`) |
+| `GET /api/health` | Health check. |
+| `GET /api/tarefas` | Lista tarefas. |
+| `POST /api/tarefas` | Cria tarefa. |
+| `PATCH /api/tarefas/{id}` | Edita tarefa. |
+| `GET /api/opcoes` | Lista opções de status/esforço/áreas. |
+| `GET /api/databases` | Lista databases visíveis. |
+| `GET /api/databases/{id}` | Explora linhas de um database genérico. |
 
-## 🔧 Superfície da API
+### MCP
 
-Métodos de `NotionClient`:
+O servidor MCP expõe ferramentas de tarefas, conteúdo, clonagem e exploração. Consulte
+[`docs/MCP.md`](docs/MCP.md) para transportes, confirmação de escrita e contratos.
 
-- **`buscar(query=None, page_size=100, buscar_todos=False, filtro=None)`** — busca páginas e databases compartilhados com a integração (endpoint `/search`); sem `query`, lista tudo o que é visível.
-- **`get_database(database_id)`** — busca os metadados de um database.
-- **`criar_database(pagina_id, titulo, propriedades)`** — cria um database filho de uma página.
-- **`consultar_database(database_id, page_size=100, buscar_todos=False, filtro=None)`** — consulta com paginação.
-- **`criar_pagina(database_id, propriedades)`** — cria uma página no database.
-- **`criar_subpagina(pagina_pai_id, titulo, blocos=None)`** — cria uma página filha dentro de outra página (ex.: um README aninhado), quebrando conteúdos com mais de 100 blocos em lotes.
-- **`atualizar_pagina(page_id, propriedades)`** — atualiza propriedades de uma página.
-- **`arquivar_pagina(page_id)`** — arquiva uma página.
+### Integrações externas
 
-## 📊 Logging
+- **Notion API:** fonte de verdade para páginas, databases, tarefas e conteúdo.
+- **GitHub API:** inventário de repositórios e READMEs em database do Notion.
+- **OpenRouter:** camada opcional de IA copiloto.
 
-O core é silencioso por padrão. Ative os handlers prontos ao rodar como script:
+Detalhes operacionais estão em [`docs/INTEGRACOES.md`](docs/INTEGRACOES.md) e
+[`docs/IA-CAMADA.md`](docs/IA-CAMADA.md).
 
-```python
-from notion_starter import configure_logging
+---
 
-configure_logging(log_file="logs/notion_starter.log")
-```
+## 🔒 Segurança e Dados
 
-Em uma aplicação, basta configurar o logger `notion_starter` pela sua configuração
-normal de logging.
+- `.env` fica fora do Git e deve ser criado localmente a partir de `.env.example`.
+- Tokens, IDs reais e artefatos do workspace não devem ser versionados.
+- `mapa.json` e `mapa.html` são gerados localmente e podem conter nomes/URLs reais.
+- Testes não chamam APIs reais; HTTP externo deve ser mockado.
+- Escritas destrutivas têm proteção na CLI (`--sim`) e hints de confirmação no MCP.
+- Logs e mensagens devem ajudar debug sem expor segredo.
 
-## ⚠️ Exceções
-
-Todos os erros derivam de `NotionSyncError`:
-
-- **`NotionConfigurationError`** — token ou identificador ausente/inválido.
-- **`NotionHTTPError`** — resposta não-2xx (`.status_code`, `.body`).
-- **`NotionConnectionError`** — falha de rede ou timeout.
-- **`NotionInvalidResponseError`** — resposta não-JSON.
-- **`NotionSchemaError`** — database incompatível com o schema esperado.
-
-## 💡 Exemplos
-
-Veja [`examples/`](examples/) — são o ponto de partida para a sua lógica:
-
-- [`export_rows.py`](examples/export_rows.py) — cria uma página por linha de uma lista de dicts.
-- [`check_schema.py`](examples/check_schema.py) — valida o schema de um database.
-- [`sync_from_csv.py`](examples/sync_from_csv.py) — fluxo end-to-end: lê um CSV, valida o schema e cria uma página por linha.
-- [`gerenciar_tarefas.py`](examples/gerenciar_tarefas.py) — usa a `TaskList` para listar, criar e concluir tarefas num database de tarefas.
-- [`listar_paginas.py`](examples/listar_paginas.py) — lista tudo que a integração enxerga (páginas e databases, com IDs).
-- [`coletar_mapa.py`](examples/coletar_mapa.py) — varre o workspace e salva `mapa.json` (estrutura, duplicatas, órfãos, nº de linhas por database).
-- [`gerar_arvore_html.py`](examples/gerar_arvore_html.py) — lê o `mapa.json` e gera um `mapa.html` navegável (árvore + destaques).
-
-## 🗺️ Roadmap e Visão
-
-Para onde o projeto caminha — de biblioteca tipada a um front próprio com IA sobre o
-Notion — está documentado em [`docs/`](docs/README.md):
-[roadmap e visão final](docs/PLANO.md), [modelos de uso](docs/MODELOS-DE-USO.md),
-[portabilidade](docs/PORTABILIDADE.md) e os caminhos de evolução
-([SaaS](docs/SAAS.md), [escala](docs/ESCALA.md), [otimização](docs/OTIMIZACAO.md) e
-[ideias extras](docs/IDEIAS-EXTRAS.md)). A ponte com o Felixo-AI-Core está em
-[`docs/MCP.md`](docs/MCP.md). O ciclo atual de evolução — front **SPA React + Tailwind +
-Vite**, **CLI completa para IA** e mapeamento das colunas reais (multi-tabela) — está
-detalhado em [`docs/PLANO.md`](docs/PLANO.md) (*Ciclo 2*), com as frentes separadas por
-agente em [`docs/AGENTES.md`](docs/AGENTES.md) e o contrato em
-[`docs/CONTRATOS.md`](docs/CONTRATOS.md). São documentos de direção, abertos à contribuição.
+---
 
 ## ✅ Qualidade
 
-O gate local fica em um comando único:
+Rode o gate completo antes de entregar mudanças:
 
 ```bash
 python3 scripts/quality_check.py
 ```
 
-Ele executa `ruff check .`, `pytest -q`, `npm run lint` e `npm run build`. Use
-`--python-only` ou `--front-only` para depurar uma frente isolada. O contrato completo
-está em [`docs/QUALIDADE.md`](docs/QUALIDADE.md), e o roteiro para agentes/mantenedores
-está em [`AGENTS.md`](AGENTS.md).
-
-## 🧪 Desenvolvimento
+Modos úteis:
 
 ```bash
-# Instale com as dependências de desenvolvimento
-pip install -e ".[dev]"
-
-# Para trabalhar no servidor (opcional):
-pip install -e ".[server]"
-
-# Para trabalhar no servidor MCP (opcional):
-pip install -e ".[mcp]"
-
-# Rode os testes e o lint
-python3 scripts/quality_check.py
+python3 scripts/quality_check.py --python-only
+python3 scripts/quality_check.py --front-only
 ```
 
-Os testes do core mockam todo o HTTP com [`responses`](https://github.com/getsentry/responses);
-nenhum token real do Notion ou acesso à rede é necessário. Os testes do servidor
-usam o Django test client e `TaskList` injetada — também sem rede. A suíte MCP valida
-a superfície `notion.*`, anotações, transportes e entradas com o Notion mockado.
+O gate cobre:
+
+- `ruff check .`
+- `pytest -q`
+- `npm run lint`
+- `npm run build`
+
+O contrato de pronto está em [`docs/QUALIDADE.md`](docs/QUALIDADE.md). O roteiro para
+agentes e mantenedores está em [`AGENTS.md`](AGENTS.md).
+
+---
+
+## 📚 Documentação
+
+| Documento | Quando ler |
+|---|---|
+| [`docs/README.md`](docs/README.md) | Índice geral da documentação. |
+| [`docs/CONTRATOS.md`](docs/CONTRATOS.md) | Contratos de API, objetos e camadas. |
+| [`docs/MCP.md`](docs/MCP.md) | Ferramentas MCP e política de confirmação. |
+| [`docs/INTEGRACOES.md`](docs/INTEGRACOES.md) | GitHub, arquivos locais, schemas e segurança. |
+| [`docs/PLANO.md`](docs/PLANO.md) | Roadmap e visão de evolução. |
+| [`docs/QUALIDADE.md`](docs/QUALIDADE.md) | Gate local, CI e critério de pronto. |
+| [`IA.md`](IA.md) | Linha do tempo técnica e decisões do projeto. |
 
 ---
 
 ## 📝 Licença
 
-Este projeto está sob a licença MIT — veja o arquivo [`LICENSE`](LICENSE).
-
-## 👤 Autor
-
-**notion-starter-boilerplate contributors**
-- Repositório: [notion-starter-boilerplate](https://github.com/flaviavs-commits/notion-starter-boilerplate)
-- Issues: [Reportar um problema](https://github.com/flaviavs-commits/notion-starter-boilerplate/issues)
-
-## 🤝 Contribuições
-
-Contribuições são bem-vindas! Sinta-se à vontade para:
-- Reportar bugs
-- Sugerir melhorias (mais tipos de propriedade, helpers de leitura, novos exemplos...)
-- Melhorar a documentação
-
-Veja o guia completo em [CONTRIBUTING.md](CONTRIBUTING.md).
+Este projeto está sob a licença MIT. Veja [`LICENSE`](LICENSE).
 
 ---
 
-⭐ Se este projeto foi útil, considere dar uma estrela no GitHub!
+## 👤 Autor
+
+**Felipe Alcantara**
+
+- GitHub: [@Felipe-Alcantara](https://github.com/Felipe-Alcantara)
+- Repositório: [Felipe-Alcantara/Automa-es-do-Notion](https://github.com/Felipe-Alcantara/Automa-es-do-Notion)
+
+---
+
+## 🤝 Contribuições
+
+Contribuições são bem-vindas. Antes de abrir uma mudança, leia
+[`CONTRIBUTING.md`](CONTRIBUTING.md), rode o gate de qualidade e mantenha a documentação
+viva atualizada no mesmo passo.
+
+⭐ Se este projeto foi útil, considere deixar uma estrela no GitHub.
