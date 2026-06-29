@@ -154,6 +154,23 @@ def test_categorias_cobrem_todas_as_acoes_sem_orfas():
     assert nas_categorias | {"status"} == acoes
 
 
+def test_acao_qualidade_roda_script_unificado(monkeypatch):
+    chamadas = []
+    monkeypatch.setattr(
+        start_app.subprocess,
+        "run",
+        lambda comando, **kwargs: chamadas.append((comando, kwargs)),
+    )
+    console = Console(file=io.StringIO(), force_terminal=False)
+
+    start_app.acao_qualidade(console)
+
+    comando, kwargs = chamadas[0]
+    assert comando == [start_app.sys.executable, str(start_app.QUALITY_SCRIPT)]
+    assert kwargs["cwd"] == start_app.RAIZ
+    assert kwargs["check"] is False
+
+
 def test_instala_extra_servidor_quando_necessario(monkeypatch):
     chamadas = []
     monkeypatch.setattr(start_app, "_django_disponivel", lambda: True)

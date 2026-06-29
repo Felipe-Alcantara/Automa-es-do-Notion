@@ -17,6 +17,7 @@
 | [🔌 PORTABILIDADE.md](PORTABILIDADE.md) | Como adaptar para outro domínio, outro provedor ou outra linguagem. Usar como template. |
 | [💼 SAAS.md](SAAS.md) | O que mudaria para virar um produto multiusuário (auth, multi-tenant, cobrança, segurança). |
 | [🏗️ INFRA.md](INFRA.md) | Como o servidor roda local e é hospedado: estrutura de pastas, config por ambiente, SQLite operacional, deploy. |
+| [✅ QUALIDADE.md](QUALIDADE.md) | Gate executável de qualidade: comandos locais, CI, critério de pronto e referências. |
 | [🔄 INTEGRACOES.md](INTEGRACOES.md) | GitHub e arquivos locais: configuração, schemas, idempotência, segurança e exemplos de sincronização. |
 | [📈 ESCALA.md](ESCALA.md) | Como crescer sem quebrar: fila de jobs, workers, cache, rate limit, observabilidade. |
 | [⚡ OTIMIZACAO.md](OTIMIZACAO.md) | Como reduzir latência e custo (chamadas ao Notion e ao OpenRouter, cache, idempotência). |
@@ -33,6 +34,7 @@
 - **Quero entender a visão** → [PLANO.md](PLANO.md) → [MODELOS-DE-USO.md](MODELOS-DE-USO.md)
 - **Vou implementar uma frente do Ciclo 2 (front React, CLI, API v2)** →
   [CONTRATOS.md](CONTRATOS.md) (o contrato) → [AGENTES.md](AGENTES.md) → [PLANO.md](PLANO.md) (*Ciclo 2*)
+- **Vou validar uma mudança antes de entregar** → [QUALIDADE.md](QUALIDADE.md)
 - **Quero reaproveitar o projeto** → [PORTABILIDADE.md](PORTABILIDADE.md)
 - **Quero pensar em produto** → [SAAS.md](SAAS.md) → [ESCALA.md](ESCALA.md)
 - **Quero entender a camada de IA** → [IA-CAMADA.md](IA-CAMADA.md)

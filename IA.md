@@ -248,6 +248,16 @@ PyPI fechado. O `pyproject.toml` segue funcional para `pip install -e` local.
   instalar) + Status + Sair, navegando por subtelas — menos informação de uma vez,
   mais intuitivo, mantendo o mínimo obrigatório do contrato de start app. +4
   testes; suíte (334) e ruff verdes.
+- [2026-06-29] ✅ **Gate de qualidade executável** — o padrão de qualidade passou a
+  estar materializado no próprio repositório: `scripts/quality_check.py` roda Ruff,
+  Pytest, Oxlint e build Vite; `start_app.py` ganhou a ação "Qualidade"; CI passou
+  a validar também o front; raiz ganhou `AGENTS.md`; documentação dedicada em
+  `docs/QUALIDADE.md`; README/CONTRIBUTING/front README atualizados.
+- [2026-06-29] ✅ **Atualização do padrão Felixo absorvida** — releitura da cópia
+  local atualizada às 14:05 confirmou novas ênfases operacionais: automação antes de
+  edição manual, `IA.md` como linha do tempo preservada, documentação viva durante a
+  execução e git direto no `main` por padrão. `AGENTS.md` e `docs/QUALIDADE.md`
+  passaram a registrar essas regras explicitamente para próximos mantenedores/agentes.
 
 Ideias abertas à comunidade: cobertura de mais tipos de propriedade do Notion,
 mais tipos de bloco no conversor Markdown (tabelas), escrita de linhas em data
@@ -269,6 +279,8 @@ planilha).
   `server/mcp_server.py` não depende do Django; usa `stdio` por padrão e oferece
   Streamable HTTP somente para depuração local.
 - [2026-06-24] Dev: `pytest`, `responses` (mock de HTTP), `ruff`.
+- [2026-06-29] Front/dev: `oxlint`, Vite build e gate unificado
+  `python3 scripts/quality_check.py`.
 - [2026-06-24] Build: `hatchling`. Layout `src/`.
 
 ---
@@ -373,10 +385,9 @@ planilha).
 - [2026-06-26] ✅ `tests/test_cli_notion_tasks.py` — CLI por injeção de doubles,
   cobrindo envelope JSON, listar/ler/criar/editar/mover/concluir/opções, listagem e
   escolha de database, resumo de mapeamento e `main()` sem rede real.
-- [2026-06-26] ✅ Suíte completa do working tree compartilhado:
-  **285 testes passando**; `ruff check .`, `ruff format --check .`,
-  `DJANGO_DEBUG=1 .venv/bin/python server/manage.py check`, `npm run lint`
-  e `npm run build` limpos.
+- [2026-06-29] ✅ Suíte completa do working tree compartilhado:
+  **427 testes passando**; `ruff check .`, `npm run lint`, `npm run build` e
+  `python3 scripts/quality_check.py` limpos.
 
 ---
 

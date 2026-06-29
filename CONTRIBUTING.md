@@ -43,14 +43,12 @@ cd notion-starter-boilerplate
 pip install -e ".[dev]"
 
 # Rode a suíte de testes (HTTP é mockado — não precisa de token nem rede)
-pytest -q
-
-# Verifique o estilo
-ruff check .
+python3 scripts/quality_check.py
 ```
 
-Requer Python 3.10+. Copie `.env.example` para `.env` apenas se for rodar exemplos
-contra um workspace real do Notion — nunca versione o `.env`.
+Requer Python 3.10+. Para validar a SPA, rode também `npm install` dentro de `front/`.
+Copie `.env.example` para `.env` apenas se for rodar exemplos contra um workspace real
+do Notion — nunca versione o `.env`.
 
 ---
 
@@ -70,6 +68,8 @@ contra um workspace real do Notion — nunca versione o `.env`.
   nos testes ou na documentação.
 - **Teste o comportamento.** Bugs corrigidos viram caso de regressão; HTTP é
   sempre mockado com `responses`.
+- **Rode o gate completo.** Use `python3 scripts/quality_check.py` antes de abrir PR;
+  ele cobre Python e front. Para isolar falhas, use `--python-only` ou `--front-only`.
 - **Atualize a documentação viva** (`README.md` e `IA.md`) no mesmo passo quando a
   mudança alterar comportamento, estrutura ou comandos.
 
@@ -98,7 +98,7 @@ Um bom PR responde claramente:
 
 - **O que mudou?**
 - **Por que mudou?**
-- **Como foi validado?** (ex.: `pytest -q` e `ruff check .`)
+- **Como foi validado?** (ex.: `python3 scripts/quality_check.py`)
 - **Qual risco sobrou?**
 
 Mantenha o PR focado: evite misturar refatoração ampla com novas funcionalidades.
