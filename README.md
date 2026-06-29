@@ -390,6 +390,41 @@ Tokens ficam no ambiente; repositórios privados só são coletados quando o tok
 ao mesmo usuário consultado. Schemas, variáveis e limites estão detalhados em
 [`docs/INTEGRACOES.md`](docs/INTEGRACOES.md).
 
+### Inventário de repositórios em um database
+
+`services.inventario_github` materializa um **inventário**: cria (ou reusa) um
+database com **uma página por repositório**, com propriedades ricas (conta, estrelas,
+linguagem, licença, issues, datas, flags de fork/arquivado…) e o **README exportado
+numa subpágina filha** chamada `README` — deixando a linha do database limpa para
+organizar. Aceita **várias contas** numa só passada e faz *upsert* (cria ou atualiza,
+sem duplicar). README só é (re)escrito em páginas novas.
+
+```python
+from integrations.github import GitHubClient
+from services.inventario_github import exportar_repos, garantir_database
+
+from notion_starter import NotionClient
+
+notion = NotionClient()
+github = GitHubClient()
+
+# Cria o database "GITHUB" como filho de uma página (ex.: sua HOME):
+database_id = garantir_database("ID_DA_PAGINA", cliente=notion, titulo="GITHUB")
+
+resumo = exportar_repos(
+    ["conta-um", "conta-dois"],
+    database_id,
+    github_client=github,
+    notion_client=notion,
+)
+print(resumo.paginas_criadas, resumo.readmes_escritos, resumo.total_erros)
+```
+
+Os nomes das colunas são configuráveis por `CamposGitHub` (Open/Closed), sem mexer no
+mapeamento. A subpágina README usa `NotionClient.criar_subpagina`, que quebra READMEs
+longos em lotes de 100 blocos automaticamente e normaliza a linguagem de blocos de
+código para um valor aceito pelo Notion.
+
 ## 🧩 Helpers de Propriedades
 
 | Helper | Tipo Notion |
@@ -415,6 +450,7 @@ Métodos de `NotionClient`:
 - **`criar_database(pagina_id, titulo, propriedades)`** — cria um database filho de uma página.
 - **`consultar_database(database_id, page_size=100, buscar_todos=False, filtro=None)`** — consulta com paginação.
 - **`criar_pagina(database_id, propriedades)`** — cria uma página no database.
+- **`criar_subpagina(pagina_pai_id, titulo, blocos=None)`** — cria uma página filha dentro de outra página (ex.: um README aninhado), quebrando conteúdos com mais de 100 blocos em lotes.
 - **`atualizar_pagina(page_id, propriedades)`** — atualiza propriedades de uma página.
 - **`arquivar_pagina(page_id)`** — arquiva uma página.
 
