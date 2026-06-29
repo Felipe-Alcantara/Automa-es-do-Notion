@@ -12,6 +12,7 @@ from services.inventario_github import (
     atualizar_repos,
     construir_schema,
     exportar_repos,
+    garantir_coluna_hash,
     garantir_database,
 )
 
@@ -85,12 +86,17 @@ class _NotionFixo:
         falhar_criacao: bool = False,
         hashes: dict[str, str] | None = None,
         blocos: dict[str, list] | None = None,
+        tem_coluna_hash: bool = True,
+        sem_data_source: bool = False,
     ) -> None:
         # existentes: {url -> page_id}. hashes/blocos: por page_id.
         self.existentes = existentes or {}
         self.falhar_criacao = falhar_criacao
         self.hashes = hashes or {}
         self.blocos = blocos or {}
+        self.tem_coluna_hash = tem_coluna_hash
+        self.sem_data_source = sem_data_source
+        self.colunas_criadas: list[dict] = []
         self.criados: list[tuple[str, dict]] = []
         self.atualizados: list[tuple[str, dict]] = []
         self.subpaginas: list[tuple[str, str, list]] = []
@@ -131,6 +137,30 @@ class _NotionFixo:
     def excluir_bloco(self, block_id):
         self.blocos_excluidos.append(block_id)
         return {"id": block_id}
+
+    # -- Schema (para garantir_coluna_hash) --------------------------------
+
+    def _props_schema(self):
+        return {"README hash": {"rich_text": {}}} if self.tem_coluna_hash else {}
+
+    def listar_data_sources(self, database_id):
+        return [] if self.sem_data_source else [{"id": "ds-1", "name": "GITHUB"}]
+
+    def get_data_source(self, data_source_id):
+        return {"id": data_source_id, "properties": self._props_schema()}
+
+    def atualizar_data_source(self, data_source_id, *, propriedades):
+        self.colunas_criadas.append(propriedades)
+        self.tem_coluna_hash = True
+        return {"id": data_source_id, "properties": self._props_schema()}
+
+    def get_database(self, database_id):
+        return {"id": database_id, "properties": self._props_schema()}
+
+    def atualizar_database(self, database_id, *, titulo=None, propriedades=None):
+        self.colunas_criadas.append(propriedades)
+        self.tem_coluna_hash = True
+        return {"id": database_id, "properties": self._props_schema()}
 
 
 # --------------------------------------------------------------------------- #
@@ -379,3 +409,46 @@ def test_atualizar_exige_contas_e_database():
         atualizar_repos(
             ["felipe"], "", github_client=_GitHubFixo({}), notion_client=_NotionFixo()
         )
+
+
+# --------------------------------------------------------------------------- #
+# garantir_coluna_hash
+# --------------------------------------------------------------------------- #
+
+
+def test_garantir_coluna_hash_cria_quando_falta_no_data_source():
+    notion = _NotionFixo(tem_coluna_hash=False)
+    criou = garantir_coluna_hash(DB, cliente=notion)
+    assert criou is True
+    assert notion.colunas_criadas == [{"README hash": {"rich_text": {}}}]
+
+
+def test_garantir_coluna_hash_idempotente_quando_ja_existe():
+    notion = _NotionFixo(tem_coluna_hash=True)
+    criou = garantir_coluna_hash(DB, cliente=notion)
+    assert criou is False
+    assert notion.colunas_criadas == []
+
+
+def test_garantir_coluna_hash_usa_database_quando_nao_ha_data_source():
+    notion = _NotionFixo(tem_coluna_hash=False, sem_data_source=True)
+    criou = garantir_coluna_hash(DB, cliente=notion)
+    assert criou is True
+    assert notion.colunas_criadas == [{"README hash": {"rich_text": {}}}]
+
+
+def test_atualizar_garante_coluna_hash_antes_de_gravar():
+    notion = _NotionFixo(tem_coluna_hash=False)
+    github = _GitHubFixo({"felipe": [_repo("r1")]}, readmes={"felipe/r1": "# X"})
+    atualizar_repos(["felipe"], DB, github_client=github, notion_client=notion)
+    # A coluna foi criada uma vez, antes de processar os repos.
+    assert notion.colunas_criadas == [{"README hash": {"rich_text": {}}}]
+
+
+def test_atualizar_sem_readme_nao_mexe_no_schema():
+    notion = _NotionFixo(tem_coluna_hash=False)
+    github = _GitHubFixo({"felipe": [_repo("r1")]})
+    atualizar_repos(
+        ["felipe"], DB, github_client=github, notion_client=notion, sincronizar_readme=False
+    )
+    assert notion.colunas_criadas == []
