@@ -558,3 +558,24 @@ criado na HOME pessoal com 85 repositórios das contas Felipe-Alcantara (inclui 
 via token próprio) e flaviavs-commits; READMEs exportados em subpágina por repo (só os
 repos sem README no GitHub ficam sem subpágina). Commits: `feat` (RepoInfo),
 `feat` (criar_subpagina), `fix` (linguagem de código), `feat` (serviço de inventário).
+
+[2026-06-29b] CONTEXTO: Os READMEs importados apareciam como Markdown cru no Notion
+(badges, divs HTML, links literais) porque o conversor era plaintext puro; e não havia
+como manter o inventário em dia (atualizar repos novos/renomeados, README/estrelas).
+DECISÃO: (1) Conversor `content.py` agora é **rico**: parser inline (negrito, itálico,
+código, ~~tachado~~, `[link](url)`) com annotations/link; imagens e badges viram blocos
+`image`; tabelas viram blocos `table`; HTML de layout (`div/center/br/a/img/h1-6`) é
+convertido/limpo preservando o conteúdo; headings 4-6 → heading_3; setext suportado. O
+reverso `blocos_para_markdown` reconstrói tudo (round-trip). Blocos de código seguem crus
+(sem parse inline). (2) `services.inventario_github.atualizar_repos`: cria repos novos,
+atualiza propriedades dos existentes e **substitui a subpágina README só quando muda**,
+detectado por hash na coluna `README hash` (sem reler blocos). Coleta multi-conta extraída
+para `_coletar_repos` (compartilhada com `exportar_repos`). (3) Comando CLI
+`atualizar-github` (--contas/--database/--sem-readme) + opção "Atualizar inventário GitHub"
+no `start_app.py`. DETALHE TÉCNICO: o limite de 2000 do Notion é por item de rich_text e
+contado em UTF-16; o fatiamento preserva annotations/link em cada fatia.
+VALIDAÇÃO: 435 testes verdes (+16 conversor, +6 update, +4 CLI), `ruff` limpo. Teste real:
+re-renderização dos READMEs do database GITHUB (badges como imagem, links clicáveis,
+negrito aplicado); rodar `atualizar-github` de novo não recria README sem mudança.
+Commits: `feat` (conversor rico), `feat` (atualizar_repos), `feat` (CLI + start_app),
+`docs`.
