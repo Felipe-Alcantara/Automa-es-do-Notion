@@ -389,6 +389,21 @@ def test_atualizar_existente_readme_mudou_substitui_subpagina():
     assert notion.subpaginas  # recriou
 
 
+def test_atualizar_remove_readmes_duplicados_antes_de_recriar():
+    # Execuções anteriores podem ter deixado 2 subpáginas README; todas saem.
+    repo = _repo("r1")
+    notion = _NotionFixo(
+        existentes={repo.url_html: "pagina-1"},
+        hashes={"pagina-1": "hashantigo000000"},
+        blocos={"pagina-1": [_readme_child("blk-a"), _readme_child("blk-b")]},
+    )
+    github = _GitHubFixo({"felipe": [repo]}, readmes={"felipe/r1": "# NOVO"})
+    resumo = atualizar_repos(["felipe"], DB, github_client=github, notion_client=notion)
+    assert resumo.readmes_atualizados == 1
+    assert notion.blocos_excluidos == ["blk-a", "blk-b"]  # apagou as duas
+    assert len(notion.subpaginas) == 1  # recriou só uma
+
+
 def test_atualizar_sem_readme_so_propriedades():
     repo = _repo("r1")
     notion = _NotionFixo(existentes={repo.url_html: "pagina-1"})
