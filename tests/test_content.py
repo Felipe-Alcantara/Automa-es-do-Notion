@@ -78,6 +78,17 @@ def test_markdown_para_blocos_linguagem_desconhecida_vira_plain_text():
     assert sem_lingua[0]["code"]["language"] == "plain text"
 
 
+def test_markdown_para_blocos_fatia_texto_acima_de_2000_chars():
+    # O Notion rejeita um item de rich_text com mais de 2000 caracteres.
+    grande = "x" * 5000
+    blocos = markdown_para_blocos(f"```\n{grande}\n```")
+    itens = blocos[0]["code"]["rich_text"]
+    assert len(itens) == 3  # 2000 + 2000 + 1000
+    assert all(len(i["text"]["content"]) <= 2000 for i in itens)
+    # A leitura reconstrói o texto inteiro, sem truncar.
+    assert grande in blocos_para_markdown(blocos)
+
+
 def test_markdown_para_blocos_ignora_linhas_em_branco():
     blocos = markdown_para_blocos("a\n\n\nb")
     assert [b["type"] for b in blocos] == ["paragraph", "paragraph"]
