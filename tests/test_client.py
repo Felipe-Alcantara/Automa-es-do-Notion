@@ -84,6 +84,54 @@ def test_criar_pagina_envia_payload_esperado():
 
 
 @responses.activate
+def test_criar_subpagina_envia_parent_page_e_titulo():
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/pages",
+        json={"id": "sub1"},
+        status=200,
+    )
+    client = criar_client()
+    bloco = {"type": "paragraph", "paragraph": {"rich_text": []}}
+    resposta = client.criar_subpagina("pai123", "README", blocos=[bloco])
+    assert resposta["id"] == "sub1"
+    body = responses.calls[0].request.body
+    assert b'"page_id": "pai123"' in body
+    assert b'"README"' in body
+    assert b'"children"' in body
+
+
+@responses.activate
+def test_criar_subpagina_quebra_blocos_em_lotes_de_100():
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/pages",
+        json={"id": "sub1"},
+        status=200,
+    )
+    responses.add(
+        responses.PATCH,
+        f"{NOTION_BASE_URL}/blocks/sub1/children",
+        json={"results": []},
+        status=200,
+    )
+    client = criar_client()
+    blocos = [
+        {"type": "paragraph", "paragraph": {"rich_text": []}} for _ in range(150)
+    ]
+    client.criar_subpagina("pai123", "README", blocos=blocos)
+    # 1 criação (100 blocos) + 1 anexação (50 restantes).
+    assert len(responses.calls) == 2
+    assert responses.calls[1].request.url.endswith("/blocks/sub1/children")
+
+
+def test_criar_subpagina_exige_titulo():
+    client = criar_client()
+    with pytest.raises(NotionConfigurationError):
+        client.criar_subpagina("pai123", "   ")
+
+
+@responses.activate
 def test_atualizar_database_envia_payload_e_invalida_cache():
     responses.add(
         responses.GET,

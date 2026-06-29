@@ -804,6 +804,65 @@ class NotionClient:
             idempotente=False,
         )
 
+    def criar_subpagina(
+        self,
+        pagina_pai_id: str,
+        titulo: str,
+        *,
+        blocos: list[dict[str, object]] | None = None,
+    ) -> dict[str, Any]:
+        """Cria uma página filha (subpágina) dentro de outra página.
+
+        Diferente de ``criar_pagina`` (que cria uma linha num database), esta
+        cria uma página solta como filha de ``pagina_pai_id`` — útil para
+        organizar conteúdo em subpáginas, como um README aninhado dentro da
+        página de um projeto.
+
+        O Notion aceita no máximo 100 blocos por requisição; quando ``blocos``
+        excede esse limite, os primeiros 100 entram na criação e o restante é
+        anexado em lotes, de forma transparente para o chamador.
+
+        Args:
+            pagina_pai_id: ID da página que receberá a subpágina.
+            titulo: Título da subpágina (vira o ``title`` da nova página).
+            blocos: Conteúdo opcional, no formato de blocos da API do Notion.
+
+        Returns:
+            A resposta JSON da subpágina criada.
+
+        Raises:
+            NotionConfigurationError: Se ``pagina_pai_id`` for inválido.
+            ValueError: Se ``titulo`` for vazio.
+            NotionHTTPError: Se a API responder com 4xx/5xx.
+        """
+
+        limpo = _validar_identificador(pagina_pai_id, "pagina_pai_id")
+        titulo_limpo = _validar_identificador(titulo, "titulo")
+        todos = list(blocos or [])
+        payload: dict[str, Any] = {
+            "parent": {"type": "page_id", "page_id": limpo},
+            "properties": {
+                "title": [{"type": "text", "text": {"content": titulo_limpo}}]
+            },
+        }
+        if todos:
+            payload["children"] = todos[:100]
+
+        resposta = self._request_json(
+            method="POST",
+            path="/pages",
+            payload=payload,
+            idempotente=False,
+        )
+
+        restante = todos[100:]
+        if restante:
+            page_id = str(resposta.get("id") or "")
+            for inicio in range(0, len(restante), 100):
+                self.anexar_blocos(page_id, restante[inicio : inicio + 100])
+
+        return resposta
+
     def atualizar_pagina(
         self,
         page_id: str,
