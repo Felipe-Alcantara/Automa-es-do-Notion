@@ -7,7 +7,9 @@ from integrations.github import RepoInfo
 from services.inventario_github import (
     CamposGitHub,
     ResumoInventario,
+    _hash_readme,
     _propriedades_pagina,
+    atualizar_repos,
     construir_schema,
     exportar_repos,
     garantir_database,
@@ -68,19 +70,32 @@ class _GitHubFixo:
         return base
 
 
+def _rt(texto: str) -> dict:
+    """Propriedade rich_text como a API do Notion devolve (com plain_text)."""
+    if not texto:
+        return {"rich_text": []}
+    return {"rich_text": [{"plain_text": texto, "text": {"content": texto}}]}
+
+
 class _NotionFixo:
     def __init__(
         self,
         *,
         existentes: dict[str, str] | None = None,
         falhar_criacao: bool = False,
+        hashes: dict[str, str] | None = None,
+        blocos: dict[str, list] | None = None,
     ) -> None:
+        # existentes: {url -> page_id}. hashes/blocos: por page_id.
         self.existentes = existentes or {}
         self.falhar_criacao = falhar_criacao
+        self.hashes = hashes or {}
+        self.blocos = blocos or {}
         self.criados: list[tuple[str, dict]] = []
         self.atualizados: list[tuple[str, dict]] = []
         self.subpaginas: list[tuple[str, str, list]] = []
         self.databases_criados: list[tuple[str, str]] = []
+        self.blocos_excluidos: list[str] = []
 
     def criar_database(self, pagina_id, titulo, propriedades):
         self.databases_criados.append((pagina_id, titulo))
@@ -90,7 +105,10 @@ class _NotionFixo:
         assert database_id == DB
         url = filtro.get("url", {}).get("equals")
         page_id = self.existentes.get(url)
-        return [{"id": page_id}] if page_id else []
+        if not page_id:
+            return []
+        props = {"README hash": _rt(self.hashes.get(page_id, ""))}
+        return [{"id": page_id, "properties": props}]
 
     def criar_pagina(self, database_id, propriedades):
         if self.falhar_criacao:
@@ -106,6 +124,13 @@ class _NotionFixo:
     def criar_subpagina(self, pagina_pai_id, titulo, *, blocos=None):
         self.subpaginas.append((pagina_pai_id, titulo, blocos or []))
         return {"id": f"sub-{len(self.subpaginas)}"}
+
+    def ler_blocos(self, block_id, *a, **k):
+        return self.blocos.get(block_id, [])
+
+    def excluir_bloco(self, block_id):
+        self.blocos_excluidos.append(block_id)
+        return {"id": block_id}
 
 
 # --------------------------------------------------------------------------- #
@@ -274,4 +299,83 @@ def test_exportar_exige_database():
 def test_resumo_inventario_defaults():
     r = ResumoInventario()
     assert r.repos_encontrados == 0
+    assert r.readmes_atualizados == 0
     assert r.total_erros == 0
+
+
+# --------------------------------------------------------------------------- #
+# atualizar_repos
+# --------------------------------------------------------------------------- #
+
+
+def _readme_child(block_id="blk-readme"):
+    return {"id": block_id, "type": "child_page", "child_page": {"title": "README"}}
+
+
+def test_schema_inclui_readme_hash():
+    assert "README hash" in construir_schema()
+
+
+def test_atualizar_cria_repo_novo_com_readme_e_hash():
+    notion = _NotionFixo()
+    github = _GitHubFixo({"felipe": [_repo("novo")]}, readmes={"felipe/novo": "# Oi"})
+    resumo = atualizar_repos(["felipe"], DB, github_client=github, notion_client=notion)
+    assert resumo.paginas_criadas == 1
+    assert resumo.readmes_escritos == 1
+    assert notion.subpaginas  # README criado
+    # Hash gravado na página recém-criada (via atualizar_pagina após criar).
+    assert any("README hash" in props for _, props in notion.atualizados)
+
+
+def test_atualizar_existente_readme_inalterado_nao_recria():
+    repo = _repo("r1")
+    readme = "# Mesmo conteúdo"
+    h = _hash_readme(readme)
+    notion = _NotionFixo(
+        existentes={repo.url_html: "pagina-1"},
+        hashes={"pagina-1": h},
+        blocos={"pagina-1": [_readme_child()]},
+    )
+    github = _GitHubFixo({"felipe": [repo]}, readmes={"felipe/r1": readme})
+    resumo = atualizar_repos(["felipe"], DB, github_client=github, notion_client=notion)
+    assert resumo.paginas_atualizadas == 1
+    assert resumo.readmes_atualizados == 0
+    assert notion.blocos_excluidos == []  # não apagou a subpágina
+    assert notion.subpaginas == []  # não recriou
+
+
+def test_atualizar_existente_readme_mudou_substitui_subpagina():
+    repo = _repo("r1")
+    notion = _NotionFixo(
+        existentes={repo.url_html: "pagina-1"},
+        hashes={"pagina-1": "hashantigo000000"},
+        blocos={"pagina-1": [_readme_child("blk-velho")]},
+    )
+    github = _GitHubFixo({"felipe": [repo]}, readmes={"felipe/r1": "# Conteúdo NOVO"})
+    resumo = atualizar_repos(["felipe"], DB, github_client=github, notion_client=notion)
+    assert resumo.paginas_atualizadas == 1
+    assert resumo.readmes_atualizados == 1
+    assert notion.blocos_excluidos == ["blk-velho"]  # apagou a antiga
+    assert notion.subpaginas  # recriou
+
+
+def test_atualizar_sem_readme_so_propriedades():
+    repo = _repo("r1")
+    notion = _NotionFixo(existentes={repo.url_html: "pagina-1"})
+    github = _GitHubFixo({"felipe": [repo]}, readmes={"felipe/r1": "# X"})
+    resumo = atualizar_repos(
+        ["felipe"], DB, github_client=github, notion_client=notion, sincronizar_readme=False
+    )
+    assert resumo.paginas_atualizadas == 1
+    assert resumo.readmes_atualizados == 0
+    assert github.detalhados == []  # não foi buscar o README
+    assert notion.blocos_excluidos == []
+
+
+def test_atualizar_exige_contas_e_database():
+    with pytest.raises(ValueError, match="conta"):
+        atualizar_repos([], DB, github_client=_GitHubFixo({}), notion_client=_NotionFixo())
+    with pytest.raises(ValueError, match="database_id"):
+        atualizar_repos(
+            ["felipe"], "", github_client=_GitHubFixo({}), notion_client=_NotionFixo()
+        )
