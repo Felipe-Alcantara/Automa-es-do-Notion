@@ -91,12 +91,24 @@ def _normalizar_linguagem(lingua: str) -> str:
     return _ALIAS_LINGUAGEM.get(chave, "plain text")
 
 
+# O Notion limita o conteúdo de cada item de rich_text a 2000 caracteres.
+_MAX_RICH_TEXT = 2000
+
+
 def _rich_text(texto: str) -> list[dict[str, Any]]:
-    """Monta o *rich text* de um bloco a partir de texto simples."""
+    """Monta o *rich text* de um bloco a partir de texto simples.
+
+    Textos acima de 2000 caracteres são fatiados em vários itens de rich text —
+    o Notion os concatena no mesmo bloco —, evitando o HTTP 400 que a API
+    retorna quando um único item excede o limite (comum em blocos de código).
+    """
 
     if not texto:
         return []
-    return [{"type": "text", "text": {"content": texto}}]
+    return [
+        {"type": "text", "text": {"content": texto[i : i + _MAX_RICH_TEXT]}}
+        for i in range(0, len(texto), _MAX_RICH_TEXT)
+    ]
 
 
 def _bloco(tipo: str, texto: str, extra: dict[str, Any] | None = None) -> dict[str, Any]:
