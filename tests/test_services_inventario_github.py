@@ -1,0 +1,277 @@
+"""Testes do caso de uso de inventário GitHub → database do Notion."""
+
+from __future__ import annotations
+
+import pytest
+from integrations.github import RepoInfo
+from services.inventario_github import (
+    CamposGitHub,
+    ResumoInventario,
+    _propriedades_pagina,
+    construir_schema,
+    exportar_repos,
+    garantir_database,
+)
+
+DB = "db_github"
+PAGINA_HOME = "pagina-home"
+
+
+def _repo(nome: str = "r1", *, dono: str = "felipe", **extras) -> RepoInfo:
+    dados = {
+        "nome": nome,
+        "nome_completo": f"{dono}/{nome}",
+        "descricao": "Descrição do repo",
+        "url_html": f"https://github.com/{dono}/{nome}",
+        "homepage": "https://example.com",
+        "linguagem": "Python",
+        "topicos": ["notion"],
+        "estrelas": 10,
+        "forks": 2,
+        "issues_abertas": 3,
+        "tamanho_kb": 42,
+        "privado": False,
+        "fork": False,
+        "arquivado": False,
+        "licenca": "MIT",
+        "dono": dono,
+        "criado_em": "2026-01-01T00:00:00Z",
+        "atualizado_em": "2026-06-25T00:00:00Z",
+        "enviado_em": "2026-06-26T00:00:00Z",
+    }
+    dados.update(extras)
+    return RepoInfo(**dados)
+
+
+class _GitHubFixo:
+    def __init__(
+        self,
+        repos_por_conta: dict[str, list[RepoInfo]],
+        *,
+        readmes: dict[str, str] | None = None,
+        falhar_listar: set[str] | None = None,
+    ) -> None:
+        self.repos_por_conta = repos_por_conta
+        self.readmes = readmes or {}
+        self.falhar_listar = falhar_listar or set()
+        self.detalhados: list[str] = []
+
+    def listar_repos(self, usuario: str) -> list[RepoInfo]:
+        if usuario in self.falhar_listar:
+            raise RuntimeError("falha ao listar")
+        return self.repos_por_conta.get(usuario, [])
+
+    def detalhar_repo(self, repo_completo: str) -> RepoInfo:
+        self.detalhados.append(repo_completo)
+        base = _repo(repo_completo.split("/")[-1])
+        base.readme = self.readmes.get(repo_completo)
+        return base
+
+
+class _NotionFixo:
+    def __init__(
+        self,
+        *,
+        existentes: dict[str, str] | None = None,
+        falhar_criacao: bool = False,
+    ) -> None:
+        self.existentes = existentes or {}
+        self.falhar_criacao = falhar_criacao
+        self.criados: list[tuple[str, dict]] = []
+        self.atualizados: list[tuple[str, dict]] = []
+        self.subpaginas: list[tuple[str, str, list]] = []
+        self.databases_criados: list[tuple[str, str]] = []
+
+    def criar_database(self, pagina_id, titulo, propriedades):
+        self.databases_criados.append((pagina_id, titulo))
+        return {"id": DB}
+
+    def consultar_database(self, database_id, page_size=100, filtro=None):
+        assert database_id == DB
+        url = filtro.get("url", {}).get("equals")
+        page_id = self.existentes.get(url)
+        return [{"id": page_id}] if page_id else []
+
+    def criar_pagina(self, database_id, propriedades):
+        if self.falhar_criacao:
+            raise RuntimeError("falha no Notion")
+        page_id = f"pagina-{len(self.criados)}"
+        self.criados.append((database_id, propriedades))
+        return {"id": page_id}
+
+    def atualizar_pagina(self, page_id, propriedades):
+        self.atualizados.append((page_id, propriedades))
+        return {"id": page_id}
+
+    def criar_subpagina(self, pagina_pai_id, titulo, *, blocos=None):
+        self.subpaginas.append((pagina_pai_id, titulo, blocos or []))
+        return {"id": f"sub-{len(self.subpaginas)}"}
+
+
+# --------------------------------------------------------------------------- #
+# Schema e mapeamento
+# --------------------------------------------------------------------------- #
+
+
+def test_schema_tem_title_e_colunas_uteis():
+    schema = construir_schema()
+    assert schema["Nome"] == {"title": {}}
+    for coluna in ("Estrelas", "Licença", "Privado", "Último push", "Conta"):
+        assert coluna in schema
+
+
+def test_schema_respeita_nomes_customizados():
+    schema = construir_schema(CamposGitHub(nome="Projeto", estrelas="Stars"))
+    assert "Projeto" in schema and schema["Projeto"] == {"title": {}}
+    assert "Stars" in schema
+    assert "Nome" not in schema
+
+
+def test_propriedades_pagina_monta_campos_completos():
+    props = _propriedades_pagina(_repo(), CamposGitHub())
+    assert props["Nome"]["title"][0]["text"]["content"] == "felipe/r1"
+    assert props["Conta"]["select"]["name"] == "felipe"
+    assert props["Linguagem"]["select"]["name"] == "Python"
+    assert props["Licença"]["select"]["name"] == "MIT"
+    assert props["Issues abertas"]["number"] == 3
+    assert props["Fork"]["checkbox"] is False
+    assert props["Último push"]["date"]["start"] == "2026-06-26T00:00:00Z"
+
+
+def test_propriedades_pagina_omite_opcionais_ausentes():
+    repo = _repo(linguagem=None, licenca=None, homepage=None, topicos=[])
+    props = _propriedades_pagina(repo, CamposGitHub())
+    assert "Linguagem" not in props
+    assert "Licença" not in props
+    assert "Homepage" not in props
+    assert "Tópicos" not in props
+
+
+# --------------------------------------------------------------------------- #
+# garantir_database
+# --------------------------------------------------------------------------- #
+
+
+def test_garantir_database_cria_sob_a_pagina():
+    notion = _NotionFixo()
+    db_id = garantir_database(PAGINA_HOME, cliente=notion, titulo="GITHUB")
+    assert db_id == DB
+    assert notion.databases_criados == [(PAGINA_HOME, "GITHUB")]
+
+
+# --------------------------------------------------------------------------- #
+# exportar_repos
+# --------------------------------------------------------------------------- #
+
+
+def test_exportar_cria_pagina_e_subpagina_readme():
+    notion = _NotionFixo()
+    github = _GitHubFixo(
+        {"felipe": [_repo("r1")]},
+        readmes={"felipe/r1": "# Olá\n\nConteúdo do README."},
+    )
+    resumo = exportar_repos(
+        ["felipe"], DB, github_client=github, notion_client=notion
+    )
+    assert resumo.repos_encontrados == 1
+    assert resumo.paginas_criadas == 1
+    assert resumo.readmes_escritos == 1
+    assert resumo.total_erros == 0
+    assert github.detalhados == ["felipe/r1"]
+    # README vai para uma subpágina filha chamada "README", não para o corpo.
+    assert len(notion.subpaginas) == 1
+    pai, titulo, blocos = notion.subpaginas[0]
+    assert pai == "pagina-0"
+    assert titulo == "README"
+    assert blocos
+
+
+def test_exportar_atualiza_existente_e_nao_escreve_readme():
+    repo = _repo("r1")
+    notion = _NotionFixo(existentes={repo.url_html: "pagina-existente"})
+    github = _GitHubFixo({"felipe": [repo]}, readmes={"felipe/r1": "# README"})
+    resumo = exportar_repos(
+        ["felipe"], DB, github_client=github, notion_client=notion
+    )
+    assert resumo.paginas_atualizadas == 1
+    assert resumo.paginas_criadas == 0
+    assert resumo.readmes_escritos == 0
+    assert notion.atualizados[0][0] == "pagina-existente"
+    assert notion.subpaginas == []  # não recria README em página existente
+
+
+def test_exportar_deduplica_repos_entre_contas():
+    repo = _repo("compartilhado")
+    notion = _NotionFixo()
+    github = _GitHubFixo({"conta-a": [repo], "conta-b": [repo]})
+    resumo = exportar_repos(
+        ["conta-a", "conta-b"],
+        DB,
+        github_client=github,
+        notion_client=notion,
+        incluir_readme=False,
+    )
+    assert resumo.repos_encontrados == 1
+    assert resumo.paginas_criadas == 1
+
+
+def test_exportar_sem_readme_nao_detalha():
+    notion = _NotionFixo()
+    github = _GitHubFixo({"felipe": [_repo("r1")]})
+    resumo = exportar_repos(
+        ["felipe"],
+        DB,
+        github_client=github,
+        notion_client=notion,
+        incluir_readme=False,
+    )
+    assert resumo.paginas_criadas == 1
+    assert github.detalhados == []
+    assert notion.subpaginas == []
+
+
+def test_exportar_registra_falha_de_listar_e_segue():
+    notion = _NotionFixo()
+    github = _GitHubFixo({"boa": [_repo("r1")]}, falhar_listar={"ruim"})
+    resumo = exportar_repos(
+        ["ruim", "boa"],
+        DB,
+        github_client=github,
+        notion_client=notion,
+        incluir_readme=False,
+    )
+    assert resumo.paginas_criadas == 1
+    assert resumo.total_erros == 1
+    assert "listar ruim" in resumo.erros[0]
+
+
+def test_exportar_falha_de_criacao_nao_interrompe():
+    notion = _NotionFixo(falhar_criacao=True)
+    github = _GitHubFixo({"felipe": [_repo("r1"), _repo("r2")]})
+    resumo = exportar_repos(
+        ["felipe"],
+        DB,
+        github_client=github,
+        notion_client=notion,
+        incluir_readme=False,
+    )
+    assert resumo.paginas_criadas == 0
+    assert resumo.total_erros == 2
+
+
+def test_exportar_exige_contas():
+    with pytest.raises(ValueError, match="conta"):
+        exportar_repos([], DB, github_client=_GitHubFixo({}), notion_client=_NotionFixo())
+
+
+def test_exportar_exige_database():
+    with pytest.raises(ValueError, match="database_id"):
+        exportar_repos(
+            ["felipe"], "", github_client=_GitHubFixo({}), notion_client=_NotionFixo()
+        )
+
+
+def test_resumo_inventario_defaults():
+    r = ResumoInventario()
+    assert r.repos_encontrados == 0
+    assert r.total_erros == 0
