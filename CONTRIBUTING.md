@@ -1,12 +1,12 @@
-# 🤝 Contribuindo com o notion-starter-boilerplate
+# 🤝 Contribuindo com o Automações do Notion
 
-Obrigado por querer contribuir! Este é um boilerplate open source — um ponto de
-partida para projetos sobre o Notion — e melhorar junto é exatamente a ideia.
-Issues, correções de documentação, novos helpers de propriedade, novos exemplos
-ou cobertura de mais endpoints do Notion são bem-vindos.
+Obrigado por querer contribuir! Este projeto reúne automações locais para operar o
+Notion com API Django, SPA React, CLI/MCP para IA e integrações como inventário
+GitHub. Issues, correções de documentação, novos helpers, exemplos, testes e
+melhorias de UX são bem-vindos.
 
-> Contribuições aqui melhoram a **base** que todo mundo clona. Mudanças específicas
-> do seu projeto vivem no seu fork, depois de usar o template.
+> Contribuições aqui devem preservar os contratos existentes, a documentação viva e o
+> gate de qualidade descrito em [`docs/QUALIDADE.md`](docs/QUALIDADE.md).
 
 ---
 
@@ -38,8 +38,8 @@ conversa antes de você investir tempo no código.
 
 ```bash
 # Clone e instale com as dependências de desenvolvimento
-git clone https://github.com/flaviavs-commits/notion-starter-boilerplate.git
-cd notion-starter-boilerplate
+git clone https://github.com/Felipe-Alcantara/Automa-es-do-Notion.git
+cd Automa-es-do-Notion
 pip install -e ".[dev]"
 
 # Rode a suíte de testes (HTTP é mockado — não precisa de token nem rede)
@@ -54,14 +54,14 @@ do Notion — nunca versione o `.env`.
 
 ## ✅ Padrões de Qualidade
 
-- **Entenda o padrão existente antes de alterar.** O projeto separa
-  responsabilidades por módulo (`client`, `schema`, `properties`, `exceptions`,
-  `logging`, `constants`); mantenha essa fronteira.
+- **Entenda o padrão existente antes de alterar.** O projeto separa core
+  (`src/notion_starter`), API (`server/api`), casos de uso (`server/services`),
+  integrações (`server/integrations`), CLI/MCP e SPA React. Preserve essas fronteiras.
 - **Prefira a solução mais simples** que resolva o problema real, sem adicionar
   dependências ou camadas sem justificativa.
-- **Preserve contratos.** A API pública (`__all__`), os nomes dos métodos e o
-  formato das exceções devem permanecer estáveis; mudança quebradora precisa ser
-  explícita e documentada.
+- **Preserve contratos.** API REST, CLI JSON, ferramentas MCP, objetos do core e
+  formatos de erro devem permanecer estáveis; mudança quebradora precisa ser explícita
+  e documentada.
 - **Tipos e validação.** Use tipagem (`TypedDict`/`dataclass`) e valide entradas
   externas, como o restante do código já faz.
 - **Não exponha segredos.** Nada de tokens, IDs reais ou URLs privadas no código,
