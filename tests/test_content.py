@@ -150,6 +150,26 @@ def test_codigo_em_bloco_nao_parseia_inline():
 # -- Imagens, badges, HTML, headings, tabelas ------------------------------
 
 
+def test_link_ancora_ou_relativo_vira_texto_sem_link():
+    # O Notion rejeita URLs não-absolutas; o rótulo é preservado sem link.
+    ancora = _itens(markdown_para_blocos("veja [a seção](#instalacao) abaixo")[0])
+    alvo = next(i for i in ancora if i["text"]["content"] == "a seção")
+    assert "link" not in alvo["text"]
+    relativo = _itens(markdown_para_blocos("[doc](docs/guia.md)")[0])
+    assert "link" not in relativo[0]["text"]
+
+
+def test_link_http_mantem_link():
+    itens = _itens(markdown_para_blocos("[site](https://x.com)")[0])
+    assert itens[0]["text"]["link"] == {"url": "https://x.com"}
+
+
+def test_imagem_com_url_relativa_nao_vira_bloco():
+    # ![logo](./logo.png) tem URL relativa: o Notion rejeitaria — vira parágrafo.
+    blocos = markdown_para_blocos("![logo](./logo.png)")
+    assert blocos[0]["type"] == "paragraph"
+
+
 def test_imagem_vira_bloco_image():
     blocos = markdown_para_blocos("![alt](https://img.com/x.png)")
     assert blocos[0]["type"] == "image"
