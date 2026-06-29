@@ -441,13 +441,19 @@ def _limpar_html(linha: str) -> str:
     return _html.unescape(linha).strip()
 
 
-def _bloco_imagem(url: str, alt: str = "") -> dict[str, Any]:
-    """Monta um bloco ``image`` externo, com legenda opcional a partir do alt."""
+def _bloco_imagem(url: str) -> dict[str, Any]:
+    """Monta um bloco ``image`` externo, sem legenda.
 
-    imagem: dict[str, Any] = {"type": "external", "external": {"url": url}}
-    if alt:
-        imagem["caption"] = _rich_text(alt)
-    return {"object": "block", "type": "image", "image": imagem}
+    O *alt* do Markdown não vira legenda: em badges (shields.io) o alt é
+    redundante e, quando a imagem não carrega no Notion, sobra só a legenda
+    colorida poluindo a página. Imagens limpas, sem caption.
+    """
+
+    return {
+        "object": "block",
+        "type": "image",
+        "image": {"type": "external", "external": {"url": url}},
+    }
 
 
 def _extrair_imagens_bloco(linha: str) -> list[dict[str, Any]] | None:
@@ -466,9 +472,8 @@ def _extrair_imagens_bloco(linha: str) -> list[dict[str, Any]] | None:
     blocos: list[dict[str, Any]] = []
     for m in _RE_IMG_OU_BADGE.finditer(linha):
         url = (m.group(2) or m.group(5) or "").strip()
-        alt = (m.group(1) or m.group(4) or "").strip()
         if _url_valida(url):  # Notion só aceita imagem externa com URL absoluta
-            blocos.append(_bloco_imagem(url, alt))
+            blocos.append(_bloco_imagem(url))
     return blocos or None
 
 
@@ -580,6 +585,12 @@ def markdown_para_blocos(markdown: str) -> list[dict[str, Any]]:
 
         linha = _limpar_html(despojada)
         if not linha.strip():
+            i += 1
+            continue
+
+        # Citação vazia (linha só com '>'): separa parágrafos de um blockquote
+        # no Markdown, mas não tem conteúdo — não vira bloco.
+        if not linha.lstrip(">").strip():
             i += 1
             continue
 

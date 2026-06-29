@@ -176,6 +176,19 @@ def test_imagem_vira_bloco_image():
     assert blocos[0]["image"]["external"]["url"] == "https://img.com/x.png"
 
 
+def test_imagem_nao_tem_legenda():
+    # O alt não vira caption — badges sem imagem deixariam só a legenda poluindo.
+    bloco = markdown_para_blocos("![Python](https://img.shields.io/x.svg)")[0]
+    assert "caption" not in bloco["image"]
+
+
+def test_citacao_vazia_e_ignorada():
+    # Linha só com '>' separa parágrafos de um blockquote, mas não é conteúdo.
+    md = "> primeira linha\n>\n> segunda linha"
+    tipos = [b["type"] for b in markdown_para_blocos(md)]
+    assert tipos == ["quote", "quote"]  # nada de paragraph '>'
+
+
 def test_badge_com_link_vira_bloco_image():
     blocos = markdown_para_blocos("[![Tests](https://img/badge.svg)](https://ci.com)")
     assert blocos[0]["type"] == "image"
@@ -256,8 +269,9 @@ def test_round_trip_inline_preserva_formatacao():
 
 
 def test_round_trip_imagem_e_tabela():
+    # O alt não é preservado (imagens vão sem legenda), mas a URL volta intacta.
     img = blocos_para_markdown(_reidratar(markdown_para_blocos("![alt](https://i/x.png)")))
-    assert "![alt](https://i/x.png)" in img
+    assert "(https://i/x.png)" in img
     md_tab = "| A | B |\n|---|---|\n| 1 | 2 |"
     tab = blocos_para_markdown(_reidratar(markdown_para_blocos(md_tab)))
     assert "| A | B |" in tab
