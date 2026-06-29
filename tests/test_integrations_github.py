@@ -43,7 +43,17 @@ def _repo_json(
 
 
 def test_repo_de_resposta_converte_todos_os_campos():
-    info = _repo_de_resposta(_repo_json())
+    info = _repo_de_resposta(
+        _repo_json(
+            open_issues_count=7,
+            watchers_count=9,
+            size=128,
+            fork=True,
+            archived=True,
+            license={"spdx_id": "MIT"},
+            pushed_at="2026-06-26T00:00:00Z",
+        )
+    )
     assert isinstance(info, RepoInfo)
     assert info.nome == "meu-repo"
     assert info.nome_completo == "user/meu-repo"
@@ -52,6 +62,14 @@ def test_repo_de_resposta_converte_todos_os_campos():
     assert info.estrelas == 42
     assert info.forks == 5
     assert info.privado is False
+    assert info.dono == "user"
+    assert info.issues_abertas == 7
+    assert info.observadores == 9
+    assert info.tamanho_kb == 128
+    assert info.fork is True
+    assert info.arquivado is True
+    assert info.licenca == "MIT"
+    assert info.enviado_em == "2026-06-26T00:00:00Z"
 
 
 def test_repo_de_resposta_normaliza_campos_ausentes():
@@ -60,6 +78,11 @@ def test_repo_de_resposta_normaliza_campos_ausentes():
     assert info.topicos == []
     assert info.estrelas == 0
     assert info.homepage is None
+    assert info.licenca is None
+    assert info.dono is None
+    assert info.fork is False
+    assert info.arquivado is False
+    assert info.issues_abertas == 0
 
 
 def test_client_valida_configuracao():
