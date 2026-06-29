@@ -89,6 +89,18 @@ def test_markdown_para_blocos_fatia_texto_acima_de_2000_chars():
     assert grande in blocos_para_markdown(blocos)
 
 
+def test_markdown_para_blocos_conta_emoji_como_duas_unidades_utf16():
+    # Emojis ocupam 2 unidades UTF-16; um item de 1000 emojis = 2000 unidades,
+    # no limite. 1500 emojis (3000 unidades) precisa de pelo menos 2 itens, e
+    # nenhum item pode passar de 2000 unidades UTF-16.
+    grande = "🚀" * 1500
+    itens = markdown_para_blocos(f"```\n{grande}\n```")[0]["code"]["rich_text"]
+    assert len(itens) >= 2
+    for item in itens:
+        unidades = sum(2 if ord(c) > 0xFFFF else 1 for c in item["text"]["content"])
+        assert unidades <= 2000
+
+
 def test_markdown_para_blocos_ignora_linhas_em_branco():
     blocos = markdown_para_blocos("a\n\n\nb")
     assert [b["type"] for b in blocos] == ["paragraph", "paragraph"]
