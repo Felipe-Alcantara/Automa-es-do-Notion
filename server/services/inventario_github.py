@@ -200,6 +200,40 @@ def garantir_database(
     return database_id
 
 
+def garantir_coluna_hash(
+    database_id: str,
+    *,
+    cliente: NotionClient,
+    campos: CamposGitHub | None = None,
+) -> bool:
+    """Garante que a coluna de hash do README exista no database.
+
+    Databases criados antes desta coluna não a têm, e gravar o hash falharia.
+    Esta função a adiciona quando falta, sem mexer em nada se já existe. Usa o
+    *data source* (modelo novo do Notion) quando o database expõe um; cai para o
+    endpoint clássico de database caso contrário. Devolve ``True`` se criou a
+    coluna, ``False`` se já existia.
+    """
+
+    campos = campos or CamposGitHub()
+    nova = {campos.readme_hash: {"rich_text": {}}}
+
+    fontes = cliente.listar_data_sources(database_id)
+    if fontes:
+        data_source_id = str(fontes[0].get("id") or "")
+        fonte = cliente.get_data_source(data_source_id)
+        if campos.readme_hash in fonte.get("properties", {}):
+            return False
+        cliente.atualizar_data_source(data_source_id, propriedades=nova)
+        return True
+
+    database = cliente.get_database(database_id)
+    if campos.readme_hash in database.get("properties", {}):
+        return False
+    cliente.atualizar_database(database_id, propriedades=nova)
+    return True
+
+
 def _pagina_existente(
     cliente: NotionClient,
     database_id: str,
@@ -432,6 +466,13 @@ def atualizar_repos(
 
     campos = campos or CamposGitHub()
     resumo = ResumoInventario()
+
+    # Databases antigos podem não ter a coluna de hash; garante antes de gravar.
+    if sincronizar_readme:
+        try:
+            garantir_coluna_hash(database_id, cliente=notion_client, campos=campos)
+        except Exception as exc:  # noqa: BLE001 — segue; a 1ª escrita avisaria de novo
+            resumo.erros.append(f"garantir coluna README hash: {exc}")
 
     for repo in _coletar_repos(contas, github_client, resumo):
         _atualizar_repo(

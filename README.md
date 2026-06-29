@@ -457,7 +457,9 @@ python -m cli --json atualizar-github --database <database_id> --sem-readme
 
 As contas saem de `--contas` (CSV) ou da variável `GITHUB_CONTAS`; o database de
 `--database` ou de `NOTION_DATABASE_ID`. Defina `GITHUB_TOKEN` para incluir os
-repositórios privados da sua própria conta.
+repositórios privados da sua própria conta. Em databases criados antes da coluna
+`README hash`, ela é adicionada automaticamente na primeira atualização — nada de
+configurar o schema na mão.
 
 ## 🧩 Helpers de Propriedades
 
