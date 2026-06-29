@@ -20,8 +20,10 @@ if str(SERVER_DIR) not in sys.path:
     sys.path.insert(0, str(SERVER_DIR))
 
 from core.config import carregar_env_file  # noqa: E402
+from integrations.github import GitHubClient  # noqa: E402
 from services import clonagem as svc_clonagem  # noqa: E402
 from services import conteudo as svc_conteudo  # noqa: E402
+from services import inventario_github as svc_inventario  # noqa: E402
 from services import normalizacao as svc_normalizacao  # noqa: E402
 from services import tarefas as svc  # noqa: E402
 
@@ -181,6 +183,14 @@ def _formatar_humano(comando: str, dados: Any) -> str:
             f"Itens: {dados['total_itens']} | páginas: {dados['total_paginas']} | "
             f"databases: {dados['total_databases']} | raízes: {dados['total_raizes']} | "
             f"duplicatas: {dados['total_duplicatas']} | órfãos: {dados['total_orfaos']}"
+        )
+    if comando == "atualizar-github":
+        return (
+            f"Repos: {dados['repos_encontrados']} | criados: {dados['paginas_criadas']} | "
+            f"atualizados: {dados['paginas_atualizadas']} | "
+            f"READMEs novos: {dados['readmes_escritos']} | "
+            f"READMEs atualizados: {dados['readmes_atualizados']} | "
+            f"erros: {len(dados['erros'])}"
         )
     return _json(dados)
 
@@ -385,6 +395,41 @@ def cmd_clonar_database(args: argparse.Namespace, *, client_factory: ClientFacto
     )
 
 
+def _resumo_inventario_dict(resumo: Any) -> dict[str, Any]:
+    return {
+        "repos_encontrados": resumo.repos_encontrados,
+        "paginas_criadas": resumo.paginas_criadas,
+        "paginas_atualizadas": resumo.paginas_atualizadas,
+        "readmes_escritos": resumo.readmes_escritos,
+        "readmes_atualizados": resumo.readmes_atualizados,
+        "erros": resumo.erros,
+    }
+
+
+def cmd_atualizar_github(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
+    """Re-sincroniza o database GITHUB: repos novos, propriedades e README mudado."""
+
+    contas = _lista_csv(args.contas) or _lista_csv([os.environ.get("GITHUB_CONTAS", "")])
+    if not contas:
+        raise CLIError(
+            "Informe as contas com --contas (CSV) ou defina GITHUB_CONTAS no ambiente."
+        )
+    database_id = _normalizar_texto(args.database) or os.environ.get(
+        "NOTION_DATABASE_ID", ""
+    ).strip()
+    if not database_id:
+        raise CLIError("Informe o database com --database ou defina NOTION_DATABASE_ID.")
+
+    resumo = svc_inventario.atualizar_repos(
+        contas,
+        database_id,
+        github_client=GitHubClient(),
+        notion_client=client_factory(),
+        sincronizar_readme=not args.sem_readme,
+    )
+    return _resumo_inventario_dict(resumo)
+
+
 #: Exemplos de uso por comando, mostrados pelo ``guia``. Texto curto e copiável.
 EXEMPLOS_GUIA: dict[str, list[str]] = {
     "listar": ['python -m cli --json listar --status "Entrada"'],
@@ -408,6 +453,10 @@ EXEMPLOS_GUIA: dict[str, list[str]] = {
     "clonar-database": [
         "python -m cli --json clonar-database <database_id>",
         'python -m cli --json clonar-database <database_id> --titulo "Cópia" --com-linhas',
+    ],
+    "atualizar-github": [
+        "python -m cli --json atualizar-github --contas conta-um,conta-dois",
+        "python -m cli --json atualizar-github --database <database_id> --sem-readme",
     ],
     "guia": ["python -m cli --json guia"],
 }
@@ -553,6 +602,25 @@ def construir_parser() -> argparse.ArgumentParser:
         "texto: relações viram texto sem vínculo",
     )
 
+    atualizar_github = sub.add_parser(
+        "atualizar-github",
+        help="re-sincroniza o database GITHUB (repos novos, propriedades, README mudado)",
+    )
+    atualizar_github.add_argument(
+        "--contas",
+        action="append",
+        help="contas do GitHub (CSV); padrão: variável de ambiente GITHUB_CONTAS",
+    )
+    atualizar_github.add_argument(
+        "--database",
+        help="database de destino (padrão: NOTION_DATABASE_ID)",
+    )
+    atualizar_github.add_argument(
+        "--sem-readme",
+        action="store_true",
+        help="atualiza só as propriedades, sem mexer na subpágina README",
+    )
+
     sub.add_parser("guia", help="lista todos os comandos com o que fazem e exemplos")
     return parser
 
@@ -607,6 +675,8 @@ def executar(
             dados = cmd_buscar(args, client_factory=client_factory)
         elif comando == "clonar-database":
             dados = cmd_clonar_database(args, client_factory=client_factory)
+        elif comando == "atualizar-github":
+            dados = cmd_atualizar_github(args, client_factory=client_factory)
         else:
             raise CLIError(f"Comando desconhecido: {comando}")
         return 0, _envelope(True, dados=dados) if args.json else _formatar_humano(comando, dados)

@@ -1204,6 +1204,59 @@ def acao_cli(console) -> None:
     )
 
 
+def acao_atualizar_github(console) -> None:
+    """Re-sincroniza o database GITHUB: repos novos, propriedades e README mudado."""
+
+    console.rule("[bold]Atualizar inventário GitHub")
+
+    configurado, origem = _token_configurado()
+    if not configurado:
+        console.print(
+            f"[yellow]•[/yellow] Token {origem}. A atualização chama a API do Notion "
+            "e vai falhar sem um token válido — ajuste em [bold]Configurar[/bold]."
+        )
+        return
+
+    ambiente = dict(os.environ)
+    token_arquivo = _ler_token_env_file()
+    if token_arquivo and not ambiente.get("NOTION_TOKEN"):
+        ambiente["NOTION_TOKEN"] = token_arquivo
+
+    contas = ambiente.get("GITHUB_CONTAS", "").strip()
+    if not contas:
+        import questionary
+
+        contas = (
+            questionary.text(
+                "Contas do GitHub a sincronizar (separadas por vírgula):"
+            ).ask()
+            or ""
+        ).strip()
+    if not contas:
+        console.print(
+            "[yellow]•[/yellow] Nenhuma conta informada. Defina [bold]GITHUB_CONTAS[/bold] "
+            "no .env ou informe ao rodar."
+        )
+        return
+
+    if not ambiente.get("GITHUB_TOKEN"):
+        console.print(
+            "[dim]Dica: defina GITHUB_TOKEN para incluir repositórios privados da sua "
+            "própria conta.[/dim]\n"
+        )
+
+    console.print(
+        f"Atualizando os repositórios de [bold]{contas}[/bold] no database GITHUB "
+        "(NOTION_DATABASE_ID).\n"
+    )
+    subprocess.run(
+        [sys.executable, "-m", "cli", "atualizar-github", "--contas", contas],
+        cwd=RAIZ,
+        env=ambiente,
+        check=False,
+    )
+
+
 def acao_mapear(console) -> None:
     """Mapear workspace: coleta o mapa e gera o relatório HTML navegável."""
 
@@ -1327,6 +1380,10 @@ def _acoes_menu():
         "servidor": ("🌐  Subir API Django — health e rotas REST locais", acao_servidor),
         "mcp": ("🔗  Subir servidor MCP — ponte para o Felixo-AI-Core", acao_mcp),
         "cli": ("⌘  CLI para IA — mostra comandos e saída JSON", acao_cli),
+        "github": (
+            "🐙  Atualizar inventário GitHub — sincroniza repos e README",
+            acao_atualizar_github,
+        ),
         "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),
         "instalar": ("⬇  Instalar / Setup — instala deps e cria o .env", acao_instalar),
         "configurar": ("⚙  Configurar — aponta o token do Notion", acao_configurar),
@@ -1345,7 +1402,7 @@ def _categorias_menu() -> list[tuple[str, list[str]]]:
 
     return [
         ("🚀  Usar o app — abrir e rodar", ["tudo", "rodar"]),
-        ("🤖  Para IA e integrações — CLI, MCP, mapa", ["cli", "mcp", "mapear"]),
+        ("🤖  Para IA e integrações — CLI, GitHub, MCP, mapa", ["cli", "github", "mcp", "mapear"]),
         ("⚙  Configurar e instalar — token, deps, API", ["configurar", "instalar", "servidor"]),
     ]
 
