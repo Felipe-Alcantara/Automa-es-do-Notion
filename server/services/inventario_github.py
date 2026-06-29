@@ -285,16 +285,23 @@ def _escrever_readme(
     return True
 
 
-def _localizar_subpagina_readme(cliente: NotionClient, page_id: str) -> str | None:
-    """Devolve o ID da subpágina ``README`` da página, ou ``None`` se não houver."""
+def _localizar_subpaginas_readme(cliente: NotionClient, page_id: str) -> list[str]:
+    """Devolve os IDs de **todas** as subpáginas ``README`` da página.
 
+    Retorna uma lista (não só a primeira) porque execuções anteriores com
+    retries podem ter deixado READMEs duplicados — todos devem ser removidos
+    antes de recriar, senão a página acumula cópias.
+    """
+
+    ids: list[str] = []
     for bloco in cliente.ler_blocos(page_id):
         if bloco.get("type") != "child_page":
             continue
-        titulo = bloco.get("child_page", {}).get("title", "")
-        if titulo == TITULO_README:
-            return str(bloco.get("id") or "") or None
-    return None
+        if bloco.get("child_page", {}).get("title", "") == TITULO_README:
+            bloco_id = str(bloco.get("id") or "")
+            if bloco_id:
+                ids.append(bloco_id)
+    return ids
 
 
 def _sincronizar_readme(
@@ -315,11 +322,10 @@ def _sincronizar_readme(
     if hash_novo == hash_atual:
         return False
 
-    antiga = _localizar_subpagina_readme(cliente, page_id)
-    if antiga:
+    for antiga in _localizar_subpaginas_readme(cliente, page_id):
         cliente.excluir_bloco(antiga)
     if not hash_novo:
-        return False  # README ficou vazio: removeu a antiga, nada a recriar
+        return False  # README ficou vazio: removeu as antigas, nada a recriar
     return _escrever_readme(cliente, page_id, readme or "")
 
 
