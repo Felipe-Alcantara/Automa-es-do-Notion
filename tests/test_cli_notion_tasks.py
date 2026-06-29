@@ -572,3 +572,67 @@ def test_clonar_database_humano_resume():
     codigo, saida = _executar(["clonar-database", "db1"], client=FakeCloneClient())
     assert codigo == 0
     assert "Clone criado" in saida
+
+
+# -- atualizar-github ------------------------------------------------------
+
+
+class _ResumoFake:
+    repos_encontrados = 3
+    paginas_criadas = 1
+    paginas_atualizadas = 2
+    readmes_escritos = 1
+    readmes_atualizados = 1
+    erros: list[str] = []
+
+
+def test_atualizar_github_passa_contas_e_database(monkeypatch):
+    capturado = {}
+
+    def fake_atualizar(contas, database_id, **kwargs):
+        capturado["contas"] = contas
+        capturado["database_id"] = database_id
+        capturado["sincronizar_readme"] = kwargs["sincronizar_readme"]
+        return _ResumoFake()
+
+    monkeypatch.setattr(cli.svc_inventario, "atualizar_repos", fake_atualizar)
+    monkeypatch.setattr(cli, "GitHubClient", lambda *a, **k: object())
+
+    codigo, saida = _executar(
+        ["--json", "atualizar-github", "--contas", "conta-a,conta-b", "--database", "db1"]
+    )
+    assert codigo == 0
+    assert capturado["contas"] == ["conta-a", "conta-b"]
+    assert capturado["database_id"] == "db1"
+    assert capturado["sincronizar_readme"] is True
+    assert saida["dados"]["paginas_atualizadas"] == 2
+
+
+def test_atualizar_github_sem_readme(monkeypatch):
+    capturado = {}
+    monkeypatch.setattr(
+        cli.svc_inventario,
+        "atualizar_repos",
+        lambda c, d, **k: capturado.update(k) or _ResumoFake(),
+    )
+    monkeypatch.setattr(cli, "GitHubClient", lambda *a, **k: object())
+    codigo, _ = _executar(
+        ["--json", "atualizar-github", "--contas", "x", "--database", "db1", "--sem-readme"]
+    )
+    assert codigo == 0
+    assert capturado["sincronizar_readme"] is False
+
+
+def test_atualizar_github_exige_contas(monkeypatch):
+    monkeypatch.delenv("GITHUB_CONTAS", raising=False)
+    codigo, saida = _executar(["--json", "atualizar-github", "--database", "db1"])
+    assert codigo == 2
+    assert saida["ok"] is False
+
+
+def test_atualizar_github_humano_resume(monkeypatch):
+    monkeypatch.setattr(cli.svc_inventario, "atualizar_repos", lambda c, d, **k: _ResumoFake())
+    monkeypatch.setattr(cli, "GitHubClient", lambda *a, **k: object())
+    codigo, saida = _executar(["atualizar-github", "--contas", "x", "--database", "db1"])
+    assert codigo == 0
+    assert "Repos: 3" in saida
