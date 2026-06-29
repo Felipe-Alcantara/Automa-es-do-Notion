@@ -50,16 +50,26 @@ class RepoInfo:
     topicos: list[str] = field(default_factory=list)
     estrelas: int = 0
     forks: int = 0
+    issues_abertas: int = 0
+    observadores: int = 0
+    tamanho_kb: int = 0
     privado: bool = False
+    fork: bool = False
+    arquivado: bool = False
+    licenca: str | None = None
+    dono: str | None = None
     branch_padrao: str | None = None
     criado_em: str | None = None
     atualizado_em: str | None = None
+    enviado_em: str | None = None
 
 
 def _repo_de_resposta(data: dict[str, Any]) -> RepoInfo:
     """Converte o JSON da API do GitHub em :class:`RepoInfo`."""
 
     topicos = data.get("topics")
+    licenca = data.get("license")
+    dono = data.get("owner")
     return RepoInfo(
         nome=str(data.get("name") or ""),
         nome_completo=str(data.get("full_name") or ""),
@@ -71,10 +81,18 @@ def _repo_de_resposta(data: dict[str, Any]) -> RepoInfo:
         topicos=list(topicos) if isinstance(topicos, list) else [],
         estrelas=int(data.get("stargazers_count") or 0),
         forks=int(data.get("forks_count") or 0),
+        issues_abertas=int(data.get("open_issues_count") or 0),
+        observadores=int(data.get("watchers_count") or 0),
+        tamanho_kb=int(data.get("size") or 0),
         privado=bool(data.get("private", False)),
+        fork=bool(data.get("fork", False)),
+        arquivado=bool(data.get("archived", False)),
+        licenca=(licenca.get("spdx_id") if isinstance(licenca, dict) else None) or None,
+        dono=(dono.get("login") if isinstance(dono, dict) else None) or None,
         branch_padrao=data.get("default_branch"),
         criado_em=data.get("created_at"),
         atualizado_em=data.get("updated_at"),
+        enviado_em=data.get("pushed_at"),
     )
 
 
