@@ -43,6 +43,53 @@ _TIPOS_TEXTO = (
     "code",
 )
 
+# Linguagens aceitas pelo Notion em blocos de código. A API rejeita o bloco
+# inteiro (HTTP 400) se a linguagem não estiver nesta lista — por isso qualquer
+# valor fora dela é normalizado para "plain text".
+_LINGUAGENS_NOTION = frozenset(
+    {
+        "abap", "abc", "agda", "arduino", "ascii art", "assembly", "bash",
+        "basic", "bnf", "c", "c#", "c++", "clojure", "coffeescript", "coq",
+        "css", "dart", "dhall", "diff", "docker", "ebnf", "elixir", "elm",
+        "erlang", "f#", "flow", "fortran", "gherkin", "glsl", "go", "graphql",
+        "groovy", "haskell", "hcl", "html", "idris", "java", "javascript",
+        "json", "julia", "kotlin", "latex", "less", "lisp", "livescript",
+        "llvm ir", "lua", "makefile", "markdown", "markup", "matlab",
+        "mathematica", "mermaid", "nix", "notion formula", "objective-c",
+        "ocaml", "pascal", "perl", "php", "plain text", "powershell", "prolog",
+        "protobuf", "purescript", "python", "r", "racket", "reason", "ruby",
+        "rust", "sass", "scala", "scheme", "scss", "shell", "smalltalk",
+        "solidity", "sql", "swift", "toml", "typescript", "vb.net", "verilog",
+        "vhdl", "visual basic", "webassembly", "xml", "yaml",
+    }
+)
+
+# Apelidos comuns de linguagem (info string de cerca de código) → nome Notion.
+_ALIAS_LINGUAGEM = {
+    "py": "python", "py3": "python", "python3": "python",
+    "js": "javascript", "node": "javascript", "jsx": "javascript",
+    "ts": "typescript", "tsx": "typescript",
+    "sh": "shell", "zsh": "shell", "console": "shell", "shell-session": "shell",
+    "cmd": "shell", "bat": "shell", "ps": "powershell", "ps1": "powershell",
+    "yml": "yaml", "md": "markdown", "txt": "plain text", "text": "plain text",
+    "": "plain text", "cs": "c#", "csharp": "c#", "cpp": "c++", "cplusplus": "c++",
+    "htm": "html", "golang": "go", "dockerfile": "docker", "rs": "rust",
+    "kt": "kotlin", "rb": "ruby", "objc": "objective-c",
+}
+
+
+def _normalizar_linguagem(lingua: str) -> str:
+    """Mapeia a linguagem de uma cerca de código para um valor aceito pelo Notion.
+
+    Apelidos comuns (``py``, ``js``, ``sh``…) viram o nome canônico; qualquer
+    linguagem desconhecida vira ``"plain text"`` para nunca quebrar a escrita.
+    """
+
+    chave = (lingua or "").strip().lower()
+    if chave in _LINGUAGENS_NOTION:
+        return chave
+    return _ALIAS_LINGUAGEM.get(chave, "plain text")
+
 
 def _rich_text(texto: str) -> list[dict[str, Any]]:
     """Monta o *rich text* de um bloco a partir de texto simples."""
@@ -114,7 +161,7 @@ def markdown_para_blocos(markdown: str) -> list[dict[str, Any]]:
                 i += 1
             i += 1  # pula o fechamento ```
             blocos.append(
-                _bloco("code", "\n".join(corpo), {"language": lingua or "plain text"})
+                _bloco("code", "\n".join(corpo), {"language": _normalizar_linguagem(lingua)})
             )
             continue
 

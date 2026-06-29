@@ -64,6 +64,20 @@ def test_markdown_para_blocos_bloco_de_codigo_preserva_linhas():
     assert blocos[0]["code"]["rich_text"][0]["text"]["content"] == "x = 1\ny = 2"
 
 
+def test_markdown_para_blocos_normaliza_apelido_de_linguagem():
+    # "py" não é aceito pelo Notion; deve virar "python".
+    blocos = markdown_para_blocos("```py\nx = 1\n```")
+    assert blocos[0]["code"]["language"] == "python"
+
+
+def test_markdown_para_blocos_linguagem_desconhecida_vira_plain_text():
+    # Linguagem fora da lista do Notion (ou cerca sem info) não pode quebrar.
+    desconhecida = markdown_para_blocos("```planilha\na,b\n```")
+    assert desconhecida[0]["code"]["language"] == "plain text"
+    sem_lingua = markdown_para_blocos("```\nsó texto\n```")
+    assert sem_lingua[0]["code"]["language"] == "plain text"
+
+
 def test_markdown_para_blocos_ignora_linhas_em_branco():
     blocos = markdown_para_blocos("a\n\n\nb")
     assert [b["type"] for b in blocos] == ["paragraph", "paragraph"]
