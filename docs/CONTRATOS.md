@@ -166,6 +166,23 @@ Lidas do schema do database (Etapa/Esforço) e do database de áreas (relations)
 }
 ```
 
+### `GET /api/database-atual` — contexto da database ativa
+
+Devolve a database de tarefas que a interface está operando naquele momento. Serve para a
+UI indicar explicitamente qual tabela está ativa e oferecer um link de conferência no
+Notion.
+
+- **200 OK**:
+
+```json
+{
+  "id": "30296e2d-cd39-4cf3-8bbd-3fb2f53c0195",
+  "titulo": "Tarefas — HOME (pessoal)",
+  "data_sources": ["Tarefas — HOME (pessoal)"],
+  "url": "https://app.notion.com/p/30296e2dcd394cf38bbd3fb2f53c0195"
+}
+```
+
 > **Confirmação antes de escrever**: criação e mudança de status são operações de
 > **escrita**. Quando acionadas por IA/MCP (Fases 5–6), exigem confirmação humana antes de
 > efetivar (`requiresConfirmation`); o guarda-corpo "copiloto que sugere e a pessoa

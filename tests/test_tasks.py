@@ -183,6 +183,18 @@ def test_criar_com_duracao_e_areas():
         json=pagina_tarefa("novo", "Tarefa", duracao="Dias", areas=["a1"]),
         status=200,
     )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json=SCHEMA_TAREFAS,
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/{AREAS_DB}/query",
+        json={"results": [pagina_area("a1", "Estudos")], "has_more": False},
+        status=200,
+    )
     t = criar_tasklist().criar("Tarefa", duracao="Dias", areas=["a1"])
     corpo = json.loads(responses.calls[0].request.body)
     assert corpo["properties"]["Esforço"]["status"]["name"] == "Dias"
@@ -221,6 +233,21 @@ def test_editar_aceita_areas():
         responses.PATCH,
         f"{NOTION_BASE_URL}/pages/t1",
         json=pagina_tarefa("t1", "A", areas=["a1", "a2"]),
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json=SCHEMA_TAREFAS,
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/{AREAS_DB}/query",
+        json={
+            "results": [pagina_area("a1", "Estudos"), pagina_area("a2", "Trabalho")],
+            "has_more": False,
+        },
         status=200,
     )
     criar_tasklist().editar("t1", areas=["a1", "a2"])
@@ -334,3 +361,55 @@ def test_listar_enriquece_areas_nomes():
     )
     tarefas = criar_tasklist().listar()
     assert tarefas[0].areas_nomes == ["Estudos"]
+
+
+@responses.activate
+def test_criar_enriquece_areas_nomes():
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/pages",
+        json=pagina_tarefa("t1", "Nova", areas=["a1"]),
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json=SCHEMA_TAREFAS,
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/{AREAS_DB}/query",
+        json={"results": [pagina_area("a1", "Estudos")], "has_more": False},
+        status=200,
+    )
+
+    tarefa = criar_tasklist().criar("Nova", areas=["a1"])
+
+    assert tarefa.areas_nomes == ["Estudos"]
+
+
+@responses.activate
+def test_editar_enriquece_areas_nomes():
+    responses.add(
+        responses.PATCH,
+        f"{NOTION_BASE_URL}/pages/t1",
+        json=pagina_tarefa("t1", "Editada", areas=["a1"]),
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json=SCHEMA_TAREFAS,
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/{AREAS_DB}/query",
+        json={"results": [pagina_area("a1", "Estudos")], "has_more": False},
+        status=200,
+    )
+
+    tarefa = criar_tasklist().editar("t1", nome="Editada", areas=["a1"])
+
+    assert tarefa.areas_nomes == ["Estudos"]

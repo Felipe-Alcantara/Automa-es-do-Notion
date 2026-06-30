@@ -64,3 +64,23 @@ def test_spa_envia_filtros_de_propriedade_para_api():
     assert "qs.set('status', filtros.status)" in codigo
     assert "qs.set('duracao', filtros.duracao)" in codigo
     assert "qs.set('area', filtros.area)" in codigo
+
+
+def test_spa_consulta_database_atual_e_exibe_link_para_notion():
+    client_js = Path(__file__).resolve().parents[1] / "front" / "src" / "api" / "client.js"
+    painel = (
+        Path(__file__).resolve().parents[1]
+        / "front"
+        / "src"
+        / "components"
+        / "tarefas"
+        / "painel-tarefas.jsx"
+    )
+
+    codigo_client = client_js.read_text(encoding="utf-8")
+    codigo_painel = painel.read_text(encoding="utf-8")
+
+    assert "request('/api/database-atual')" in codigo_client
+    assert "Database ativa" in codigo_painel
+    assert "Fonte:" in codigo_painel
+    assert "Abrir no Notion" in codigo_painel

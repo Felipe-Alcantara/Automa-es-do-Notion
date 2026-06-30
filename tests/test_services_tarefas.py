@@ -96,6 +96,35 @@ def test_criar_tarefa_devolve_tarefa_criada():
         json=_pagina("novo", "Nova", "Entrada", duracao="Dias", areas=["a1"]),
         status=200,
     )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json={
+            "properties": {
+                "Áreas da vida": {
+                    "type": "relation",
+                    "relation": {"database_id": "db_areas"},
+                }
+            }
+        },
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/db_areas/query",
+        json={
+            "results": [
+                {
+                    "id": "a1",
+                    "properties": {
+                        "Name": {"type": "title", "title": [{"plain_text": "Estudos"}]}
+                    },
+                }
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
     tarefa = svc.criar_tarefa(
         "Nova",
         status="Entrada",
@@ -107,6 +136,7 @@ def test_criar_tarefa_devolve_tarefa_criada():
     assert tarefa.nome == "Nova"
     assert tarefa.duracao == "Dias"
     assert tarefa.areas == ["a1"]
+    assert tarefa.areas_nomes == ["Estudos"]
 
 
 @responses.activate

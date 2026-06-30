@@ -70,13 +70,43 @@ class FrontRuntime(NamedTuple):
     versao: str
 
 
+def _executavel_projeto() -> str:
+    """Retorna o Python do ambiente local do projeto quando ele existir.
+
+    O `start_app.py` é frequentemente invocado com o Python do sistema, mas o
+    repositório já costuma ter um `.venv` preparado. Reusar esse interpretador
+    evita tentar instalar dependências num ambiente externamente gerenciado.
+    """
+
+    candidatos = (
+        RAIZ / ".venv" / "bin" / "python",
+        RAIZ / ".venv" / "Scripts" / "python.exe",
+        RAIZ / "venv" / "bin" / "python",
+        RAIZ / "venv" / "Scripts" / "python.exe",
+    )
+    for candidato in candidatos:
+        if candidato.exists():
+            return str(candidato)
+    return sys.executable
+
+
+def _reexecutar_no_python_do_projeto(argumentos: list[str]) -> None:
+    """Relança o script no Python do projeto quando ele difere do atual."""
+
+    destino = Path(_executavel_projeto()).absolute()
+    atual = Path(sys.executable).absolute()
+    if destino == atual:
+        return
+    os.execv(str(destino), [str(destino), str(Path(__file__).resolve()), *argumentos])
+
+
 # --------------------------------------------------------------------------- #
 # Terminais dedicados                                                        #
 # --------------------------------------------------------------------------- #
 def _comando_acao(chave: str) -> list[str]:
     """Monta o comando que executa uma única ação fora do menu principal."""
 
-    return [sys.executable, str(Path(__file__).resolve()), "--action", chave]
+    return [_executavel_projeto(), str(Path(__file__).resolve()), "--action", chave]
 
 
 def _comando_terminal_linux(
@@ -183,12 +213,13 @@ def _instalar_deps_tui() -> bool:
     """Tenta instalar as dependências de TUI do menu. Retorna sucesso."""
 
     print(f"Instalando dependências do menu ({', '.join(_DEPS_TUI)})...")
-    codigo = subprocess.call([sys.executable, "-m", "pip", "install", *_DEPS_TUI])
+    executavel = _executavel_projeto()
+    codigo = subprocess.call([executavel, "-m", "pip", "install", *_DEPS_TUI])
     if codigo != 0:
         print(
             "Não consegui instalar as dependências do menu. "
             "Instale manualmente com:\n"
-            f"  {sys.executable} -m pip install {' '.join(_DEPS_TUI)}"
+            f"  {executavel} -m pip install {' '.join(_DEPS_TUI)}"
         )
         return False
     return True
@@ -606,18 +637,39 @@ def _database_compativel(item: dict) -> bool:
     return not _colunas_faltantes(item)
 
 
-def _buscar_databases(token: str) -> list[tuple[str, str, bool, list[str]]]:
+def _nomes_data_sources_terminal(fontes: list[dict]) -> list[str]:
+    """Extrai nomes das fontes de dados para orientar a escolha no terminal."""
+
+    nomes = []
+    for fonte in fontes:
+        nome = str(fonte.get("name") or "").strip()
+        if nome:
+            nomes.append(nome)
+    return nomes
+
+
+def _partes_database(item: tuple) -> tuple[str, str, bool, list[str], list[str]]:
+    """Aceita registros antigos de teste e registros novos com data sources."""
+
+    titulo, db_id, compativel, faltantes, *resto = item
+    fontes = resto[0] if resto else []
+    return titulo, db_id, compativel, faltantes, fontes
+
+
+def _buscar_databases(token: str) -> list[tuple[str, str, bool, list[str], list[str]]]:
     """Lista TODOS os databases acessíveis à integração, ordenados.
 
-    Cada item é ``(titulo, db_id, compativel, faltantes)``. Compatíveis (que
-    atendem ao schema de tarefas) vêm primeiro; dentro de cada grupo, em ordem
-    alfabética. Mostrar todos — não só os compatíveis — deixa a pessoa escolher
-    livremente um database mesmo que precise ajustar as colunas depois.
+    Cada item é ``(titulo, db_id, compativel, faltantes, data_sources)``.
+    Compatíveis (que atendem ao schema de tarefas) vêm primeiro; dentro de cada
+    grupo, em ordem alfabética. Mostrar todos — não só os compatíveis — deixa a
+    pessoa escolher livremente um database mesmo que precise ajustar as colunas
+    depois.
     """
 
     from notion_starter import NotionClient
 
-    itens = NotionClient(token=token).buscar(
+    cliente = NotionClient(token=token)
+    itens = cliente.buscar(
         buscar_todos=True,
         filtro={"property": "object", "value": "database"},
     )
@@ -627,9 +679,24 @@ def _buscar_databases(token: str) -> list[tuple[str, str, bool, list[str]]]:
         if not db_id:
             continue
         faltantes = _colunas_faltantes(item)
-        databases.append((_titulo_database(item), db_id, not faltantes, faltantes))
+        fontes = []
+        if not faltantes:
+            fontes = _nomes_data_sources_terminal(cliente.listar_data_sources(db_id))
+        databases.append((_titulo_database(item), db_id, not faltantes, faltantes, fontes))
     # Compatíveis primeiro (not compativel == False ordena antes), depois título.
     return sorted(databases, key=lambda d: (not d[2], d[0].casefold()))
+
+
+def _rotulo_database_terminal(titulo: str, database_id: str) -> str:
+    """Monta um rótulo curto e confiável para mensagens do terminal."""
+
+    return f"{titulo} ({database_id[:8]}…)"
+
+
+def _url_database_terminal(database_id: str) -> str:
+    """Monta a URL canônica do database no Notion a partir do ID."""
+
+    return f"https://app.notion.com/p/{database_id.replace('-', '')}"
 
 
 def _garantir_database_tarefas(console) -> bool:
@@ -687,33 +754,55 @@ def _selecionar_database_tarefas(console, *, manter_atual_ao_cancelar: bool = Fa
         )
         return False
 
-    compativeis = sum(1 for _, _, ok, _ in databases if ok)
+    compativeis = sum(1 for item in databases if _partes_database(item)[2])
     console.print(
         f"[dim]{len(databases)} databases acessíveis · {compativeis} já compatíveis "
         "(✓). Os demais (⚠) podem ser usados, mas pedem ajuste de colunas.[/dim]"
     )
+    if compativeis:
+        console.print("[dim]Compatíveis detectados (título pela API + ID + URL):[/dim]")
+        for item in databases:
+            titulo, db_id, ok, _, fontes = _partes_database(item)
+            if not ok:
+                continue
+            atual_label = " [atual]" if db_id == atual else ""
+            console.print(f"  • [bold]{titulo}[/bold]{atual_label}")
+            console.print(f"    ID: {db_id}")
+            if fontes:
+                console.print(f"    Data source: {', '.join(fontes)}")
+            console.print(f"    URL: {_url_database_terminal(db_id)}")
 
     # Mapa para descrever o database escolhido (título + colunas que faltam).
-    por_id = {db_id: (titulo, faltantes) for titulo, db_id, _, faltantes in databases}
-    escolha_atual = next((db_id for _, db_id, _, _ in databases if db_id == atual), None)
+    por_id = {
+        db_id: (titulo, faltantes)
+        for titulo, db_id, _, faltantes, _ in map(_partes_database, databases)
+    }
+    escolha_atual = next(
+        (db_id for _, db_id, _, _, _ in map(_partes_database, databases) if db_id == atual),
+        None,
+    )
     escolhas = [
         questionary.Choice(
-            f"{'✓' if ok else '⚠'} {titulo} · {db_id[:8]}…"
+            f"{'✓' if ok else '⚠'} {titulo} · {db_id}"
             + ("  [atual]" if db_id == atual else ""),
             value=db_id,
         )
-        for titulo, db_id, ok, _ in databases
+        for titulo, db_id, ok, _, _ in map(_partes_database, databases)
     ]
     rotulo_cancelar = "Manter o atual" if (manter_atual_ao_cancelar and atual) else "Cancelar"
     escolhas.append(questionary.Choice(rotulo_cancelar, value=None))
     database_id = questionary.select(
-        "Qual database deve alimentar a lista de tarefas?",
+        "Qual database real do Notion deve alimentar a lista de tarefas?",
         choices=escolhas,
         default=escolha_atual,
     ).ask()
     if not database_id:
         if manter_atual_ao_cancelar and atual:
-            console.print(f"[dim]Mantendo o database atual ({atual[:8]}…).[/dim]")
+            titulo_atual = por_id.get(atual, ("database atual", []))[0]
+            console.print(
+                f"[dim]Mantendo o database atual: "
+                f"{_rotulo_database_terminal(titulo_atual, atual)}.[/dim]"
+            )
             os.environ.setdefault(DATABASE_ENV, atual)
             return True
         console.print("[dim]Configuração cancelada.[/dim]")
@@ -729,7 +818,11 @@ def _selecionar_database_tarefas(console, *, manter_atual_ao_cancelar: bool = Fa
             console.print(f"   • {falta}")
         if not questionary.confirm("Usar este database mesmo assim?", default=False).ask():
             if manter_atual_ao_cancelar and atual:
-                console.print(f"[dim]Mantendo o database atual ({atual[:8]}…).[/dim]")
+                titulo_atual = por_id.get(atual, ("database atual", []))[0]
+                console.print(
+                    f"[dim]Mantendo o database atual: "
+                    f"{_rotulo_database_terminal(titulo_atual, atual)}.[/dim]"
+                )
                 os.environ.setdefault(DATABASE_ENV, atual)
                 return True
             console.print("[dim]Configuração cancelada.[/dim]")
@@ -738,7 +831,8 @@ def _selecionar_database_tarefas(console, *, manter_atual_ao_cancelar: bool = Fa
     _gravar_valor_env_file(DATABASE_ENV, database_id)
     os.environ[DATABASE_ENV] = database_id
     console.print(
-        "[green]✓[/green] Database de tarefas salvo no .env. "
+        "[green]✓[/green] Database de tarefas salvo no .env: "
+        f"[bold]{_rotulo_database_terminal(titulo_escolhido, database_id)}[/bold]. "
         "Essa escolha será reutilizada nas próximas execuções."
     )
     return True
@@ -1535,6 +1629,8 @@ def main(argv: list[str] | None = None) -> None:
         if acao_solicitada not in _acoes_menu():
             opcoes = ", ".join(_acoes_menu())
             raise SystemExit(f"Ação desconhecida: {acao_solicitada}. Opções: {opcoes}")
+
+    _reexecutar_no_python_do_projeto(argumentos)
 
     if not _tui_disponivel():
         print(

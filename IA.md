@@ -603,3 +603,98 @@ re-renderização dos READMEs do database GITHUB (badges como imagem, links clic
 negrito aplicado); rodar `atualizar-github` de novo não recria README sem mudança.
 Commits: `feat` (conversor rico), `feat` (atualizar_repos), `feat` (CLI + start_app),
 `docs`.
+
+[2026-06-30] CONTEXTO: Execução da task "Testar o programa das automações", focada na
+frente web do repositório com a database `Tarefas — HOME (pessoal)` como caso principal
+de uso real. O objetivo foi validar bootstrap local, fluxo principal de tarefas e atritos
+de produto antes de qualquer expansão para outras tabelas.
+ACHADOS: (1) o `.env` local estava apontando para `Tarefas — HOME (principal)`, enquanto a
+task vive em `Tarefas — HOME (pessoal)`; isso confirmou que a web ainda precisa expor com
+clareza qual database está ativa. (2) leitura, filtros, criação e edição funcionaram na
+base pessoal tanto pela API local quanto pelo proxy do front. (3) o caminho recomendado
+`python3 start_app.py --action tudo` quebrava em ambiente Python externamente gerenciado,
+mesmo com `.venv` pronta. (4) as respostas de `POST/PATCH` de tarefas voltavam com
+`areas_nomes` vazio, enquanto `GET /api/tarefas` vinha enriquecido.
+DECISÃO: corrigir nesta task o que afeta diretamente o uso real e o contrato público, sem
+abrir uma refatoração ampla. O `start_app.py` agora relança a si mesmo no Python do `.venv`
+quando ele existe, e as ações filhas passam a usar esse executável do projeto. No core,
+`TaskList.criar/editar` agora enriquecem `areas_nomes` antes de devolver a tarefa. Os
+achados e prioridades do teste foram registrados em `docs/TESTE-WEB-2026-06-30.md`.
+VALIDAÇÃO: teste real com backend em `127.0.0.1:8000` e front em `127.0.0.1:5173`, usando
+override de `NOTION_DATABASE_ID` para a database pessoal; `GET /api/health`, `GET /api/tarefas`,
+`GET /api/opcoes`, filtros por `status/duracao/area`, criação e edição via API direta e via
+proxy do Vite; `python3 start_app.py --action status` passou a refletir Django disponível;
+testes automatizados verdes (`tests/test_start_app.py`, `tests/test_tasks.py`,
+`tests/test_services_tarefas.py`) e documentação viva atualizada.
+
+[2026-06-30b] CONTEXTO: Após a primeira rodada do teste web, ficou explícito um risco de uso:
+a pessoa podia operar a interface de tarefas sem confirmação visível de qual database estava
+ativa, num projeto que já convive com `Tarefas — HOME (pessoal)`, `principal`, cópias e
+outras tabelas próximas.
+DECISÃO: transformar esse contexto em contrato público da API em vez de esconder a solução no
+front. Foi criado `GET /api/database-atual`, que devolve `id`, `titulo` e `url` da database de
+tarefas ativa. O painel principal do front passou a mostrar a database corrente e oferecer o
+link "Abrir no Notion" para conferência imediata.
+VALIDAÇÃO: testes novos cobrindo a borda HTTP (`tests/test_api_tarefas.py`) e a fiação do front
+(`tests/test_front.py`); suíte afetada verde (`77 passed`) com Ruff e Oxlint limpos. A melhoria
+também atualizou `docs/CONTRATOS.md`, `front/README.md` e o relatório
+`docs/TESTE-WEB-2026-06-30.md`.
+
+[2026-06-30c] CONTEXTO: Ao comparar as duas tabelas reais no Notion, ficou claro que a
+ambiguidade restante não era só de seleção, mas também de comunicação no terminal: a CLI
+`database-atual` mostrava apenas o ID, e o `start_app.py` ainda confirmava "database atual"
+sem reforçar o título real retornado pelo Notion.
+DECISÃO: eliminar nomes implícitos no terminal. A CLI `database-atual` agora resolve a
+database no Notion e exibe `titulo + id + url`; o `start_app.py` passou a mostrar o título real
+nas mensagens de manter/salvar database, em vez de só truncar o ID.
+VALIDAÇÃO: testes atualizados em `tests/test_cli_notion_tasks.py` e `tests/test_start_app.py`,
+mais a suíte focada `tests/test_start_app.py tests/test_cli_notion_tasks.py tests/test_api_tarefas.py
+tests/test_front.py` verde (`87 passed`) e gate completo executado ao final da rodada.
+
+[2026-06-30d] CONTEXTO: Mesmo após expor `titulo + id + url`, a UX do `start_app.py`
+continuava poluída por um texto auxiliar de exemplo (`Ex.: ...`) no momento exato em que a
+pessoa precisava validar qual era a database real. Na prática, o exemplo desviava a atenção
+do problema central: conferir nome, ID e link da tabela apontada.
+DECISÃO: simplificar a seleção para informação autoritativa apenas. O `start_app.py` deixou de
+mostrar exemplos de tarefas nesse fluxo e passou a imprimir, antes da pergunta, uma lista
+objetiva das databases compatíveis com `título pela API do Notion + ID completo + URL`.
+As opções do seletor também passaram a usar o ID completo, sem rótulos paralelos.
+VALIDAÇÃO: regressão coberta em `tests/test_start_app.py`, incluindo a garantia explícita de que
+`Ex.:` não volta a aparecer; `ruff check start_app.py tests/test_start_app.py`, a suíte focada
+de `tests/test_start_app.py` e o gate completo do repositório foram executados nesta rodada.
+
+[2026-06-30e] CONTEXTO: O usuário confirmou que o site abria uma tabela diferente da URL
+esperada (`30296e2d-cd39-4cf3-8bbd-3fb2f53c0195`). A investigação mostrou que o `.env`
+local ainda estava apontando para `1fe91f95-497e-813f-9892-cfa80d4fd341`, enquanto o link
+informado era da database pessoal. Também havia uma lacuna de diagnóstico: a UI e o terminal
+mostravam o título do database, mas não o nome da *data source* usada pelo modelo novo do
+Notion.
+DECISÃO: corrigir o `.env` local para `30296e2d-cd39-4cf3-8bbd-3fb2f53c0195` e ampliar o
+contrato de `GET /api/database-atual`/`cli database-atual` para incluir `data_sources`. O
+front e o `start_app.py` agora exibem a fonte de dados junto de título, ID e URL, reduzindo
+a ambiguidade entre database, data source e view aberta no Notion.
+VALIDAÇÃO: `python3 -m cli database-atual` retornou `Tarefas — HOME (pessoal)`,
+`30296e2d-cd39-4cf3-8bbd-3fb2f53c0195`, data source `Tarefas — HOME (pessoal)` e URL do
+mesmo ID; suíte focada (`tests/test_start_app.py tests/test_cli_notion_tasks.py
+tests/test_api_tarefas.py tests/test_front.py`) verde com `65 passed, 2 skipped`, e Ruff
+focado limpo antes do gate completo.
+
+[2026-06-30f] CONTEXTO: Finalização da task "Testar o programa das automações". A sessão
+anterior identificou que o problema principal era de configuração (`.env` apontando para
+o database errado) combinado com ambiguidade de contexto (título vs data source). Após a
+correção do `.env` local para `30296e2d-cd39-4cf3-8bbd-3fb2f53c0195` e a ampliação de
+`GET /api/database-atual` para incluir `data_sources`, foi necessário executar o gate de
+qualidade completo e registrar a conclusão da task no Notion.
+DECISÃO: rodar `python3 scripts/quality_check.py` para validação final antes do registro.
+O gate completo passou: Ruff limpo, 433 testes passando com 2 skipped, Oxlint limpo e
+build Vite bem-sucedido. A task foi atualizada no Notion com registro técnico dos três
+problemas corrigidos: (1) `.env` local apontando para database errado; (2) campo
+`data_sources` ausente nos endpoints de database atual; (3) validação completa executada
+com 433 testes verdes.
+VALIDAÇÃO: gate completo aprovado. Referências principais: `server/services/tarefas.py:110`
+(método `obter_database_atual` com resolução de data sources), `start_app.py:640` (exibição
+de data source na seleção de database), `front/src/components/tarefas/painel-tarefas.jsx:232`
+(hook `useDatabaseAtual` e exibição no painel). Documentação viva atualizada:
+`docs/TESTE-WEB-2026-06-30.md` com registro completo da rodada de teste, `docs/CONTRATOS.md`
+com novo endpoint `GET /api/database-atual`, README principal com instruções atualizadas de
+variáveis de ambiente e validação. IA.md preservado como linha do tempo completa do projeto.

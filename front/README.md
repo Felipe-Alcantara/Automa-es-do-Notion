@@ -40,6 +40,8 @@ python3 scripts/quality_check.py
   numa tabela genérica que se adapta ao schema — não só a todolist. Usa
   `GET /api/databases` e `GET /api/databases/{id}`. Só leitura por enquanto.
 - Visualizações em grade, lista e kanban.
+- Indicação explícita da **database ativa** e da **data source** do Notion, com link
+  para abrir a tabela atual e conferir se a interface está apontando para a fonte certa.
 - Busca, filtros persistentes por etapa/esforço/área e ordenação. Os valores
   de etapa/esforço/área vêm do Notion e são enviados de volta sem tradução
   local.
