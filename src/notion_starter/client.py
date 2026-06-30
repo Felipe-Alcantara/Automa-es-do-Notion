@@ -10,6 +10,8 @@ from urllib.parse import urlencode
 
 import requests
 
+from .utils import safe_json_dumps
+
 try:  # ``NotRequired`` só existe em ``typing`` a partir do 3.11.
     from typing import NotRequired, TypedDict
 except ImportError:  # pragma: no cover - fallback para Python 3.10
@@ -291,10 +293,13 @@ class NotionClient:
 
         for tentativa in range(total_tentativas):
             try:
+                # Usar serialização JSON segura para prevenir erros de surrogate
+                json_payload = safe_json_dumps(payload) if payload else None
+
                 resp = requests.request(
                     method=method,
                     url=url,
-                    json=payload,
+                    json=json.loads(json_payload) if json_payload else None,
                     headers=self._headers(version),
                     timeout=self._timeout,
                 )
