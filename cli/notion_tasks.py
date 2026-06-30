@@ -249,9 +249,27 @@ def cmd_ler(args: argparse.Namespace, *, tasklist_factory: TaskListFactory) -> A
 
 
 def cmd_criar(args: argparse.Namespace, *, tasklist_factory: TaskListFactory) -> Any:
+    """Cria uma tarefa nova.
+
+    IMPORTANTE: Valida status contra opções disponíveis no database para evitar
+    erro "Invalid status option" da API do Notion.
+
+    Problema conhecido: CLI falhava com status inválido que não existe no schema.
+    Solução: Validar status contra opções do database antes de enviar.
+    """
+    # Validar status contra opções disponíveis (se fornecido)
+    status = _normalizar_texto(args.status)
+    if status:
+        opcoes = svc.listar_opcoes(tasklist=tasklist_factory())
+        status_validos = opcoes.get("status", [])
+        if status not in status_validos:
+            raise CLIError(
+                f"Status '{status}' inválido. Opções disponíveis: {', '.join(status_validos)}"
+            )
+
     tarefa = svc.criar_tarefa(
         _texto_obrigatorio(args.nome, "nome"),
-        status=_normalizar_texto(args.status),
+        status=status,
         prazo=_normalizar_texto(args.prazo),
         duracao=_normalizar_texto(args.duracao),
         areas=_lista_csv(args.area),
@@ -261,6 +279,14 @@ def cmd_criar(args: argparse.Namespace, *, tasklist_factory: TaskListFactory) ->
 
 
 def cmd_editar(args: argparse.Namespace, *, tasklist_factory: TaskListFactory) -> Any:
+    """Edita uma tarefa existente.
+
+    IMPORTANTE: Valida status contra opções disponíveis no database para evitar
+    erro "Invalid status option" da API do Notion.
+
+    Problema conhecido: CLI falhava com status inválido que não existe no schema.
+    Solução: Validar status contra opções do database antes de enviar.
+    """
     campos = {
         "nome": _normalizar_texto(args.nome),
         "status": _normalizar_texto(args.status),
@@ -268,8 +294,20 @@ def cmd_editar(args: argparse.Namespace, *, tasklist_factory: TaskListFactory) -
         "duracao": _normalizar_texto(args.duracao),
         "areas": _lista_csv(args.area),
     }
+
     if all(valor is None for valor in campos.values()):
         raise CLIError("Informe ao menos um campo para editar.")
+
+    # Validar status contra opções disponíveis (se fornecido)
+    status = campos["status"]
+    if status:
+        opcoes = svc.listar_opcoes(tasklist=tasklist_factory())
+        status_validos = opcoes.get("status", [])
+        if status not in status_validos:
+            raise CLIError(
+                f"Status '{status}' inválido. Opções disponíveis: {', '.join(status_validos)}"
+            )
+
     tarefa = svc.editar_tarefa(
         _texto_obrigatorio(args.task_id, "task_id"),
         **campos,
@@ -279,18 +317,54 @@ def cmd_editar(args: argparse.Namespace, *, tasklist_factory: TaskListFactory) -
 
 
 def cmd_mover(args: argparse.Namespace, *, tasklist_factory: TaskListFactory) -> Any:
+    """Move tarefa para outro status.
+
+    IMPORTANTE: Valida status contra opções disponíveis no database para evitar
+    erro "Invalid status option" da API do Notion.
+
+    Problema conhecido: CLI falhava com status inválido que não existe no schema.
+    Solução: Validar status contra opções do database antes de enviar.
+    """
+    status = _texto_obrigatorio(args.status, "status")
+
+    # Validar status contra opções disponíveis
+    opcoes = svc.listar_opcoes(tasklist=tasklist_factory())
+    status_validos = opcoes.get("status", [])
+    if status not in status_validos:
+        raise CLIError(
+            f"Status '{status}' inválido. Opções disponíveis: {', '.join(status_validos)}"
+        )
+
     tarefa = svc.mover_status(
         _texto_obrigatorio(args.task_id, "task_id"),
-        _texto_obrigatorio(args.status, "status"),
+        status,
         tasklist=tasklist_factory(),
     )
     return _tarefa_dict(tarefa)
 
 
 def cmd_concluir(args: argparse.Namespace, *, tasklist_factory: TaskListFactory) -> Any:
+    """Conclui tarefa com o status informado.
+
+    IMPORTANTE: Valida status contra opções disponíveis no database para evitar
+    erro "Invalid status option" da API do Notion.
+
+    Problema conhecido: CLI falhava com status inválido que não existe no schema.
+    Solução: Validar status contra opções do database antes de enviar.
+    """
+    status = _texto_obrigatorio(args.status, "status")
+
+    # Validar status contra opções disponíveis
+    opcoes = svc.listar_opcoes(tasklist=tasklist_factory())
+    status_validos = opcoes.get("status", [])
+    if status not in status_validos:
+        raise CLIError(
+            f"Status '{status}' inválido. Opções disponíveis: {', '.join(status_validos)}"
+        )
+
     tarefa = svc.concluir_tarefa(
         _texto_obrigatorio(args.task_id, "task_id"),
-        _texto_obrigatorio(args.status, "status"),
+        status,
         tasklist=tasklist_factory(),
     )
     return _tarefa_dict(tarefa)

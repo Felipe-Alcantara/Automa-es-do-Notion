@@ -73,7 +73,7 @@ class FakeTaskList:
     def opcoes(self):
         self.chamadas.append(("opcoes", None))
         return {
-            "status": ["Entrada", "Concluída"],
+            "status": ["Entrada", "Assim que possível", "Concluída"],
             "duracao": ["Dias"],
             "areas": [{"id": "a1", "nome": "Estudos"}],
         }
@@ -336,7 +336,9 @@ def test_criar_delega_campos_amplos_para_services():
         fake,
     )
     assert codigo == 0
-    assert fake.chamadas == [("criar", ("Nova tarefa", "Entrada", None, "Dias", ["a1", "a2"]))]
+    # Agora valida status antes de criar, então espera chamada a listar_opcoes também
+    assert fake.chamadas[0] == ("opcoes", None)
+    assert fake.chamadas[1] == ("criar", ("Nova tarefa", "Entrada", None, "Dias", ["a1", "a2"]))
     assert saida["dados"]["areas"] == ["a1", "a2"]
 
 
@@ -355,10 +357,11 @@ def test_mover_e_concluir_delegam_para_tasklist():
     codigo_concluir, _ = _executar(["concluir", "t1", "Concluída"], fake)
     assert codigo_mover == 0
     assert codigo_concluir == 0
-    assert fake.chamadas == [
-        ("atualizar_status", ("t1", "Assim que possível")),
-        ("concluir", ("t1", "Concluída")),
-    ]
+    # Agora valida status antes de mover/concluir
+    assert fake.chamadas[0] == ("opcoes", None)
+    assert fake.chamadas[1] == ("atualizar_status", ("t1", "Assim que possível"))
+    assert fake.chamadas[2] == ("opcoes", None)
+    assert fake.chamadas[3] == ("concluir", ("t1", "Concluída"))
 
 
 def test_ler_busca_tarefa_por_id():
@@ -376,7 +379,7 @@ def test_ler_retorna_erro_quando_nao_encontra():
 def test_opcoes_retorna_json_dos_seletores():
     codigo, saida = _executar(["--json", "opcoes"])
     assert codigo == 0
-    assert saida["dados"]["status"] == ["Entrada", "Concluída"]
+    assert saida["dados"]["status"] == ["Entrada", "Assim que possível", "Concluída"]
 
 
 def test_databases_lista_databases_visiveis():
