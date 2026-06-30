@@ -79,6 +79,36 @@ def test_get_tarefas_lista(client):
 
 
 @responses.activate
+def test_get_database_atual_retorna_contexto(client):
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json={
+            "url": f"https://notion.so/{DB}",
+            "title": [{"plain_text": "Tarefas — HOME (pessoal)"}],
+            "properties": {},
+        },
+        status=200,
+    )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json={"data_sources": [{"id": "ds1", "name": "Tarefas — HOME (pessoal)"}]},
+        status=200,
+    )
+
+    resp = client.get("/api/database-atual")
+
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "id": DB,
+        "titulo": "Tarefas — HOME (pessoal)",
+        "url": f"https://notion.so/{DB}",
+        "data_sources": ["Tarefas — HOME (pessoal)"],
+    }
+
+
+@responses.activate
 def test_get_tarefas_filtra_por_status(client):
     responses.add(
         responses.POST,
@@ -118,6 +148,35 @@ def test_post_tarefa_cria(client):
         json=_pagina("novo", "Nova", "Entrada", duracao="Dias", areas=["a1"]),
         status=200,
     )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json={
+            "properties": {
+                "Áreas da vida": {
+                    "type": "relation",
+                    "relation": {"database_id": "db_areas"},
+                }
+            }
+        },
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/db_areas/query",
+        json={
+            "results": [
+                {
+                    "id": "a1",
+                    "properties": {
+                        "Name": {"type": "title", "title": [{"plain_text": "Estudos"}]}
+                    },
+                }
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
     resp = client.post(
         "/api/tarefas",
         data=json.dumps(
@@ -135,6 +194,7 @@ def test_post_tarefa_cria(client):
     assert corpo["id"] == "novo"
     assert corpo["duracao"] == "Dias"
     assert corpo["areas"] == ["a1"]
+    assert corpo["areas_nomes"] == ["Estudos"]
 
     request = json.loads(responses.calls[0].request.body)
     assert request["properties"]["Esforço"]["status"]["name"] == "Dias"
@@ -176,6 +236,35 @@ def test_patch_tarefa_edita_campos_amplos(client):
         json=_pagina("t1", "Renomeada", "Assim que possível", duracao="Poucas horas", areas=["a1"]),
         status=200,
     )
+    responses.add(
+        responses.GET,
+        f"{NOTION_BASE_URL}/databases/{DB}",
+        json={
+            "properties": {
+                "Áreas da vida": {
+                    "type": "relation",
+                    "relation": {"database_id": "db_areas"},
+                }
+            }
+        },
+        status=200,
+    )
+    responses.add(
+        responses.POST,
+        f"{NOTION_BASE_URL}/databases/db_areas/query",
+        json={
+            "results": [
+                {
+                    "id": "a1",
+                    "properties": {
+                        "Name": {"type": "title", "title": [{"plain_text": "Estudos"}]}
+                    },
+                }
+            ],
+            "has_more": False,
+        },
+        status=200,
+    )
     resp = client.patch(
         "/api/tarefas/t1",
         data=json.dumps(
@@ -193,6 +282,7 @@ def test_patch_tarefa_edita_campos_amplos(client):
     assert corpo["nome"] == "Renomeada"
     assert corpo["duracao"] == "Poucas horas"
     assert corpo["areas"] == ["a1"]
+    assert corpo["areas_nomes"] == ["Estudos"]
 
     request = json.loads(responses.calls[0].request.body)
     assert request["properties"]["Tarefa"]["title"][0]["text"]["content"] == "Renomeada"

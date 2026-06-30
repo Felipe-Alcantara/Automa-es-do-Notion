@@ -18,9 +18,46 @@ _SPEC.loader.exec_module(start_app)
 def test_comando_acao_reabre_start_app_com_acao():
     comando = start_app._comando_acao("servidor")
 
-    assert comando[0] == start_app.sys.executable
+    assert comando[0] == start_app._executavel_projeto()
     assert comando[1] == str(start_app.Path(start_app.__file__).resolve())
     assert comando[2:] == ["--action", "servidor"]
+
+
+def test_reexecuta_no_python_do_projeto_quando_venv_difere(monkeypatch):
+    chamadas = []
+    monkeypatch.setattr(start_app, "_executavel_projeto", lambda: "/tmp/projeto/.venv/bin/python")
+    monkeypatch.setattr(start_app.sys, "executable", "/usr/bin/python3")
+    monkeypatch.setattr(
+        start_app.os,
+        "execv",
+        lambda executavel, argv: chamadas.append((executavel, argv)),
+    )
+
+    start_app._reexecutar_no_python_do_projeto(["--action", "tudo"])
+
+    assert chamadas == [
+        (
+            "/tmp/projeto/.venv/bin/python",
+            [
+                "/tmp/projeto/.venv/bin/python",
+                str(start_app.Path(start_app.__file__).resolve()),
+                "--action",
+                "tudo",
+            ],
+        )
+    ]
+
+
+def test_reexecutar_no_python_do_projeto_nao_faz_nada_quando_ja_esta_no_mesmo(monkeypatch):
+    monkeypatch.setattr(start_app, "_executavel_projeto", lambda: "/usr/bin/python3")
+    monkeypatch.setattr(start_app.sys, "executable", "/usr/bin/python3")
+    monkeypatch.setattr(
+        start_app.os,
+        "execv",
+        lambda *_args: (_ for _ in ()).throw(AssertionError("não deveria reexecutar")),
+    )
+
+    start_app._reexecutar_no_python_do_projeto(["status"])
 
 
 def test_terminal_linux_prefere_terminal_configurado(monkeypatch):
@@ -370,6 +407,34 @@ def test_selecionar_database_pergunta_para_trocar_o_atual(monkeypatch, tmp_path)
     assert "NOTION_DATABASE_ID=db-novo" in env_file.read_text()
     # O database atualmente em uso aparece marcado para o usuário se orientar.
     assert any("[atual]" in str(c.title) for c in capturado["choices"])
+
+
+def test_selecionar_database_cancelado_mostra_titulo_real_do_atual(monkeypatch, tmp_path):
+    import questionary
+
+    class Pergunta:
+        def ask(self):
+            return None
+
+    env_file = tmp_path / ".env"
+    env_file.write_text("NOTION_TOKEN=ntn_teste\nNOTION_DATABASE_ID=db-atual\n", encoding="utf-8")
+    monkeypatch.setattr(start_app, "ENV_FILE", env_file)
+    monkeypatch.setenv(start_app.DATABASE_ENV, "db-atual")
+    monkeypatch.delenv(start_app.TOKEN_ENV, raising=False)
+    monkeypatch.setattr(
+        start_app,
+        "_buscar_databases",
+        lambda token: [("Tasks", "db-atual", True, [], ["Tasks"])],
+    )
+    monkeypatch.setattr(questionary, "select", lambda *args, **kwargs: Pergunta())
+    saida = io.StringIO()
+    console = Console(file=saida, force_terminal=False)
+
+    assert start_app._selecionar_database_tarefas(console, manter_atual_ao_cancelar=True) is True
+    assert "Tasks (db-atual" in saida.getvalue()
+    assert "Data source: Tasks" in saida.getvalue()
+    assert "URL: https://app.notion.com/p/dbatual" in saida.getvalue()
+    assert "Ex.:" not in saida.getvalue()
 
 
 def test_selecionar_database_lista_todos_com_marca(monkeypatch, tmp_path):

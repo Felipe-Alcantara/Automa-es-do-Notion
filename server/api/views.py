@@ -7,6 +7,7 @@ Sem regra de negócio aqui (isso vive em ``services``) nem formato cru do Notion
     POST  /api/tarefas                    cria  {nome, status?, prazo?, duracao?, areas?}  -> 201
     PATCH /api/tarefas/<id>               edita {nome?, status?, prazo?, duracao?, areas?} -> 200
     GET   /api/opcoes                     valores para seletores                          -> 200
+    GET   /api/database-atual             contexto da database ativa                      -> 200
 
 Saída em JSON. Erros mapeados: 400 (entrada inválida), 404 (tarefa inexistente),
 502 (falha na API do Notion), 500 (servidor sem token/database configurado).
@@ -172,6 +173,16 @@ def opcoes(_request: HttpRequest) -> JsonResponse:
         return JsonResponse(svc.listar_opcoes())
 
     return _responder(_listar_opcoes)
+
+
+@require_http_methods(["GET"])
+def database_atual(_request: HttpRequest) -> JsonResponse:
+    """Devolve a database de tarefas ativa, com título e URL do Notion."""
+
+    def _obter() -> JsonResponse:
+        return JsonResponse(svc.obter_database_atual())
+
+    return _responder(_obter)
 
 
 @require_http_methods(["GET"])

@@ -265,7 +265,9 @@ class TaskList:
             propriedades[self._campos.areas] = p.relation(areas)
 
         pagina = self._client.criar_pagina(self._database_id, propriedades)
-        return tarefa_de_pagina(pagina, self._campos)
+        tarefa = tarefa_de_pagina(pagina, self._campos)
+        self._enriquecer_areas([tarefa])
+        return tarefa
 
     def editar(
         self,
@@ -313,7 +315,9 @@ class TaskList:
             raise ValueError("Ao menos um campo deve ser informado para editar.")
 
         pagina = self._client.atualizar_pagina(task_id, propriedades)
-        return tarefa_de_pagina(pagina, self._campos)
+        tarefa = tarefa_de_pagina(pagina, self._campos)
+        self._enriquecer_areas([tarefa])
+        return tarefa
 
     def atualizar_status(self, task_id: str, status: str) -> Tarefa:
         """Muda o status de uma tarefa existente.

@@ -203,6 +203,10 @@ const realApi = {
     return request('/api/opcoes')
   },
 
+  async databaseAtual() {
+    return request('/api/database-atual')
+  },
+
   async listarDatabases(query = '') {
     const qs = query ? `?query=${encodeURIComponent(query)}` : ''
     return request(`/api/databases${qs}`)
@@ -274,6 +278,10 @@ export const api = {
   criarTarefa: escolherApi(realApi.criarTarefa, mockApi.criarTarefa),
   editarTarefa: escolherApi(realApi.editarTarefa, mockApi.editarTarefa),
   opcoes: escolherApi(realApi.opcoes, mockApi.opcoes),
+  databaseAtual: escolherApi(
+    realApi.databaseAtual,
+    async () => ({ id: 'db-tarefas', titulo: 'Tarefas — HOME', url: null }),
+  ),
   listarDatabases: escolherApi(realApi.listarDatabases, mockExploracao.listarDatabases),
   descreverDatabase: escolherApi(realApi.descreverDatabase, mockExploracao.descreverDatabase),
 }

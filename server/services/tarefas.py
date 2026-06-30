@@ -17,6 +17,25 @@ from typing import Any
 from notion_starter import Tarefa, TaskList
 
 
+def _titulo_database(database: dict[str, Any]) -> str:
+    """Extrai o título legível de um database do Notion."""
+
+    partes = database.get("title", [])
+    titulo = "".join(parte.get("plain_text", "") for parte in partes).strip()
+    return titulo or "(sem título)"
+
+
+def _nomes_data_sources(fontes: list[dict[str, Any]]) -> list[str]:
+    """Extrai nomes das fontes de dados do modelo novo do Notion."""
+
+    nomes = []
+    for fonte in fontes:
+        nome = str(fonte.get("name") or "").strip()
+        if nome:
+            nomes.append(nome)
+    return nomes
+
+
 def _tasklist_padrao() -> TaskList:
     """Resolve a ``TaskList`` a partir da configuração do servidor.
 
@@ -86,6 +105,27 @@ def listar_opcoes(
     """Retorna os valores possíveis para seletores (status, duração, áreas)."""
 
     return (tasklist or _tasklist_padrao()).opcoes()
+
+
+def obter_database_atual() -> dict[str, Any]:
+    """Retorna o contexto da database de tarefas ativa no servidor."""
+
+    from core.config import carregar_config
+    from integrations.notion import criar_cliente
+
+    cfg = carregar_config()
+    if not cfg.notion_database_id:
+        raise ValueError("NOTION_DATABASE_ID não configurado.")
+
+    cliente = criar_cliente()
+    database = cliente.get_database(cfg.notion_database_id)
+    fontes = cliente.listar_data_sources(cfg.notion_database_id)
+    return {
+        "id": cfg.notion_database_id,
+        "titulo": _titulo_database(database),
+        "url": database.get("url", ""),
+        "data_sources": _nomes_data_sources(fontes),
+    }
 
 
 def mover_status(

@@ -18,6 +18,7 @@
 | [💼 SAAS.md](SAAS.md) | O que mudaria para virar um produto multiusuário (auth, multi-tenant, cobrança, segurança). |
 | [🏗️ INFRA.md](INFRA.md) | Como o servidor roda local e é hospedado: estrutura de pastas, config por ambiente, SQLite operacional, deploy. |
 | [✅ QUALIDADE.md](QUALIDADE.md) | Gate executável de qualidade: comandos locais, CI, critério de pronto e referências. |
+| [🧪 TESTE-WEB-2026-06-30.md](TESTE-WEB-2026-06-30.md) | Registro da validação da frente web focada na database `Tarefas — HOME (pessoal)`, com achados, correções aplicadas e prioridades. |
 | [🔄 INTEGRACOES.md](INTEGRACOES.md) | GitHub e arquivos locais: configuração, schemas, idempotência, segurança e exemplos de sincronização. |
 | [📈 ESCALA.md](ESCALA.md) | Como crescer sem quebrar: fila de jobs, workers, cache, rate limit, observabilidade. |
 | [⚡ OTIMIZACAO.md](OTIMIZACAO.md) | Como reduzir latência e custo (chamadas ao Notion e ao OpenRouter, cache, idempotência). |

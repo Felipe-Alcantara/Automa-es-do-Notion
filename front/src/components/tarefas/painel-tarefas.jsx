@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { AlertCircle, Loader2, Plus, RefreshCw } from 'lucide-react'
+import { AlertCircle, ExternalLink, Loader2, Plus, RefreshCw } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Filtros } from './filtros'
 import { TarefaFormModal } from './tarefa-form'
 import { ViewGrade } from './view-grade'
 import { ViewKanban } from './view-kanban'
 import { ViewLista } from './view-lista'
+import { useDatabaseAtual } from '../../hooks/use-database-atual'
 import { useOpcoes } from '../../hooks/use-opcoes'
 import { useTarefas } from '../../hooks/use-tarefas'
 
@@ -82,6 +83,7 @@ export function PainelTarefas() {
     area: uiState.areaFiltro,
   })
   const { opcoes, erro: erroOpcoes } = useOpcoes()
+  const { database, erro: erroDatabase } = useDatabaseAtual()
 
   const atualizarUiState = (campo, valor) => {
     setUiState((atual) => {
@@ -146,6 +148,7 @@ export function PainelTarefas() {
           <p className="max-w-2xl text-sm leading-relaxed text-zinc-400">
             Etapas, esforço e áreas vêm direto do seu Notion.
           </p>
+          <DatabaseAtiva database={database} erro={erroDatabase} />
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -223,6 +226,44 @@ export function PainelTarefas() {
         opcoes={opcoes}
       />
     </>
+  )
+}
+
+function DatabaseAtiva({ database, erro }) {
+  if (erro) {
+    return (
+      <p className="text-xs text-amber-300">
+        Database ativa indisponível agora. Confirme o Notion pelo menu ou recarregue a página.
+      </p>
+    )
+  }
+  if (!database) {
+    return <p className="text-xs text-zinc-500">Carregando database ativa...</p>
+  }
+  const dataSources = database.data_sources?.length
+    ? database.data_sources.join(', ')
+    : 'sem data source acessível'
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+      <span className="rounded-full border border-brand-500/30 bg-brand-500/10 px-2.5 py-1 text-brand-200">
+        Database ativa
+      </span>
+      <span className="text-white">{database.titulo}</span>
+      <span className="text-zinc-500">{database.id}</span>
+      <span className="text-zinc-500">Fonte: {dataSources}</span>
+      {database.url && (
+        <a
+          href={database.url}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-brand-300 hover:text-brand-200"
+        >
+          Abrir no Notion
+          <ExternalLink size={12} aria-hidden="true" />
+        </a>
+      )}
+    </div>
   )
 }
 

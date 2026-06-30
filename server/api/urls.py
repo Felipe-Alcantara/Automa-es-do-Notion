@@ -15,6 +15,7 @@ urlpatterns = [
     path("tarefas", views.tarefas, name="tarefas"),
     path("tarefas/<str:task_id>", views.tarefa_detalhe, name="tarefa-detalhe"),
     path("opcoes", views.opcoes, name="opcoes"),
+    path("database-atual", views.database_atual, name="database-atual"),
     path("databases", views.databases, name="databases"),
     path("databases/<str:database_id>", views.database_detalhe, name="database-detalhe"),
 ]

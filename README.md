@@ -103,6 +103,7 @@ Automa-es-do-Notion/
 **`python3 start_app.py`**
 
 - Abre um menu interativo com categorias para uso normal, IA/integrações e configuração.
+- Reaproveita o `.venv` local do projeto quando ele já existir, evitando instalar extras no Python global.
 - Instala dependências, cria `.env`, configura token/database, mostra status e roda exemplos.
 - Sobe API Django e front React juntos em modo local.
 - Executa o gate de qualidade pelo próprio menu.
@@ -114,6 +115,7 @@ Automa-es-do-Notion/
 **`front/src/App.jsx`**
 
 - Interface web para tarefas do Notion com visualizações de grade, lista e kanban.
+- Mostra explicitamente qual database de tarefas está ativa e oferece link para abrir essa tabela no Notion.
 - Aba **Explorar** para visualizar qualquer database compartilhado com a integração.
 - Filtros persistentes por etapa, esforço e área, usando opções vindas do Notion.
 - Build Vite e lint com Oxlint.
@@ -182,6 +184,8 @@ Automa-es-do-Notion/
 # Instale o pacote local e abra o menu
 python3 start_app.py
 ```
+
+Se o repositório já tiver um `.venv`, o menu usa esse ambiente automaticamente.
 
 No menu, use:
 

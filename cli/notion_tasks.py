@@ -105,6 +105,15 @@ def _database_dict(item: dict[str, Any]) -> dict[str, Any]:
     return {"id": item.get("id", ""), "titulo": _database_titulo(item), "url": item.get("url")}
 
 
+def _nomes_data_sources(fontes: list[dict[str, Any]]) -> list[str]:
+    nomes = []
+    for fonte in fontes:
+        nome = str(fonte.get("name") or "").strip()
+        if nome:
+            nomes.append(nome)
+    return nomes
+
+
 def _envelope(sucesso: bool, dados: Any = None, erro: str | None = None) -> dict[str, Any]:
     if sucesso:
         return {"ok": True, "dados": dados}
@@ -175,7 +184,14 @@ def _formatar_humano(comando: str, dados: Any) -> str:
             f"linhas copiadas: {dados['linhas_copiadas']}"
         )
     if comando == "database-atual":
-        return f"Database atual: {dados['database_id'] or '(não configurado)'}"
+        if not dados["database_id"]:
+            return "Database atual: (não configurado)"
+        fontes = ", ".join(dados.get("data_sources") or []) or "(sem data source acessível)"
+        return (
+            f"Database atual: {dados['titulo']} ({dados['database_id']})\n"
+            f"Data source: {fontes}\n"
+            f"URL: {dados['url'] or '(sem URL)'}"
+        )
     if comando == "normalizar-nomes":
         return _json(dados)
     if comando == "mapear":
@@ -293,8 +309,19 @@ def cmd_databases(args: argparse.Namespace, *, client_factory: ClientFactory) ->
     return [_database_dict(item) for item in itens]
 
 
-def cmd_database_atual(args: argparse.Namespace) -> Any:
-    return {"database_id": os.environ.get("NOTION_DATABASE_ID", "").strip()}
+def cmd_database_atual(args: argparse.Namespace, *, client_factory: ClientFactory) -> Any:
+    database_id = os.environ.get("NOTION_DATABASE_ID", "").strip()
+    if not database_id:
+        return {"database_id": "", "titulo": "", "url": "", "data_sources": []}
+    cliente = client_factory()
+    database = cliente.get_database(database_id)
+    fontes = cliente.listar_data_sources(database_id)
+    return {
+        "database_id": database_id,
+        "titulo": _database_titulo(database),
+        "url": database.get("url"),
+        "data_sources": _nomes_data_sources(fontes),
+    }
 
 
 def cmd_escolher_database(args: argparse.Namespace) -> Any:
@@ -654,7 +681,7 @@ def executar(
         elif comando == "databases":
             dados = cmd_databases(args, client_factory=client_factory)
         elif comando == "database-atual":
-            dados = cmd_database_atual(args)
+            dados = cmd_database_atual(args, client_factory=client_factory)
         elif comando == "escolher-database":
             dados = cmd_escolher_database(args)
         elif comando == "normalizar-nomes":

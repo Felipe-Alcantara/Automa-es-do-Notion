@@ -84,6 +84,7 @@ class FakeClient:
         self.chamadas: list[tuple[str, object]] = []
         self.database = {
             "id": "db1",
+            "url": "https://notion.so/db1",
             "title": [{"plain_text": "Tarefas"}],
             "properties": {
                 "Nome": {"type": "title", "title": {}},
@@ -176,6 +177,10 @@ class FakeClient:
             return self.areas_database
         return self.database
 
+    def listar_data_sources(self, database_id):
+        self.chamadas.append(("listar_data_sources", database_id))
+        return [{"id": "ds1", "name": "Tarefas"}]
+
     def consultar_database(self, database_id, buscar_todos=False):
         return self.areas if database_id == "areas-db" else self.paginas
 
@@ -226,10 +231,6 @@ class FakeClient:
     def excluir_bloco(self, block_id):
         self.chamadas.append(("excluir_bloco", block_id))
         return {"id": block_id, "archived": True}
-
-    def listar_data_sources(self, database_id):
-        self.chamadas.append(("listar_data_sources", database_id))
-        return []
 
     def consultar_data_source(self, data_source_id, page_size=100, buscar_todos=False, filtro=None):
         self.chamadas.append(("consultar_data_source", data_source_id))
@@ -498,6 +499,20 @@ def test_buscar_normaliza_itens():
     assert codigo == 0
     ids = {item["id"] for item in saida["dados"]}
     assert ids == {"p1", "db1"}
+
+
+def test_database_atual_traz_titulo_real():
+    client = FakeClient()
+    with mock.patch.dict(cli.os.environ, {"NOTION_DATABASE_ID": "db1"}, clear=False):
+        codigo, saida = _executar(["--json", "database-atual"], client=client)
+
+    assert codigo == 0
+    assert saida["dados"] == {
+        "database_id": "db1",
+        "titulo": "Tarefas",
+        "url": "https://notion.so/db1",
+        "data_sources": ["Tarefas"],
+    }
 
 
 def test_conteudo_de_database_avisa_e_traz_linhas():
