@@ -121,7 +121,9 @@ def _envelope(sucesso: bool, dados: Any = None, erro: str | None = None) -> dict
 
 
 def _json(dados: Any) -> str:
-    return json.dumps(dados, ensure_ascii=False, indent=2, sort_keys=True)
+    # Usar safe_json_dumps para prevenir erros de surrogate inválidos
+    from notion_starter.utils import safe_json_dumps
+    return safe_json_dumps(dados, ensure_ascii=False, indent=2, sort_keys=True)
 
 
 def _linhas_tabela(registros: Iterable[dict[str, Any]], colunas: Sequence[str]) -> list[str]:
