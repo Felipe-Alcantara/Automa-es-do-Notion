@@ -7,7 +7,6 @@ services compartilhados com API/MCP. Não monta payload cru do Notion.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 from collections.abc import Callable, Iterable, Sequence

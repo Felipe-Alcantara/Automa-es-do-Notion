@@ -11,12 +11,13 @@ O problema ocorre quando:
 """
 
 import json
-from unittest.mock import Mock, patch
-import pytest
+import os
 
 # Adicionar src ao path para import
 import sys
-import os
+
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from notion_starter.utils import has_invalid_surrogates, safe_json_dumps, sanitize_text
@@ -37,7 +38,9 @@ def test_surrogate_detection():
 
     for text, expected in test_cases:
         result = has_invalid_surrogates(text)
-        assert result == expected, f"Falha para: {repr(text)[:30]} - esperado: {expected}, obtido: {result}"
+        assert result == expected, (
+            f"Falha para: {repr(text)[:30]} - esperado: {expected}, obtido: {result}"
+        )
 
 
 def test_safe_json_dumps():
@@ -125,7 +128,7 @@ def test_requests_serialization_issue():
 
         # Tentar codificar para UTF-8 (o que requests faz)
         try:
-            json_bytes = json_str.encode('utf-8')
+            json_str.encode('utf-8')
             print("UTF-8 encoding funciona")
         except UnicodeEncodeError as e:
             print(f"UTF-8 encoding FALHA: {e}")
@@ -139,7 +142,7 @@ def test_requests_serialization_issue():
     print(f"safe_json_dumps funciona: {len(safe_json)} chars")
 
     try:
-        safe_bytes = safe_json.encode('utf-8')
+        safe_json.encode('utf-8')
         print("UTF-8 encoding funciona com safe_json_dumps")
     except UnicodeEncodeError as e:
         print(f"UTF-8 encoding ainda falha: {e}")
