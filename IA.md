@@ -4,6 +4,15 @@
 > um novo mantenedor, sem precisar reler todo o código ou o histórico de conversa.
 > Baseado no template de contexto do Felixo System Design.
 
+> ⚠️ **NOTA DE ESTRUTURA (2026-07-02)**: o monorepo descrito neste documento foi
+> separado em módulos. Os caminhos citados abaixo (`src/`, `cli/`, `server/`,
+> `front/`) hoje vivem em repositórios próprios — veja o mapa de roteamento no
+> **`AGENTS.md`** deste hub, que é o guia operacional atual. Este arquivo permanece
+> como **histórico de decisões** (as decisões continuam válidas; só os caminhos
+> mudaram): `src/notion_starter` → repo `notion-starter`; `cli/` + `core/` +
+> `integrations/` + `services/` → repo `notion-tasks-cli`; `server/` + `front/` +
+> `start_app.py` → repo `notion-workspace-app`.
+
 ---
 
 ## 🎯 OBJETIVO DO PROJETO

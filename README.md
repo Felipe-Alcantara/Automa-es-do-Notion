@@ -49,6 +49,15 @@ Este projeto faz parte de um ecossistema maior de desenvolvimento com multiagent
 4. **Automações do Notion** — este hub e seus três módulos
 5. [OpenRouter-Monitorator](https://github.com/Felipe-Alcantara/OpenRouter-Monitorator) — métricas de uso e custo de modelos via OpenRouter
 
+## 🤖 Para IAs (e para quem desenvolve com elas)
+
+Este hub é o **ponto de entrada para agentes**. Aponte sua IA para este repositório e ela encontra em [`AGENTS.md`](AGENTS.md) o roteamento completo:
+
+- **Usar o Notion** → instala o `notion-tasks` (CLI feito para IAs) e opera o workspace pelo terminal.
+- **Desenvolver as ferramentas** → `python bootstrap.py` clona os módulos em `modules/`, e o agente edita, testa e commita no repositório correto sozinho.
+
+Ou seja: você pode usar cada módulo separadamente, ou promptar a partir daqui e deixar o agente achar a função (ou o código) certo.
+
 ## 📚 Documentação
 
 A pasta [`docs/`](docs/) guarda o material de arquitetura e planejamento que guiou o desenvolvimento (contratos, camada de IA, MCP, modularização, escala, SaaS…). O arquivo [`IA.md`](IA.md) é o guia de operação para agentes de IA trabalhando no ecossistema.

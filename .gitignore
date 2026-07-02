@@ -38,3 +38,6 @@ server/staticfiles/
 .DS_Store
 /Padrão de qualidade - Felixo System Design
 /Padr├úo de qualidade - Felixo System Design
+
+# Workspace de desenvolvimento dos módulos (bootstrap.py)
+modules/
