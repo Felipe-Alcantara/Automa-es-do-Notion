@@ -29,10 +29,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Dependências da TUI do start_app.py. Instale com: pip install -e ".[app]"
+app = [
+    "questionary>=2.0",
+    "rich>=13.0",
+]
 dev = [
     "pytest>=7.0",
     "responses>=0.23",
     "ruff>=0.4",
+    # A suíte exercita start_app.py, que importa a TUI; por isso o dev inclui app.
+    "automacoes-do-notion[app]",
 ]
 # Dependências do servidor Django (Fase 2+). Instale com: pip install -e ".[server]"
 server = [
