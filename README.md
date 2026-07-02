@@ -23,10 +23,14 @@ Isso clona os 3 módulos do ecossistema em `modules/` (gitignorado, só local se
 Quando os módulos tiverem atualizações no GitHub, rode:
 
 ```bash
-sync
+python sync.py
 ```
 
-(Você precisa configurar o alias `sync` uma única vez — veja [SYNC.md](SYNC.md).)
+Ou, se configurou o alias (veja [SYNC.md](SYNC.md)):
+
+```bash
+sync
+```
 
 Isso executa `git pull` em cada módulo e valida que tudo está OK.
 

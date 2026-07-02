@@ -1,38 +1,52 @@
 # Sincronização dos módulos
 
-Use `sync` (alias/script) para atualizar os módulos locais com as últimas mudanças do GitHub.
+Use `python sync.py` (ou o alias `sync`) para atualizar os módulos locais com as últimas mudanças do GitHub.
 
-## Instalação (escolha uma opção)
+## Uso rápido
+
+```bash
+python sync.py
+```
+
+Isso:
+1. Executa `python bootstrap.py` — faz `git pull --ff-only` em cada módulo
+2. Executa `python check-dev.py` — valida se o workspace está OK
+
+Saída: 0 (tudo OK) ou 1 (algo falta/falhou).
+
+## Alias (opcional)
+
+Se quiser abreviar para apenas `sync`, configure **uma vez** no seu shell:
 
 ### Windows — PowerShell
 
-Adicione ao seu perfil do PowerShell (`$PROFILE`):
+Abra seu perfil:
 
 ```powershell
-# Abra o arquivo:
 notepad $PROFILE
-
-# Adicione esta linha:
-function sync { & "E:\Programação\Github\Automa-es-do-Notion\sync.ps1" }
-
-# Salve. Próxima vez que abrir PowerShell, o comando 'sync' está disponível.
 ```
 
-Ou rode manualmente:
+Adicione:
 
 ```powershell
-E:\Programação\Github\Automa-es-do-Notion\sync.ps1
+function sync { python "E:\Programação\Github\Automa-es-do-Notion\sync.py" }
+```
+
+Salve. Na próxima sessão do PowerShell:
+
+```powershell
+sync
 ```
 
 ### macOS / Linux — Bash/Zsh
 
-Adicione ao seu `~/.bashrc` ou `~/.zshrc`:
+Adicione ao `~/.bashrc` ou `~/.zshrc`:
 
 ```bash
-alias sync="cd /path/to/Automa-es-do-Notion && bash sync.sh"
+alias sync="python /path/to/Automa-es-do-Notion/sync.py"
 ```
 
-Depois recarregue:
+Recarregue:
 
 ```bash
 source ~/.bashrc
@@ -40,16 +54,11 @@ source ~/.bashrc
 source ~/.zshrc
 ```
 
-## Uso
+Depois:
 
 ```bash
 sync
 ```
-
-Isso:
-1. Roda `python bootstrap.py` (clona ou faz `git pull` em cada módulo)
-2. Roda `python check-dev.py` (valida se tudo está OK)
-3. Mostra o status final
 
 ## O que ele sincroniza?
 
@@ -58,4 +67,4 @@ Os três módulos em `modules/`:
 - notion-tasks-cli
 - notion-workspace-app
 
-Se algum deles tem commits novos no GitHub, `git pull --ff-only` traz para seu PC.
+Se algum tem commits novos no GitHub, `git pull --ff-only` traz para seu PC.
