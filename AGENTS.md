@@ -1,11 +1,48 @@
-# AGENTS.md — Centro de operações do ecossistema Automações do Notion
+# AGENTS.md — Roteamento para agentes
 
-Você (agente) está no **hub** do ecossistema. Este repositório não contém o código das ferramentas — ele **roteia**: seu trabalho é identificar a intenção do pedido, encontrar o repositório correto e agir lá.
+Este é o **mapa de roteamento** de pedidos para módulos. Leia isto **toda vez** que receber um pedido.
 
-Dois modos de operação:
+## Pré-requisito: bootstrap.py
 
-- **MODO USO** — o pedido é *operar o Notion* (criar tarefa, ler página, mapear workspace…). Use o CLI `notion-tasks`; não é preciso clonar nada.
-- **MODO DESENVOLVIMENTO** — o pedido é *modificar as ferramentas* (corrigir bug, adicionar comando, mudar o front…). Clone os módulos em `modules/` (rode `python bootstrap.py`), edite no módulo correto, rode os testes dele e commite/push **no repositório do módulo**, nunca aqui.
+Antes de qualquer coisa, verifique se `modules/` existe com os três repositórios:
+
+```bash
+python bootstrap.py
+```
+
+Se `modules/` não existe, rode isso. Se existe, `git pull` os módulos. Sem este passo, você não acessa o código dos módulos.
+
+---
+
+## Dois modos de operação
+
+### MODO USO — operar o Notion via CLI
+
+O pedido é: *criar tarefa, ler página, mapear workspace, buscar dados, sincronizar…*
+
+**Ação:** instale uma vez (`pip install notion-tasks-cli`), depois execute comandos.
+
+```bash
+notion-tasks listar
+notion-tasks criar --titulo "..."
+notion-tasks conteudo <id>
+```
+
+Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o guia completo (escrito para IAs).
+
+### MODO DESENVOLVIMENTO — modificar código das ferramentas
+
+O pedido é: *corrigir bug, adicionar comando, mudar frontend, melhorar resilência…*
+
+**Pré-requisito:** `python bootstrap.py` (primeiro). Sem isso, `modules/` não existe.
+
+**Fluxo:**
+1. Use a tabela de roteamento abaixo para encontrar o módulo (`notion-starter`, `notion-tasks-cli`, `notion-workspace-app`).
+2. Edite no arquivo correto, em `modules/<nome>/`.
+3. Teste dentro do módulo: `cd modules/<nome> && python -m pytest`.
+4. Commit e push **dentro do módulo**, não no hub.
+
+Nunca desenvolva funcionalidade neste hub; este é documentação e roteamento.
 
 ---
 
