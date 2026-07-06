@@ -12,6 +12,8 @@ python bootstrap.py
 
 Se `modules/` não existe, rode isso. Se existe, `git pull` os módulos. Sem este passo, você não acessa o código dos módulos.
 
+O `bootstrap.py` **reusa clones existentes**: se um módulo já estiver clonado na pasta acima (`../<nome>`), ele cria um link (junction no Windows, symlink no POSIX) em `modules/<nome>` apontando para lá, em vez de duplicar. Ou seja, `modules/<nome>` é sempre o caminho de dev — editar/testar/commitar ali escreve no clone real. Só clona do GitHub o que não existe em lugar nenhum.
+
 ---
 
 ## Dois modos de operação
