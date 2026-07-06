@@ -746,3 +746,29 @@ VALIDAÇÃO: removido `modules/`, rodado `python bootstrap.py` → detectou os t
 date"); `python check-dev.py` reporta os três `[OK]` (o `.git` é encontrado através da
 junction). Docs vivas atualizadas no mesmo passo: README (seção "Primeiro passo") e AGENTS.md
 (pré-requisito bootstrap).
+
+[2026-07-06c] CONTEXTO: Lote de tarefas de uso/dev vindas de agentes que operavam o Notion:
+(1) "resolver as propriedades" — ao editar uma página que é linha de database, os agentes só
+mexiam no conteúdo (blocos), nunca nas propriedades, a menos que explicitados; (4) proposta de
+um comando "editar-linha" no notion-tasks-cli (o CLI cobria conteúdo e tarefas, mas não editava
+propriedades de linhas genéricas, forçando ir à API crua com o token do hub); (3) tornar o
+append de conteúdo seguro (preservar o existente, respeitar limites, verificar pós-PATCH).
+DECISÃO: as tarefas 1 e 4 têm a mesma raiz — faltava um caminho de propriedades para linha
+genérica. Adicionado `NotionClient.obter_pagina` no notion-starter (GET /pages/{id} já traz o
+`type` de cada coluna) e o comando `editar-linha <page_id> --set "Nome=valor"` no
+notion-tasks-cli (`services/propriedades.py`), que infere o tipo da própria página, converte o
+valor (title, rich_text, number, checkbox, select, status, multi_select, relation, people, date
+com intervalo "inicio..fim", email, phone, url), limpa com valor vazio e recusa tipos calculados.
+O `--help`/guia passou a recomendar "comece pelas propriedades, depois o conteúdo" — atacando a
+raiz da tarefa 1 (agora há caminho e ele é o recomendado). Tarefa 3: `escrever_conteudo` passou a
+anexar em lotes de 100 (limite do Notion por requisição; o limite de 2000 chars/rich_text já era
+tratado por `content.py` na lib) e a confirmar, pela resposta da API, que todos os blocos foram
+criados (erro em escrita parcial); o append sempre entra ao final, preservando o existente. A
+correção de conteudo.py foi espelhada em notion-workspace-app/server (camada services duplicada).
+VALIDAÇÃO: notion-starter 21/21 testes; notion-tasks-cli 72/72 (incl. novos test_services_
+propriedades e test_services_conteudo, e casos de editar-linha no test_cli); notion-workspace-app
+test_services_conteudo 12/12 (novo teste de lotes via callback do `responses`). Smoke test:
+`python -m cli editar-linha --help` e `guia` mostram o comando e a nova dica. Os três repos foram
+commitados e publicados no main. PENDÊNCIA de runtime: o notion_starter instalado (site-packages,
+via git+https) ainda não tem `obter_pagina` — é preciso reinstalar a dependência para o
+`editar-linha` funcionar em execução real (os testes usam doubles e não dependem disso).
