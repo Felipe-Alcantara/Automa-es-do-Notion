@@ -1,10 +1,31 @@
-# Automações do Notion
+# 🧩 Automações do Notion
 
-Hub do ecossistema de automações do Notion — arquitetura, documentação e os módulos que nasceram aqui.
+<div align="center">
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
-[![Notion API](https://img.shields.io/badge/Notion-API-000000?style=flat-square&logo=notion&logoColor=white)](https://developers.notion.com)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
+**Hub do ecossistema de automações do Notion — arquitetura, documentação e roteamento dos módulos que nasceram aqui.**
+
+[🚀 Como Usar](#-uso--cli-para-operar-o-notion) • [🛠️ Desenvolvimento](#️-desenvolvimento--editar-os-módulos) • [🤖 Para IAs](#-para-ias--agentes-de-ia-como-desenvolvedoras) • [📐 Arquitetura](#-arquitetura-do-ecossistema)
+
+</div>
+
+---
+
+## 📋 Índice
+
+- [⚡ Primeiro passo obrigatório](#-primeiro-passo-obrigatório)
+- [📁 Estrutura do Projeto](#-estrutura-do-projeto)
+- [🚀 Uso — CLI para operar o Notion](#-uso--cli-para-operar-o-notion)
+- [🛠️ Desenvolvimento — editar os módulos](#️-desenvolvimento--editar-os-módulos)
+- [🤖 Para IAs — agentes como desenvolvedoras](#-para-ias--agentes-de-ia-como-desenvolvedoras)
+- [📐 Arquitetura do ecossistema](#-arquitetura-do-ecossistema)
+- [🌌 Ecossistema Felixo](#-ecossistema-felixo)
+- [📚 Documentação](#-documentação)
+- [📄 Licença](#-licença)
+- [👤 Autor](#-autor)
 
 ---
 
@@ -16,7 +37,9 @@ Se você está começando aqui — seja para **usar** as ferramentas (CLI) ou **
 python bootstrap.py
 ```
 
-Isso clona os 3 módulos do ecossistema em `modules/` (gitignorado, só local seu). Sem este passo, os módulos não existem.
+Isso prepara os 3 módulos do ecossistema em `modules/` (gitignorado, só local seu). Sem este passo, os módulos não existem.
+
+> **Reusa clones que você já tem.** Se um módulo já estiver clonado **na pasta acima** deste repositório (ex.: `../notion-tasks-cli`), o `bootstrap.py` cria um **link** para reusar o mesmo working copy em vez de duplicar — assim você desenvolve num só lugar. Só clona do GitHub o que ainda não existe. O link usa junction no Windows (não precisa de administrador) e symlink no Linux/macOS.
 
 ### Depois: sincronizar regularmente
 
@@ -33,6 +56,30 @@ sync
 ```
 
 Isso executa `git pull` em cada módulo e valida que tudo está OK.
+
+---
+
+## 📁 Estrutura do Projeto
+
+Este repositório é **só o hub**: documentação, roteamento e as ferramentas de bootstrap. O código das ferramentas vive nos módulos, clonados sob demanda em `modules/` (gitignorado).
+
+```
+Automações do Notion/
+│
+├── 📁 docs/                # Arquitetura, contratos, MCP, modularização, escala
+├── 📁 modules/             # Módulos clonados por bootstrap.py (local, gitignorado)
+│
+├── AGENTS.md               # Roteamento de pedidos para o módulo/arquivo certo
+├── CLAUDE.md               # Contexto automático para Claude Code
+├── IA.md                   # Linha do tempo de decisões de arquitetura
+├── README.md               # Este arquivo
+├── SYNC.md                 # Como configurar o alias `sync`
+│
+├── bootstrap.py            # Clona os 3 módulos em modules/
+├── sync.py                 # git pull em cada módulo
+├── check-dev.py            # Verifica se o workspace de dev está pronto
+└── LICENSE
+```
 
 ---
 
@@ -202,4 +249,27 @@ Este projeto faz parte de um ecossistema maior de desenvolvimento com multiagent
 
 ## 📄 Licença
 
-MIT
+Este projeto está sob a licença MIT — veja o arquivo [`LICENSE`](LICENSE).
+
+---
+
+## 👤 Autor
+
+**Felipe Martin**
+
+- GitHub: [@Felipe-Alcantara](https://github.com/Felipe-Alcantara)
+- Módulos: [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) · [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) · [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app)
+
+## 🤝 Contribuições
+
+Contribuições são bem-vindas! Sinta-se à vontade para:
+
+- Reportar bugs e propor melhorias
+- Sugerir novas automações ou comandos
+- Melhorar a documentação e o roteamento para agentes
+
+Lembre-se: funcionalidade se desenvolve **nos módulos**, não neste hub (ver [AGENTS.md](AGENTS.md)).
+
+---
+
+⭐ Se este ecossistema foi útil, considere deixar uma estrela no GitHub!

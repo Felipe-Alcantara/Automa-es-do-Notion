@@ -707,3 +707,42 @@ de data source na seleção de database), `front/src/components/tarefas/painel-t
 `docs/TESTE-WEB-2026-06-30.md` com registro completo da rodada de teste, `docs/CONTRATOS.md`
 com novo endpoint `GET /api/database-atual`, README principal com instruções atualizadas de
 variáveis de ambiente e validação. IA.md preservado como linha do tempo completa do projeto.
+
+[2026-07-06] CONTEXTO: Rodada de padronização do hub segundo o Felixo System Design
+("Padrão de qualidade"). O hub tinha diretórios fantasma remanescentes da divisão do
+monorepo (`cli/`, `server/`, `src/`, `tests/` contendo apenas `__pycache__`), caches de
+tooling (`.pytest_cache/`, `.ruff_cache/`) e o `operacional.sqlite3` (estado do app antigo,
+gitignorado) na raiz — ruído que não pertence a um repositório que é só documentação e
+roteamento. O README já era forte, mas faltavam seções obrigatórias do padrão de README.
+DECISÃO: (1) remover o resíduo local do monorepo, deixando na raiz apenas docs + roteamento
++ ferramentas de bootstrap (`bootstrap.py`, `sync.py`, `check-dev.py`); (2) completar o
+README com as seções ⭐ obrigatórias que faltavam — Índice, Estrutura do Projeto (árvore do
+hub), Autor e o rodapé de Contribuições + CTA — e padronizar o header (badges
+`for-the-badge`, descrição em negrito, links rápidos). Não alterei a titularidade do
+`LICENSE` (copyright "André Gustavo" difere do autor Git "Felipe Martin"): mudança de
+titularidade de licença é decisão do dono, fica registrada aqui como pendência a confirmar.
+VALIDAÇÃO: âncoras do Índice conferidas contra os cabeçalhos `##` do README; `git status`
+antes da limpeza estava limpo (o resíduo era não rastreado/ignorado, então a remoção não
+afeta o histórico versionado). Nenhum código foi tocado — funcionalidade continua vivendo
+nos módulos, conforme AGENTS.md.
+
+[2026-07-06b] CONTEXTO: Ergonomia de desenvolvimento dos módulos (task "verificar se está
+fácil tanto para uso quanto para desenvolvimento"). Observado que os módulos estavam
+clonados em DOIS lugares — em `modules/` (cópia feita pelo bootstrap dentro do hub) e na
+pasta acima (`../notion-starter`, `../notion-tasks-cli`, `../notion-workspace-app`), mesmos
+remotes e commits. O `bootstrap.py` antigo sempre criava a cópia dentro do hub, ignorando o
+clone que já existia, gerando duplicação e ambiguidade sobre "onde eu desenvolvo".
+DECISÃO: `bootstrap.py` passa a reusar o clone existente. Ordem de preferência por módulo:
+(1) já preparado em `modules/<nome>` → `git pull --ff-only`; (2) já clonado em `../<nome>` →
+cria um LINK em `modules/<nome>` apontando para lá (junction no Windows via `mklink /J`, que
+não exige admin; symlink no POSIX), reusando o mesmo working copy; (3) não existe →
+`git clone` do GitHub. `modules/<nome>` segue sendo o caminho canônico de dev, então
+check-dev.py e todo o roteamento do AGENTS.md continuam válidos sem mudança — o `.git` é
+resolvido através do link. Escolhi o link (em vez de "só usar ../<nome>") para não quebrar
+nada que já aponta para `modules/`.
+VALIDAÇÃO: removido `modules/`, rodado `python bootstrap.py` → detectou os três clones em
+`../` e criou junctions (confirmado por `os.path.realpath('modules/notion-starter')` →
+`...\Github\notion-starter`); `git pull --ff-only` rodou dentro de cada link ("Already up to
+date"); `python check-dev.py` reporta os três `[OK]` (o `.git` é encontrado através da
+junction). Docs vivas atualizadas no mesmo passo: README (seção "Primeiro passo") e AGENTS.md
+(pré-requisito bootstrap).
