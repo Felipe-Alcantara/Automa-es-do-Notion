@@ -794,3 +794,26 @@ VALIDAÇÃO: notion-tasks-cli 74/74 testes; guia humano mostra o fluxo em destaq
 06/07 conferido via API — "O que fiz" (6932 chars, 5 itens: 4 originais + 1 novo), "Resumo"
 (2064, 2 itens) e "Próximos passos" (1355, 2 itens) com o texto original íntegro no início e a
 seção Automações do Notion ao final; Status/Área/Data mantidos.
+
+[2026-07-06e] CONTEXTO: Fechar a lacuna registrada em [2026-07-06d]: o `editar-linha` fazia
+full-replace e não fatiava rich_text >2000, então atualizar propriedades longas (como as do
+relatório) exigia montar o array via API na mão. Pedido: deixar tudo preparado para uso da
+forma mais otimizada, seguindo o padrão.
+DECISÃO: (1) Na lib (notion-starter): centralizei a fatia UTF-16 em `utils.fatiar_utf16` e o
+teto em `constants.MAX_RICH_TEXT` (antes privados em content.py — agora reusados sem duplicar,
+content.py passou a importá-los), e os builders `properties.title`/`rich_text` passaram a
+fatiar texto >2000 em vários itens que o Notion concatena. Texto curto segue gerando 1 item
+(compatível). (2) No CLI (notion-tasks-cli): `editar-linha` ganhou `--append "Nome=texto"`, que
+acrescenta ao final de colunas de texto preservando os itens rich_text originais (lê via
+obter_pagina, limpa os itens para forma gravável, junta o texto novo fatiado, num único PATCH);
+`--set` segue substituindo. Valida conflito set+append na mesma coluna e append em coluna não
+textual. O append NÃO apara espaços (preserva o separador \n\n), diferente do --set.
+(3) Dev: instalei o notion-starter em modo EDITÁVEL apontando para o clone local (via o junction
+de modules/), então mudanças na lib valem na hora para o CLI, sem reinstalar do git a cada vez —
+o setup de desenvolvimento mais otimizado, alinhado ao fluxo de junctions do bootstrap.
+VALIDAÇÃO: notion-starter 171/171 (novos testes de fatia: 4500 chars→[2000,2000,500], emoji
+conta 2 unidades UTF-16, vazio→1 item); notion-tasks-cli 79/79 (append preserva original,
+fatia em 2000, erro em coluna não-texto, erro set+append na mesma coluna, set+append juntos em
+colunas diferentes). End-to-end real na Notion: `editar-linha <relatório> --append "Resumo="`
+(no-op) reenviou os itens originais e o Resumo continuou com 2 itens/2064 chars — preservação
+confirmada sem poluir. Commits e push: notion-starter (d278d3d), notion-tasks-cli (ad2e52a).
