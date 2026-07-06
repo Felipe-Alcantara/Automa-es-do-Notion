@@ -111,6 +111,10 @@ notion-tasks mapear              # resume o workspace inteiro
 notion-tasks buscar <termo>      # pesquisa páginas e databases
 notion-tasks linhas <id>         # lista linhas de um database
 
+# Linha de database (propriedades ANTES do conteúdo)
+notion-tasks editar-linha <id> --set "Status=Feito"      # substitui uma coluna
+notion-tasks editar-linha <id> --append "Resumo=..."     # acrescenta sem perder o atual
+
 # Conteúdo de páginas
 notion-tasks conteudo <id>       # lê como Markdown
 notion-tasks escrever <id>       # anexa Markdown
@@ -149,10 +153,12 @@ modules/
 | Parar de chamar a API do Notion; melhorar resilência; cliente HTTP | [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) | `src/notion_starter/client.py` |
 | Schema, leitura/comparação de database | notion-starter | `src/notion_starter/schema.py` |
 | Modelo `Tarefa` e `TaskList` | notion-starter | `src/notion_starter/tasks.py` |
-| Conversão Markdown ↔ blocos | notion-starter | `src/notion_starter/content.py` |
-| Saneamento de texto/JSON (surrogates) | notion-starter | `src/notion_starter/utils.py` |
+| Conversão Markdown ↔ blocos; builders de propriedade (fatia >2000) | notion-starter | `src/notion_starter/content.py`, `properties.py` |
+| Ler/editar propriedades de página (`obter_pagina`/`atualizar_pagina`) | notion-starter | `src/notion_starter/client.py` |
+| Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
 | Subcomando do CLI, saída JSON, `--help` | [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) | `cli/notion_tasks.py` |
 | Regra de negócio (tarefas, clonagem, conteúdo, GitHub) | notion-tasks-cli | `services/` |
+| Editar propriedades de linha genérica (`editar-linha`) | notion-tasks-cli | `services/propriedades.py` |
 | Endpoints REST, serializers, API Django | [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app) | `server/api/` |
 | Servidor MCP (ferramentas `notion.*`) | notion-workspace-app | `server/mcp_server.py` |
 | Interface web (kanban, filtros, exploração) | notion-workspace-app | `front/src/` |

@@ -817,3 +817,19 @@ fatia em 2000, erro em coluna não-texto, erro set+append na mesma coluna, set+a
 colunas diferentes). End-to-end real na Notion: `editar-linha <relatório> --append "Resumo="`
 (no-op) reenviou os itens originais e o Resumo continuou com 2 itens/2064 chars — preservação
 confirmada sem poluir. Commits e push: notion-starter (d278d3d), notion-tasks-cli (ad2e52a).
+
+[2026-07-06f] CONTEXTO: Fechamento da rodada — garantir que git, docs e a database (relatório
+no Notion) reflitam tudo, seguindo o padrão de qualidade.
+DECISÃO: (1) Git: os quatro repositórios (hub + três módulos) já estavam commitados (Conventional
+Commits, docs no mesmo passo) e sincronizados com o origin/main — confirmado por fetch, sem
+ahead/behind. (2) Docs vivas atualizadas: hub AGENTS.md (roteamento MODO USO ganhou `editar-linha`
+com a ordem propriedades→conteúdo; MODO DEV ganhou linhas para `obter_pagina`/`atualizar_pagina`
+e `services/propriedades.py`), hub README (comandos e tabela de roteamento com editar-linha e
+obter_pagina), e notion-starter README/AGENTS (obter_pagina, builders de propriedade que fatiam
+>2000, `utils.fatiar_utf16`). (3) Database: o relatório de 06/07 foi atualizado com o trabalho
+mais recente usando a PRÓPRIA CLI — `escrever` para o conteúdo e `editar-linha --append` para as
+colunas "O que fiz", "Resumo" e "Próximos passos" (dogfooding do modo append), preservando o
+conteúdo original.
+VALIDAÇÃO: relatório conferido via API — "O que fiz" 6 itens/7311 chars, "Resumo" 3/2387,
+"Próximos passos" 3/1510, todos com o texto original íntegro no início e a atualização ao final.
+Commits/push: notion-starter docs (81ecb75); hub (docs de roteamento) neste passo.
