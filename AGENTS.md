@@ -70,6 +70,7 @@ Requer `NOTION_TOKEN` (e opcionalmente `NOTION_DATABASE_ID`) no ambiente ou `.en
 | Pesquisar páginas e databases | `notion-tasks buscar <termo>` |
 | Listar databases / linhas de um database | `notion-tasks databases` / `notion-tasks linhas <id>` |
 | Ler uma página como Markdown | `notion-tasks conteudo <id>` |
+| Editar propriedades (colunas) de uma linha de database | `notion-tasks editar-linha <id> --set "Nome=valor"` (substitui) / `--append "Nome=texto"` (acrescenta preservando). **Faça isto antes de escrever o conteúdo.** |
 | Escrever/editar/apagar blocos | `notion-tasks escrever / editar-bloco / apagar-bloco` (apagar exige `--sim`; o Notion arquiva, não destrói) |
 | Clonar páginas/estruturas | `notion-tasks clonar <id>` |
 | Interface gráfica ou servidor MCP | use o `notion-workspace-app` (`python start_app.py`) |
@@ -83,11 +84,13 @@ Primeiro `python bootstrap.py` (clona ou atualiza os módulos em `modules/`). De
 | Cliente HTTP, retries, rate limit, erros da API | notion-starter | `src/notion_starter/client.py` |
 | Schema de databases, comparação | notion-starter | `src/notion_starter/schema.py` |
 | Modelo de tarefas (`Tarefa`, `TaskList`) | notion-starter | `src/notion_starter/tasks.py` |
-| Conversão Markdown ↔ blocos | notion-starter | `src/notion_starter/content.py`, `properties.py`, `readers.py` |
+| Conversão Markdown ↔ blocos; builders de propriedade (fatia de texto >2000) | notion-starter | `src/notion_starter/content.py`, `properties.py`, `readers.py` |
+| Ler/editar propriedades de uma página (`obter_pagina`/`atualizar_pagina`) | notion-starter | `src/notion_starter/client.py` |
 | Inventário/varredura do workspace | notion-starter | `src/notion_starter/inventory.py` |
-| Saneamento de texto/JSON (surrogates) | notion-starter | `src/notion_starter/utils.py` |
+| Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
 | Subcomandos do CLI, saída JSON, `--help` | notion-tasks-cli | `cli/notion_tasks.py` |
 | Regra de negócio (tarefas, clonagem, conteúdo, ingestão, sync GitHub) | notion-tasks-cli | `services/` |
+| Editar propriedades de linha genérica (`editar-linha`, set/append) | notion-tasks-cli | `services/propriedades.py` |
 | Adaptadores GitHub/OpenRouter/Notion | notion-tasks-cli | `integrations/` |
 | Endpoints REST, serializers | notion-workspace-app | `server/api/` |
 | Servidor MCP (ferramentas `notion.*`) | notion-workspace-app | `server/mcp_server.py` |
