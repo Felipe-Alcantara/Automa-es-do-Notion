@@ -772,3 +772,25 @@ test_services_conteudo 12/12 (novo teste de lotes via callback do `responses`). 
 commitados e publicados no main. PENDÊNCIA de runtime: o notion_starter instalado (site-packages,
 via git+https) ainda não tem `obter_pagina` — é preciso reinstalar a dependência para o
 `editar-linha` funcionar em execução real (os testes usam doubles e não dependem disso).
+
+[2026-07-06d] CONTEXTO: Ao atualizar o relatório diário no Notion (database "Relatórios
+diários"), caí exatamente no vício da tarefa 1: atualizei o CONTEÚDO (blocos, via `escrever`)
+e esqueci as PROPRIEDADES (colunas rich_text "O que fiz", "Resumo", "Próximos passos"). O
+usuário apontou. Além disso pediu que a PRÓPRIA ferramenta recomende, de forma explícita,
+mexer nas propriedades primeiro e no conteúdo depois.
+DECISÃO: (1) Atualizei as propriedades preservando o conteúdo original — peguei os objetos
+rich_text originais de cada coluna e anexei um item novo ao final (respeitando o teto de 2000
+unidades por item), via `atualizar_pagina`; isso é exatamente o comportamento que a tarefa 3
+descrevia para rich_text. (2) Reforcei o guia do CLI: novo campo estrutural
+`fluxo_recomendado` (guia --json e humano) com a REGRA "propriedades primeiro (editar-linha),
+conteúdo depois (escrever)", e os `--help` de `editar-linha` e `escrever` passaram a apontar a
+ordem. Commit `feat` no notion-tasks-cli (add8e33), com teste garantindo a ordem no guia.
+LIMITAÇÃO REGISTRADA (próximo passo): o comando `editar-linha` faz FULL-REPLACE do valor e o
+builder `properties.rich_text` cria um único item — ou seja, não fatia texto >2000 nem anexa
+preservando o existente. Para colunas rich_text longas (como as do relatório) hoje é preciso ir
+via `atualizar_pagina` montando o array. Ideia: dar ao `editar-linha` um modo "append" e fazer
+o builder de rich_text fatiar em ≤2000 como o `content.py` já faz para blocos.
+VALIDAÇÃO: notion-tasks-cli 74/74 testes; guia humano mostra o fluxo em destaque; relatório
+06/07 conferido via API — "O que fiz" (6932 chars, 5 itens: 4 originais + 1 novo), "Resumo"
+(2064, 2 itens) e "Próximos passos" (1355, 2 itens) com o texto original íntegro no início e a
+seção Automações do Notion ao final; Status/Área/Data mantidos.
