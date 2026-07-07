@@ -133,6 +133,9 @@ notion-tasks conteudo <id>       # lê como Markdown
 notion-tasks escrever <id>       # anexa Markdown
 notion-tasks editar-bloco <id>   # substitui texto
 
+# Relatórios diários
+notion-tasks exportar-docx --database <id> --de 2026-07-01 --ate 2026-07-06 --saida ./exports
+
 # Guia completo
 notion-tasks --help
 ```
@@ -170,7 +173,7 @@ modules/
 | Ler/editar propriedades de página (`obter_pagina`/`atualizar_pagina`) | notion-starter | `src/notion_starter/client.py` |
 | Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
 | Subcomando do CLI, saída JSON, `--help` | [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) | `cli/notion_tasks.py` |
-| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, GitHub) | notion-starter | `src/notion_starter/services/` |
+| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, GitHub, exportação DOCX) | notion-starter | `src/notion_starter/services/` |
 | Editar propriedades de linha genérica (`editar-linha`) | notion-tasks-cli | `services/propriedades.py` |
 | Endpoints REST, serializers, API Django | [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app) | `server/api/` |
 | Servidor MCP (ferramentas `notion.*`) | notion-workspace-app | `server/mcp_server.py` |
