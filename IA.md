@@ -833,3 +833,51 @@ conteúdo original.
 VALIDAÇÃO: relatório conferido via API — "O que fiz" 6 itens/7311 chars, "Resumo" 3/2387,
 "Próximos passos" 3/1510, todos com o texto original íntegro no início e a atualização ao final.
 Commits/push: notion-starter docs (81ecb75); hub (docs de roteamento) neste passo.
+
+[2026-07-07] CONTEXTO: Task do Notion "Colocar um módulo de github para notion" (Prioridade
+Hiperfoco/Urgente) pedia um módulo que importasse repositórios do GitHub para uma database do
+Notion e fosse fácil de atualizar. Investigação mostrou que a FUNCIONALIDADE JÁ EXISTIA madura no
+`notion-tasks-cli` (`services/inventario_github.py` + `integrations/github.py`, exposta pelo
+comando `atualizar-github`): upsert por URL, ~20 propriedades ricas, README em subpágina com
+detecção de mudança por hash. O trabalho real foi documentar/expor e estender, não recriar.
+DECISÃO: (1) Documentar/expor — novo guia `docs/GITHUB-DATABASE.md` (uso, rotina, FAQ), linkado no
+README e no AGENTS (a tabela MODO USO não citava `atualizar-github`; agora cita). (2) Estender — o
+serviço e o CLI ganharam `ignorar_arquivados`/`--sem-arquivados` para manter a database só com
+repositórios ativos; filtro aplicado no ponto compartilhado `_coletar_repos` (vale para
+`exportar_repos` e `atualizar_repos`), com testes de serviço e de CLI. (3) Qualidade do hub
+(Felixo): o hub ganhou `start_app.py` — menu interativo obrigatório (contrato #11) que instala a
+CLI, sincroniza módulos, configura o `.env` e opera o Notion; documentado no README como forma
+principal de rodar. `docs/QUALIDADE.md` estava desatualizado (descrevia o gate do antigo monorepo:
+`scripts/quality_check.py`, `front/`, npm, `CONTRIBUTING.md` — nada disso existe no hub); reescrito
+para a realidade do hub (gate = `check-dev.py`/`start_app.py`; gate de código = `pytest` por módulo).
+VALIDAÇÃO: suíte do `notion-tasks-cli` verde (82 passed); `--sem-arquivados` aparece no `--help` e é
+propagado ao serviço (teste de CLI); `start_app.py` valida sintaxe, helpers e renderiza o Status.
+Commit/push do código vai no repo do módulo (`notion-tasks-cli`), não no hub.
+
+[2026-07-07b] CONTEXTO: Pedido de portar as funções de coleta/análise do app React
+`Felipe-Alcantara/Git-Hub-Repositories` para o Notion — "principalmente importar vários perfis de uma
+vez, verificando duplicatas". INVESTIGAÇÃO: a função destacada JÁ existia no ecossistema
+(`atualizar-github --contas a,b,c`: multi-conta, dedup por URL/upsert, privados do usuário
+autenticado, resiliente por conta). Cruzando o app com o módulo, faltavam de fato duas coisas: (1)
+aceitar URL de perfil/`@handle` (o app tem `extractUsername`); (2) sync incremental por data
+(`updated_at`) que o app usa para pular repos sem mudança e reportar novos/atualizados/pulados.
+DECISÃO — ONDE MORAR (seguindo o padrão de qualidade #9, evitar duplicação): `integrations/github.py`
+era byte-idêntico nos dois repos (`notion-tasks-cli` e `notion-workspace-app/server`) e
+`inventario_github.py` só divergia pela minha edição `--sem-arquivados` de [2026-07-07] que eu tinha
+esquecido de espelhar (drift proibido pelo AGENTS). Consolidar a camada no `notion-starter` é o
+passo de roadmap, mas é refactor grande/arriscado (imports de 3 repos + Django/MCP) —
+desproporcional. Escolhi: escrever a lógica nova como FUNÇÕES PURAS reutilizáveis no ponto DRY que
+cobre todos os callers, e manter as duas cópias byte-idênticas (política vigente), corrigindo o
+drift. IMPLEMENTAÇÃO: (a) `extrair_login(texto)` em `integrations/github.py`, chamada por
+`_validar_usuario` — logo TODO caller (CLI, serviço, app/MCP) passa a aceitar URL/@handle/nome sem
+mudar; (b) `apenas_mudancas` em `atualizar_repos` + helpers puros `_parse_data` (tolera `Z` e
+`+00:00`) e `_repo_mudou_desde_pagina` (compara `updated_at` do GitHub com a coluna "Atualizado em"
+gravada; na dúvida atualiza), novo contador `paginas_puladas`; (c) flags CLI `--apenas-mudancas` (a
+`--sem-arquivados` já existia) e o resumo humano/JSON ganhou `pulados`. Aplicado nos DOIS repos
+(cópias idênticas de novo); testes espelhados nas suítes de cada um (o app tinha suíte bem mais
+rica). Expor as flags no MCP/REST do workspace-app fica como dívida anotada.
+VALIDAÇÃO: `notion-tasks-cli` 96 passed; `notion-workspace-app` 66 passed nos testes de
+github/inventário (as 3 falhas restantes são as pré-existentes conhecidas do Windows —
+`test_start_app`×2, `test_services_ingestao`×1). Ruff sem erros novos (só o `I001` pré-existente em
+`inventario_github.py`, idêntico nos dois repos). `github.py` e `inventario_github.py` confirmados
+byte-idênticos entre os repos após a mudança.
