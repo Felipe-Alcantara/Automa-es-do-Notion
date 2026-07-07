@@ -170,14 +170,16 @@ modules/
 | Ler/editar propriedades de página (`obter_pagina`/`atualizar_pagina`) | notion-starter | `src/notion_starter/client.py` |
 | Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
 | Subcomando do CLI, saída JSON, `--help` | [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) | `cli/notion_tasks.py` |
-| Regra de negócio (tarefas, clonagem, conteúdo, GitHub) | notion-tasks-cli | `services/` |
+| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, GitHub) | notion-starter | `src/notion_starter/services/` |
 | Editar propriedades de linha genérica (`editar-linha`) | notion-tasks-cli | `services/propriedades.py` |
 | Endpoints REST, serializers, API Django | [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app) | `server/api/` |
 | Servidor MCP (ferramentas `notion.*`) | notion-workspace-app | `server/mcp_server.py` |
 | Interface web (kanban, filtros, exploração) | notion-workspace-app | `front/src/` |
 | Launcher TUI (`start_app.py`) | notion-workspace-app | `start_app.py` |
 
-**Dívida conhecida:** `core/`, `integrations/` e `services/` vivem duplicados em `notion-tasks-cli` e `notion-workspace-app/server/`. Quando mexer nesses pacotes, aplique a correção nos dois repos. (Roadmap: consolidar no notion-starter.)
+**Consolidação:** os adaptadores GitHub/OpenRouter e os `services` compartilhados vivem em
+`notion-starter`; os módulos consumidores mantêm shims compatíveis. Código específico de borda
+continua nos consumidores.
 
 ### Exemplo: adicionar um comando ao CLI
 
