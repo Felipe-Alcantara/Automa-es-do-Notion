@@ -921,3 +921,19 @@ VALIDAÇÃO: `notion-starter` 171/171; `notion-tasks-cli` 96/96; `notion-workspa
 restando somente as três falhas Windows já documentadas (`test_services_ingestao` e
 `test_start_app`×2). Falha intermediária por mojibake foi corrigida restaurando os serviços do
 Git com leitura/escrita UTF-8 explícita antes dos testes finais.
+
+[2026-07-07e] CONTEXTO: Pedido de transformar a exportação one-off de relatórios diários do
+Notion para DOCX em módulo padronizado. A nota da task exigia: sem token hardcoded, sem paths/IDs
+fixos, unificar propriedades + corpo sem `props.json`, preferir Python, testes e documentação.
+DECISÃO: a regra de negócio ficou em `notion-starter/src/notion_starter/services/relatorios_docx.py`
+porque já é a camada compartilhada consolidada; o `notion-tasks-cli` ganhou apenas a borda fina
+`exportar-docx`. O serviço consulta o database por período (`Data` por padrão), lê blocos
+recursivamente como Markdown, renderiza um DOCX por relatório com capa, sumário manual, tabela de
+propriedades, seções de destaque (Resumo/Bloqueios/Próximos passos) e relatório completo. A
+dependência escolhida foi `python-docx` por coesão com o ecossistema Python. O CLI aceita
+`--database` ou `NOTION_REPORTS_DATABASE_ID` (fallback `NOTION_DATABASE_ID`), `--de`, `--ate`,
+`--saida` e `--campo-data`. `notion-starter` e `notion-tasks-cli` foram bumpados para `0.1.3`.
+VALIDAÇÃO: testes focados criados para o serviço (`test_services_relatorios_docx.py`) e para a CLI
+(`test_cli_notion_tasks.py -k exportar_docx`). Renderização visual DOCX via LibreOffice não foi
+possível no ambiente local porque `soffice` não está instalado; a validação estrutural abre o
+arquivo com `python-docx` e verifica propriedades/corpo/tabelas.

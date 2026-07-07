@@ -73,6 +73,7 @@ Requer `NOTION_TOKEN` (e opcionalmente `NOTION_DATABASE_ID`) no ambiente ou `.en
 | Editar propriedades (colunas) de uma linha de database | `notion-tasks editar-linha <id> --set "Nome=valor"` (substitui) / `--append "Nome=texto"` (acrescenta preservando). **Faça isto antes de escrever o conteúdo.** |
 | Escrever/editar/apagar blocos | `notion-tasks escrever / editar-bloco / apagar-bloco` (apagar exige `--sim`; o Notion arquiva, não destrói) |
 | Clonar páginas/estruturas | `notion-tasks clonar <id>` |
+| Exportar relatórios diários para DOCX | `notion-tasks exportar-docx --database <id> --de YYYY-MM-DD --ate YYYY-MM-DD --saida <dir>` (também aceita `NOTION_REPORTS_DATABASE_ID`; gera um `.docx` por relatório/dia) |
 | Importar/atualizar repositórios do GitHub numa database (vários perfis de uma vez, com dedup) | `notion-tasks atualizar-github --contas <login/@handle/URL,...>` (upsert por URL, propriedades ricas e README em subpágina). Flags: `--sem-readme` (só propriedades), `--sem-arquivados` (ignora arquivados), `--apenas-mudancas` (pula sem alteração). Guia: [`docs/GITHUB-DATABASE.md`](docs/GITHUB-DATABASE.md) |
 | Interface gráfica ou servidor MCP | use o `notion-workspace-app` (`python start_app.py`) |
 
@@ -90,7 +91,7 @@ Primeiro `python bootstrap.py` (clona ou atualiza os módulos em `modules/`). De
 | Inventário/varredura do workspace | notion-starter | `src/notion_starter/inventory.py` |
 | Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
 | Subcomandos do CLI, saída JSON, `--help` | notion-tasks-cli | `cli/notion_tasks.py` |
-| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, ingestão, sync GitHub) | notion-starter | `src/notion_starter/services/` |
+| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, ingestão, sync GitHub, exportação DOCX) | notion-starter | `src/notion_starter/services/` |
 | Editar propriedades de linha genérica (`editar-linha`, set/append) | notion-tasks-cli | `services/propriedades.py` |
 | Adaptadores GitHub/OpenRouter/Notion | notion-tasks-cli | `integrations/` |
 | Endpoints REST, serializers | notion-workspace-app | `server/api/` |
