@@ -52,8 +52,8 @@ Nunca desenvolva funcionalidade neste hub; este é documentação e roteamento.
 
 | Repositório | Papel | Local após bootstrap |
 | --- | --- | --- |
-| [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) | Biblioteca Python base: `NotionClient`, schema, tarefas, conteúdo Markdown↔blocos, inventário | `modules/notion-starter/` |
-| [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) | CLI para IAs ("MCP via CLI"): borda fina + camada de serviços (`core/`, `integrations/`, `services/`) | `modules/notion-tasks-cli/` |
+| [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) | Biblioteca Python base + camada compartilhada: `NotionClient`, schema, tarefas, conteúdo, inventário, adaptadores e `notion_starter.services` | `modules/notion-starter/` |
+| [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) | CLI para IAs ("MCP via CLI"): borda fina; `integrations/` e `services/` comuns são shims para `notion-starter` | `modules/notion-tasks-cli/` |
 | [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app) | App completo: API Django, SPA React, servidor MCP, launcher `start_app.py` | `modules/notion-workspace-app/` |
 
 ## Roteamento — MODO USO
@@ -90,7 +90,7 @@ Primeiro `python bootstrap.py` (clona ou atualiza os módulos em `modules/`). De
 | Inventário/varredura do workspace | notion-starter | `src/notion_starter/inventory.py` |
 | Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
 | Subcomandos do CLI, saída JSON, `--help` | notion-tasks-cli | `cli/notion_tasks.py` |
-| Regra de negócio (tarefas, clonagem, conteúdo, ingestão, sync GitHub) | notion-tasks-cli | `services/` |
+| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, ingestão, sync GitHub) | notion-starter | `src/notion_starter/services/` |
 | Editar propriedades de linha genérica (`editar-linha`, set/append) | notion-tasks-cli | `services/propriedades.py` |
 | Adaptadores GitHub/OpenRouter/Notion | notion-tasks-cli | `integrations/` |
 | Endpoints REST, serializers | notion-workspace-app | `server/api/` |
@@ -98,7 +98,10 @@ Primeiro `python bootstrap.py` (clona ou atualiza os módulos em `modules/`). De
 | Interface web (kanban, filtros, exploração) | notion-workspace-app | `front/src/` |
 | Launcher TUI | notion-workspace-app | `start_app.py` |
 
-**Dívida conhecida:** `core/`, `integrations/` e `services/` existem duplicados em `notion-tasks-cli` e em `notion-workspace-app/server/`. Ao corrigir um bug nessa camada, **aplique a correção nos dois repositórios**. Consolidar essa camada no `notion-starter` é o próximo passo do roadmap.
+**Consolidação:** `integrations/github.py`, `integrations/openrouter.py` e os `services/`
+compartilhados do CLI/app são shims para `notion-starter`. Corrija a implementação real em
+`modules/notion-starter/src/notion_starter/`. O que ainda é específico do consumidor permanece
+no consumidor (ex.: `services/propriedades.py` do CLI e `integrations/notion.py` de cada borda).
 
 ### Fluxo de trabalho
 

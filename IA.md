@@ -903,3 +903,21 @@ encoding cp1252 e `test_start_app`×2 normalização de paths POSIX em Windows).
 novas bordas passaram: `tests/test_api_tarefas.py` + `tests/test_mcp_server.py` = 63/63, e
 `tests/test_integrations_openrouter.py` = 15/15 após ajustar o shim para preservar monkeypatch do
 cache.
+
+[2026-07-07d] CONTEXTO: Fechamento da dívida restante de [2026-07-07c]. Depois de expor as flags
+no REST/MCP e consolidar adaptadores, ainda restava a duplicação de `services/*` entre
+`notion-tasks-cli` e `notion-workspace-app/server`. O usuário pediu resolver de vez e atualizar a
+nota do relatório.
+DECISÃO: mover os 10 serviços byte-idênticos para `notion-starter/src/notion_starter/services/`
+(`clonagem`, `conteudo`, `exploracao`, `ia`, `ingestao`, `inventario_github`, `normalizacao`,
+`projetos`, `sincronizar_github`, `tarefas`) e transformar os arquivos correspondentes nos dois
+consumidores em shims de compatibilidade. `services/propriedades.py` permanece no CLI porque não
+é duplicado e representa funcionalidade específica da borda CLI. `integrations/notion.py` também
+permanece em cada consumidor: é a fábrica de configuração/ambiente, não regra compartilhada. O
+`notion-starter` foi bumpado para `0.1.2`; o `notion-tasks-cli` também para `0.1.2` para distinguir
+a build com shims. AGENTS/README dos quatro repos foram atualizados para remover a regra antiga
+de "aplique bugfix nos dois" e apontar a implementação real para `notion_starter.services`.
+VALIDAÇÃO: `notion-starter` 171/171; `notion-tasks-cli` 96/96; `notion-workspace-app` 269/272,
+restando somente as três falhas Windows já documentadas (`test_services_ingestao` e
+`test_start_app`×2). Falha intermediária por mojibake foi corrigida restaurando os serviços do
+Git com leitura/escrita UTF-8 explícita antes dos testes finais.
