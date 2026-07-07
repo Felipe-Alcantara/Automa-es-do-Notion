@@ -881,3 +881,25 @@ github/inventário (as 3 falhas restantes são as pré-existentes conhecidas do 
 `test_start_app`×2, `test_services_ingestao`×1). Ruff sem erros novos (só o `I001` pré-existente em
 `inventario_github.py`, idêntico nos dois repos). `github.py` e `inventario_github.py` confirmados
 byte-idênticos entre os repos após a mudança.
+
+[2026-07-07c] CONTEXTO: Fechamento da dívida anotada em [2026-07-07b]: versionar melhor o
+`notion-tasks-cli`, expor as flags novas no MCP/REST do `notion-workspace-app` e reduzir duplicação
+entre CLI e app. Havia uma tensão de arquitetura: o hub fala em consolidar `integrations/services`
+no `notion-starter`, mas o AGENTS local do `notion-starter` proíbe regra de negócio de produto
+nessa biblioteca base.
+DECISÃO: consolidar agora apenas os ADAPTADORES puros e reutilizáveis (`GitHubClient`/`RepoInfo` e
+OpenRouter) no `notion-starter`, mantendo os imports públicos antigos como shims compatíveis em
+`notion-tasks-cli/integrations/*` e `notion-workspace-app/server/integrations/*`. Os `services/*`
+continuam nos consumidores por enquanto, porque carregam regra de negócio de produto e movê-los
+para a lib base violaria a fronteira local; a próxima consolidação deve ser desenhada como pacote
+compartilhado ou como camada explicitamente aceita no `notion-starter`, não como despejo automático.
+O `notion-tasks-cli` foi bumpado para `0.1.1`; o `notion-starter` também para `0.1.1` por expor
+novos módulos públicos. O workspace-app ganhou `POST /api/github/atualizar` e a ferramenta MCP
+`notion.update_github_inventory`, ambas com `sem_readme`, `sem_arquivados` e `apenas_mudancas`,
+delegando finas para `services.inventario_github.atualizar_repos`.
+VALIDAÇÃO: `notion-starter` 171/171; `notion-tasks-cli` 96/96; `notion-workspace-app`
+269/272, restando só as três falhas Windows já documentadas no AGENTS (`test_services_ingestao`
+encoding cp1252 e `test_start_app`×2 normalização de paths POSIX em Windows). Testes focados das
+novas bordas passaram: `tests/test_api_tarefas.py` + `tests/test_mcp_server.py` = 63/63, e
+`tests/test_integrations_openrouter.py` = 15/15 após ajustar o shim para preservar monkeypatch do
+cache.
