@@ -1,79 +1,75 @@
 # ✅ Qualidade
 
-Este documento é o contrato executável de qualidade deste repositório. Ele traduz o
-Felixo System Design para os checks reais do projeto, sem depender de memória de
-conversa ou comandos espalhados.
+Este documento é o contrato de qualidade **deste repositório hub**. Ele traduz o
+Felixo System Design (`Padrão de qualidade - Felixo System Design/`, ignorado pelo
+Git) para os checks reais do hub, sem depender de memória de conversa.
 
-## Gate Local
+> **O hub não hospeda funcionalidade.** Aqui vivem documentação, roteamento
+> (`AGENTS.md`) e os scripts de workspace (`bootstrap.py`, `check-dev.py`,
+> `sync.py`, `start_app.py`). O código das ferramentas — e o gate de testes/lint
+> dele — mora em cada módulo (`notion-starter`, `notion-tasks-cli`,
+> `notion-workspace-app`), com o próprio `QUALIDADE`/`pytest` de cada repo. Veja o
+> mapa de roteamento no [`AGENTS.md`](../AGENTS.md).
 
-Use o comando único antes de encerrar mudanças:
+## Gate Local (hub)
 
-```bash
-python3 scripts/quality_check.py
-```
-
-Se o seu ambiente tiver o alias `python` apontando para Python 3, ele também pode ser
-usado. Neste repositório, `python3` é o comando portátil para Linux/macOS.
-
-Ele roda:
-
-- `ruff check .` para estilo, imports e problemas estáticos de Python.
-- `pytest -q` para a suíte Python/Django/MCP/CLI com HTTP mockado.
-- `npm run lint` em `front/` para lint da SPA React.
-- `npm run build` em `front/` para validar o build Vite.
-
-Para depuração pontual:
+Antes de encerrar uma mudança no hub, rode a porta de entrada e a verificação:
 
 ```bash
-python3 scripts/quality_check.py --python-only
-python3 scripts/quality_check.py --front-only
+python start_app.py     # menu: Instalar/Setup, Configurar, Status, Usar, Desenvolver
+python check-dev.py     # valida Python, módulos clonados, .env e deps
 ```
 
-Pré-requisitos:
+- `start_app.py` é o menu interativo obrigatório (contrato Felixo): instala a CLI,
+  sincroniza os módulos, configura o `.env` e opera o Notion — sem decorar comando.
+- `check-dev.py` confere o ambiente de desenvolvimento (Python 3.10+, `modules/`
+  clonado, `.env`, `pytest`/`requests`).
+- `sync.py` roda `bootstrap.py` + `check-dev.py` em sequência para atualizar tudo.
+
+Nenhum check do hub exige token real do Notion, GitHub ou OpenRouter.
+
+## Gate por módulo
+
+Ao **desenvolver** (editar código de uma ferramenta), o gate é o do módulo, dentro
+de `modules/<nome>/`:
 
 ```bash
-pip install -e ".[dev]"
-cd front && npm install
+cd modules/<nome>
+python -m pytest
 ```
 
-## Gate de CI
-
-O GitHub Actions valida duas frentes:
-
-- Python 3.10, 3.11, 3.12 e 3.13: instala `.[dev]`, roda Ruff e Pytest.
-- Front: instala dependências com `npm ci`, roda Oxlint e build Vite.
-
-Nenhum check exige token real do Notion, OpenRouter ou GitHub. Integrações externas
-devem continuar mockadas em teste.
+Aplique a correção nos dois repositórios quando mexer na camada duplicada
+(`core/`, `integrations/`, `services/` existem em `notion-tasks-cli` e em
+`notion-workspace-app/server/` — ver "Dívida conhecida" no `AGENTS.md`).
 
 ## Critério de Pronto
 
-Uma mudança só deve ser tratada como pronta quando:
+Uma mudança só está pronta quando:
 
-- O comando `python3 scripts/quality_check.py` passa localmente, ou a impossibilidade
-  de executar algum trecho foi registrada com motivo objetivo.
-- Comportamento novo ou bug corrigido tem teste quando aplicável.
-- Documentação viva foi atualizada quando comandos, contratos, arquitetura ou UX mudam.
+- O gate aplicável passou: `check-dev.py` para mudanças no hub; `pytest` do módulo
+  para mudanças de código — ou a impossibilidade foi registrada com motivo objetivo.
+- Comportamento novo ou bug corrigido tem teste quando aplicável (no módulo).
+- Documentação viva foi atualizada quando comandos, contratos, arquitetura, UX ou
+  o **roteamento** mudam (`README.md`, `AGENTS.md`, `docs/`).
 - O `IA.md` preserva o histórico: decisões novas entram como registros datados, sem
   apagar a linha de raciocínio anterior.
-- Scripts, comandos e ferramentas reutilizáveis foram priorizados antes de edição
-  manual; exceções foram registradas objetivamente.
+- Scripts e ferramentas reutilizáveis foram priorizados antes de edição manual;
+  exceções foram registradas objetivamente.
 - Segredos, IDs reais e artefatos locais continuam fora do Git.
-- A borda HTTP/UI/CLI/MCP continua fina, delegando regra de negócio para `services/`
-  ou para o core `notion_starter`.
+- As fronteiras de camada seguem intactas: bordas (CLI/API/MCP) não têm regra de
+  negócio; `services/` não conhece HTTP; só o `NotionClient` fala com a API.
 
 ## Git
 
-Quando o usuário pedir para seguir o guia de git, use a política do padrão local:
-
 - Trabalhe direto no `main` por padrão.
 - Crie branch apenas para feature grande, refatoração significativa ou alto risco.
-- Faça commits pequenos e coesos no formato `tipo: descricao`.
-- Atualize documentação viva no mesmo commit da mudança.
+- Faça commits pequenos e coesos no formato `tipo: descricao` (`feat`/`fix`/`docs`/
+  `refactor`/`chore`).
+- Atualize a documentação viva no mesmo commit da mudança.
+- Commits e push de código vão **no repositório do módulo**, não no hub.
 
 ## Referências
 
 - [`AGENTS.md`](../AGENTS.md) — roteiro operacional para agentes e mantenedores.
 - [`IA.md`](../IA.md) — memória técnica e decisões do projeto.
-- [`CONTRIBUTING.md`](../CONTRIBUTING.md) — contribuição externa e padrão de PR.
 - `Padrão de qualidade - Felixo System Design/` — referência local ignorada pelo Git.

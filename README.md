@@ -31,6 +31,18 @@
 
 ## ⚡ Primeiro passo obrigatório
 
+### Forma mais simples — o menu de entrada
+
+Não quer decorar comando? Rode o menu interativo e escolha o que fazer (instalar a CLI, configurar o token, sincronizar os módulos, ver status ou operar o Notion):
+
+```bash
+python start_app.py
+```
+
+No menu você tem: **Instalar/Setup**, **Configurar**, **Usar o Notion (CLI)**, **Desenvolver** e **Status/Sair**. É a porta de entrada única do hub.
+
+### Ou direto pelos scripts
+
 Se você está começando aqui — seja para **usar** as ferramentas (CLI) ou **desenvolver** (editar o código) — rode isto primeiro:
 
 ```bash
@@ -75,6 +87,7 @@ Automações do Notion/
 ├── README.md               # Este arquivo
 ├── SYNC.md                 # Como configurar o alias `sync`
 │
+├── start_app.py            # Menu de entrada interativo (instalar, configurar, usar, dev)
 ├── bootstrap.py            # Clona os 3 módulos em modules/
 ├── sync.py                 # git pull em cada módulo
 ├── check-dev.py            # Verifica se o workspace de dev está pronto
@@ -249,6 +262,8 @@ Este projeto faz parte de um ecossistema maior de desenvolvimento com multiagent
 - **[AGENTS.md](AGENTS.md)** — roteamento uso vs desenvolvimento, fluxo de trabalho, convenções.
 - **[CLAUDE.md](CLAUDE.md)** — contexto automático para Claude Code.
 - **[IA.md](IA.md)** — histórico de decisões de arquitetura.
+- **[docs/GITHUB-DATABASE.md](docs/GITHUB-DATABASE.md)** — importar e manter seus repositórios do GitHub numa database do Notion.
+- **[docs/QUALIDADE.md](docs/QUALIDADE.md)** — contrato de qualidade do hub e dos módulos.
 - **[docs/](docs/)** — material de arquitetura, contratos, MCP, modularização, escala.
 
 ---
