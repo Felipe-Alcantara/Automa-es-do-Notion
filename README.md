@@ -133,7 +133,7 @@ notion-tasks conteudo <id>       # lê como Markdown
 notion-tasks escrever <id>       # anexa Markdown
 notion-tasks editar-bloco <id>   # substitui texto
 
-# Relatórios diários
+# Relatórios diários (saída programática: acabamento fino pode pedir ajuste manual no Word)
 notion-tasks exportar-docx --database <id> --de 2026-07-01 --ate 2026-07-06 --saida ./exports
 
 # Guia completo
