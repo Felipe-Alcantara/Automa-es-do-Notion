@@ -119,4 +119,4 @@ no consumidor (ex.: `services/propriedades.py` do CLI e `integrations/notion.py`
 - Tipagem forte (`TypedDict` para payloads, `dataclass` para resultados); exceções derivam de `NotionSyncError`.
 - Nunca commitar `.env`, tokens ou bancos SQLite.
 - Histórico de decisões de arquitetura: `IA.md` (leia antes de mudanças estruturais).
-- Falhas pré-existentes conhecidas no Windows: 2 em `test_start_app`, 1 em `test_services_ingestao` (não são regressão sua).
+- Cada módulo tem seu próprio gate (`ruff check .` + `python -m pytest`; o app também `npm run lint`/`npm run build` em `front/`) e CI no GitHub Actions. As suítes passam 100% em Windows e POSIX.
