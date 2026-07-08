@@ -937,3 +937,23 @@ VALIDAÇÃO: testes focados criados para o serviço (`test_services_relatorios_d
 (`test_cli_notion_tasks.py -k exportar_docx`). Renderização visual DOCX via LibreOffice não foi
 possível no ambiente local porque `soffice` não está instalado; a validação estrutural abre o
 arquivo com `python-docx` e verifica propriedades/corpo/tabelas.
+
+[2026-07-08] CONTEXTO: Pedido de colocar todos os repositórios do ecossistema no padrão de
+qualidade (Felixo System Design). A separação do monorepo deixou os módulos sem os artefatos
+obrigatórios que viviam na raiz: CONTRIBUTING, IA.md, CI, `.env.example` (starter) e menu de
+entrada (CLI). O workspace-app ainda carregava 13 erros de ruff pós-consolidação e 3 falhas de
+teste "conhecidas" no Windows.
+DECISÃO: cada módulo ganhou `CONTRIBUTING.md`, `IA.md` próprio (linha do tempo a partir da
+separação, apontando para este IA.md como histórico) e CI GitHub Actions (ruff + pytest em
+Python 3.10–3.13; o app também valida o front com oxlint + build Vite, recuperando o gate do
+monorepo). `notion-starter` ganhou `.env.example`; a exceção "sem start_app.py por ser
+biblioteca" foi registrada no IA.md dele. `notion-tasks-cli` ganhou `start_app.py` (menu
+interativo: Instalar / Configurar .env / Status / Usar). No `notion-workspace-app`, o ruff foi
+zerado (imports pós-shims + E501) e as 3 falhas Windows foram corrigidas de vez — eram bugs de
+portabilidade dos TESTES (escrita sem `encoding="utf-8"` e comparação de caminhos POSIX
+literais com `Path` do Windows), não do produto; a nota de "falhas pré-existentes" saiu do
+AGENTS.md do hub.
+VALIDAÇÃO: `notion-starter` 183/183 + ruff limpo; `notion-tasks-cli` 109/109 + ruff limpo +
+smoke do menu (Status/Usar); `notion-workspace-app` 272/272 + ruff limpo + `npm run lint` +
+`npm run build` verdes — primeira vez com as três suítes 100% verdes no Windows. Commits
+pushados nos três módulos (Conventional Commits, direto no main).
