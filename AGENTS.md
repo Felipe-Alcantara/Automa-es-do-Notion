@@ -73,6 +73,10 @@ Requer `NOTION_TOKEN` (e opcionalmente `NOTION_DATABASE_ID`) no ambiente ou `.en
 | Editar propriedades (colunas) de uma linha de database | `notion-tasks editar-linha <id> --set "Nome=valor"` (substitui) / `--append "Nome=texto"` (acrescenta preservando). **Faça isto antes de escrever o conteúdo.** |
 | Escrever/editar/apagar blocos | `notion-tasks escrever / editar-bloco / apagar-bloco` (apagar exige `--sim`; o Notion arquiva, não destrói) |
 | Clonar páginas/estruturas | `notion-tasks clonar <id>` |
+| Criar database com schema tipado | `notion-tasks criar-database <pagina_id> <titulo> --prop "Coluna=tipo"` (tipos em português; `--inline`, `--icone`, `--descricao`, `--prefixo-id` para unique_id — prefixo único por workspace) |
+| Importar planilha (.xlsx/.csv) para um database | `notion-tasks importar-planilha <database_id> <arquivo>` (upsert idempotente por Origem; `--tipo "Coluna=numero/data/..."` converte formato BR, inválidos vão para Observações) |
+| Anexar arquivo local (até 20 MB) numa linha | `notion-tasks anexar-arquivo <page_id> <arquivo>` (preserva anexos existentes; `--substituir` troca) |
+| Mover (re-parentear) página ou database | `notion-tasks mover-pagina <id> <novo_pai_id>` / `mover-database <id> <novo_pai_id>` (página que contém databases: mova cada database e descarte a página vazia) |
 | Exportar relatórios diários para DOCX | `notion-tasks exportar-docx --database <id> --de YYYY-MM-DD --ate YYYY-MM-DD --saida <dir>` (também aceita `NOTION_REPORTS_DATABASE_ID`; gera um `.docx` por relatório/dia). A saída reproduz o modelo visual dos relatórios, mas é gerada programaticamente — o acabamento fino pode exigir ajuste manual no Word. |
 | Importar/atualizar repositórios do GitHub numa database (vários perfis de uma vez, com dedup) | `notion-tasks atualizar-github --contas <login/@handle/URL,...>` (upsert por URL, propriedades ricas e README em subpágina). Flags: `--sem-readme` (só propriedades), `--sem-arquivados` (ignora arquivados), `--apenas-mudancas` (pula sem alteração). Guia: [`docs/GITHUB-DATABASE.md`](docs/GITHUB-DATABASE.md) |
 | Interface gráfica ou servidor MCP | use o `notion-workspace-app` (`python start_app.py`) |
@@ -91,7 +95,10 @@ Primeiro `python bootstrap.py` (clona ou atualiza os módulos em `modules/`). De
 | Inventário/varredura do workspace | notion-starter | `src/notion_starter/inventory.py` |
 | Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
 | Subcomandos do CLI, saída JSON, `--help` | notion-tasks-cli | `cli/notion_tasks.py` |
-| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, ingestão, sync GitHub, exportação DOCX) | notion-starter | `src/notion_starter/services/` |
+| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, ingestão, sync GitHub, exportação DOCX, anexos, import retomável) | notion-starter | `src/notion_starter/services/` |
+| Fonte de planilha (.xlsx/.csv) do framework de ingestão | notion-starter | `src/notion_starter/services/ingestao.py` (`FontePlanilha`) |
+| Normalização de números/datas no formato brasileiro | notion-starter | `src/notion_starter/valores_br.py` |
+| Re-parent (mover página/database), File Upload API, schema de coluna por tipo | notion-starter | `src/notion_starter/client.py`, `properties.py` (`schema_propriedade`) |
 | Editar propriedades de linha genérica (`editar-linha`, set/append) | notion-tasks-cli | `services/propriedades.py` |
 | Adaptadores GitHub/OpenRouter/Notion | notion-tasks-cli | `integrations/` |
 | Endpoints REST, serializers | notion-workspace-app | `server/api/` |
