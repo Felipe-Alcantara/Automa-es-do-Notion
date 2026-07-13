@@ -69,6 +69,18 @@ Instale uma vez: `pip install git+https://github.com/Felipe-Alcantara/notion-tas
 Requer `NOTION_TOKEN` (e opcionalmente `NOTION_DATABASE_ID`) no ambiente ou `.env`.
 `notion-tasks --help` traz o guia completo, escrito para ser lido por modelos.
 
+**Autenticação — perfis vencem a variável de ambiente.** A CLI tem perfis locais de
+workspaces/keys (`notion-tasks perfis listar/adicionar/usar/mostrar/remover`). Quando existe um
+**perfil ativo**, o token dele é usado **mesmo que `NOTION_TOKEN` esteja exportado** — a variável
+de ambiente só vale quando nenhum perfil está ativo. Para operar outro workspace numa única
+execução, use `--perfil <alias>` (vence o perfil ativo); para trocar de vez,
+`notion-tasks perfis usar <alias>`.
+
+> **Troubleshooting — "Recurso não encontrado" com um link/ID válido:** antes de concluir que a
+> página não foi compartilhada com a integração, rode `notion-tasks perfis listar` e confira **qual
+> workspace** está respondendo. O sintoma clássico de perfil errado é trocar o token no ambiente e
+> a busca continuar devolvendo exatamente as mesmas páginas.
+
 | Você quer… | Comando |
 | --- | --- |
 | Listar/criar/editar/mover/concluir tarefas | `notion-tasks listar / criar / editar / mover / concluir` |
@@ -86,6 +98,7 @@ Requer `NOTION_TOKEN` (e opcionalmente `NOTION_DATABASE_ID`) no ambiente ou `.en
 | Mover (re-parentear) página ou database | `notion-tasks mover-pagina <id> <novo_pai_id>` / `mover-database <id> <novo_pai_id>` (página que contém databases: mova cada database e descarte a página vazia) |
 | Exportar relatórios diários para DOCX | `notion-tasks exportar-docx --database <id> --de YYYY-MM-DD --ate YYYY-MM-DD --saida <dir>` (também aceita `NOTION_REPORTS_DATABASE_ID`; gera um `.docx` por relatório/dia). A saída reproduz o modelo visual dos relatórios, mas é gerada programaticamente — o acabamento fino pode exigir ajuste manual no Word. |
 | Importar/atualizar repositórios do GitHub numa database (vários perfis de uma vez, com dedup) | `notion-tasks atualizar-github --contas <login/@handle/URL,...>` (upsert por URL, propriedades ricas e README em subpágina). Flags: `--sem-readme` (só propriedades), `--sem-arquivados` (ignora arquivados), `--apenas-mudancas` (pula sem alteração). Guia: [`docs/GITHUB-DATABASE.md`](docs/GITHUB-DATABASE.md) |
+| Trocar de workspace / gerenciar keys salvas | `notion-tasks perfis listar / adicionar / usar / mostrar / remover`; numa única execução, `--perfil <alias>` |
 | Interface gráfica ou servidor MCP | use o `notion-workspace-app` (`python start_app.py`) |
 
 ## Roteamento — MODO DESENVOLVIMENTO

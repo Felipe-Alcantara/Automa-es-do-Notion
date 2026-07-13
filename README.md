@@ -111,6 +111,19 @@ export NOTION_TOKEN=ntn_...
 export NOTION_DATABASE_ID=...
 ```
 
+Ou salve workspaces como **perfis** (recomendado para quem alterna entre workspaces):
+
+```bash
+notion-tasks perfis adicionar <alias>   # salva uma key/workspace local
+notion-tasks perfis usar <alias>        # define o perfil ativo
+notion-tasks perfis listar              # mostra os perfis sem expor tokens
+notion-tasks --perfil <alias> <comando> # usa outro perfil só nesta execução
+```
+
+> **Atenção à precedência:** quando há um perfil ativo, o token dele **vence** o `NOTION_TOKEN`
+> do ambiente/`.env`. Se um link válido devolve "Recurso não encontrado", confira primeiro o
+> perfil ativo com `notion-tasks perfis listar` — você pode estar consultando outro workspace.
+
 ### Comandos principais
 
 ```bash
