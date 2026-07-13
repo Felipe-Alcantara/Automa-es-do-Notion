@@ -66,20 +66,31 @@ Nunca desenvolva funcionalidade neste hub; este é documentação e roteamento.
 ## Roteamento — MODO USO
 
 Instale uma vez: `pip install git+https://github.com/Felipe-Alcantara/notion-tasks-cli.git`
-Requer `NOTION_TOKEN` (e opcionalmente `NOTION_DATABASE_ID`) no ambiente ou `.env`.
+Requer autenticação: um **perfil ativo** salvo na CLI **ou** `NOTION_TOKEN` (e opcionalmente
+`NOTION_DATABASE_ID`) no ambiente/`.env` — veja a precedência abaixo.
 `notion-tasks --help` traz o guia completo, escrito para ser lido por modelos.
 
-**Autenticação — perfis vencem a variável de ambiente.** A CLI tem perfis locais de
-workspaces/keys (`notion-tasks perfis listar/adicionar/usar/mostrar/remover`). Quando existe um
-**perfil ativo**, o token dele é usado **mesmo que `NOTION_TOKEN` esteja exportado** — a variável
-de ambiente só vale quando nenhum perfil está ativo. Para operar outro workspace numa única
-execução, use `--perfil <alias>` (vence o perfil ativo); para trocar de vez,
-`notion-tasks perfis usar <alias>`.
+**Autenticação — ordem de precedência (da maior para a menor):**
+
+1. `--perfil <alias>` na linha de comando — vale só naquela execução e vence tudo;
+2. **perfil ativo** salvo na CLI (`notion-tasks perfis usar <alias>`) — vence **mesmo que
+   `NOTION_TOKEN` esteja exportado**, silenciosamente;
+3. `NOTION_TOKEN` do ambiente ou `.env` — só é usado quando **nenhum** perfil está ativo.
+
+A CLI gerencia os perfis locais de workspaces/keys com
+`notion-tasks perfis listar/adicionar/usar/mostrar/remover`.
 
 > **Troubleshooting — "Recurso não encontrado" com um link/ID válido:** antes de concluir que a
-> página não foi compartilhada com a integração, rode `notion-tasks perfis listar` e confira **qual
-> workspace** está respondendo. O sintoma clássico de perfil errado é trocar o token no ambiente e
-> a busca continuar devolvendo exatamente as mesmas páginas.
+> página não foi compartilhada com a integração, siga esta ordem:
+>
+> 1. `notion-tasks perfis listar` — confira **qual perfil está ativo** e a **qual workspace** ele
+>    aponta (é ele que responde, não o `NOTION_TOKEN` exportado);
+> 2. se for o workspace errado, use `--perfil <alias>` (pontual) ou
+>    `notion-tasks perfis usar <alias>` (permanente);
+> 3. só então investigue compartilhamento da página com a integração.
+>
+> O sintoma clássico de perfil errado é trocar o token no ambiente e a busca continuar
+> devolvendo exatamente as mesmas páginas — sinal de que a variável nem está sendo lida.
 
 | Você quer… | Comando |
 | --- | --- |

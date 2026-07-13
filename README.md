@@ -120,9 +120,11 @@ notion-tasks perfis listar              # mostra os perfis sem expor tokens
 notion-tasks --perfil <alias> <comando> # usa outro perfil só nesta execução
 ```
 
-> **Atenção à precedência:** quando há um perfil ativo, o token dele **vence** o `NOTION_TOKEN`
-> do ambiente/`.env`. Se um link válido devolve "Recurso não encontrado", confira primeiro o
-> perfil ativo com `notion-tasks perfis listar` — você pode estar consultando outro workspace.
+> **Atenção à precedência** (da maior para a menor): `--perfil <alias>` → **perfil ativo** →
+> `NOTION_TOKEN` do ambiente/`.env`. Quando há um perfil ativo, o token dele **vence
+> silenciosamente** a variável de ambiente — exportar outro `NOTION_TOKEN` não muda nada.
+> Se um link válido devolve "Recurso não encontrado", confira primeiro o perfil ativo com
+> `notion-tasks perfis listar` — você pode estar consultando outro workspace.
 
 ### Comandos principais
 
