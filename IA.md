@@ -957,3 +957,19 @@ VALIDAÇÃO: `notion-starter` 183/183 + ruff limpo; `notion-tasks-cli` 109/109 +
 smoke do menu (Status/Usar); `notion-workspace-app` 272/272 + ruff limpo + `npm run lint` +
 `npm run build` verdes — primeira vez com as três suítes 100% verdes no Windows. Commits
 pushados nos três módulos (Conventional Commits, direto no main).
+
+[2026-07-13] CONTEXTO: Numa sessão de MODO USO, um agente recebeu um link válido de página
+("Relatórios") e a CLI devolveu "Recurso não encontrado" mesmo após trocar o `NOTION_TOKEN`
+exportado pelo token correto. O agente diagnosticou errado ("página não compartilhada com a
+integração") e só depois descobriu a causa real: havia um **perfil ativo** salvo na CLI
+(`notion-tasks perfis`), e o perfil ativo vence silenciosamente a variável de ambiente — os dois
+tokens testados nunca chegaram a ser usados. `--perfil relatorios` resolveu na hora.
+DECISÃO: documentar a precedência (perfil ativo > `NOTION_TOKEN` do ambiente/`.env`) no
+AGENTS.md (seção MODO USO, com troubleshooting do sintoma "mesmo workspace com tokens
+diferentes") e no README (bloco de configuração do token), e rotear `perfis`/`--perfil` na tabela
+de comandos do AGENTS.md — o hub documentava apenas a variável de ambiente, que não é a fonte de
+verdade quando há perfis salvos.
+VALIDAÇÃO: reprodução real na sessão (busca idêntica com dois tokens diferentes; acesso imediato
+com `--perfil relatorios`). Melhoria de código correspondente (avisar quando `NOTION_TOKEN` é
+ignorado e indicar o perfil em uso nos erros) pertence ao `notion-tasks-cli`/`notion-starter`,
+registrada aqui como pendência para PR futuro nos módulos.
