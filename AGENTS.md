@@ -114,6 +114,7 @@ no consumidor (ex.: `services/propriedades.py` do CLI e `integrations/notion.py`
 
 ### Convenções (valem para todos os módulos)
 
+- **Prefira scripts e automações a mudanças manuais** — sempre. Toda vez que precisar manipular dados (no Notion ou em qualquer projeto que use o padrão de qualidade Felixo), use primeiro a CLI `notion-tasks`, os serviços do `notion-starter` ou um script reutilizável; edição manual é exceção e deve ser registrada com o motivo. Por quê: scripts reutilizáveis viram patrimônio — modelos de IA cada vez melhores podem ler, melhorar e estender essas ferramentas, aprimorando o ecossistema naturalmente ao longo do tempo. Uma mudança manual não deixa rastro reutilizável; um script deixa.
 - Código, docstrings e mensagens de erro **em português**.
 - Fronteiras de camada sagradas: bordas (CLI/API/MCP) não têm regra de negócio; `services` não conhece HTTP; só o `NotionClient` fala com a API do Notion.
 - Tipagem forte (`TypedDict` para payloads, `dataclass` para resultados); exceções derivam de `NotionSyncError`.
