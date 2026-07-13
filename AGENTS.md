@@ -32,6 +32,12 @@ notion-tasks conteudo <id>
 
 Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o guia completo (escrito para IAs).
 
+**Regras de operação no Notion (valem para CLI e MCP):**
+
+1. **Regra do link**: ao receber um link ou ID do Notion, **leia e entenda do que se trata antes de qualquer escrita** (`notion-tasks conteudo <id>`; se for database, `notion-tasks linhas <id>`). Se o alvo é um database, o trabalho é **nas linhas**: localize a linha certa e atualize-a — nunca ignore o database e escreva blocos soltos abaixo dele.
+2. **Regra de leitura**: propriedades e corpo são partes da **mesma página**. Comece a leitura pelas propriedades (colunas) e só depois pelo corpo — há páginas com mais informação nas propriedades do que no corpo. `conteudo <id>` já devolve as duas partes, propriedades primeiro.
+3. **Regra de escrita**: numa linha de database, edite primeiro as propriedades (`editar-linha`) e depois o corpo (`escrever`).
+
 ### MODO DESENVOLVIMENTO — modificar código das ferramentas
 
 O pedido é: *corrigir bug, adicionar comando, mudar frontend, melhorar resilência…*
