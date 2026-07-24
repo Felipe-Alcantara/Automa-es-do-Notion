@@ -40,6 +40,33 @@
 | Anexar o arquivo original na linha | `notion-tasks anexar-arquivo <page_id> <arquivo>` |
 | Montar tópicos (heading + divisória) | `notion-tasks escrever <pagina> $'## Tópico\n\n---'` |
 | Consolidar/reorganizar | `notion-tasks mover-pagina` / `mover-database` |
+| Criar uma subpágina simples (README, Estado atual, etc.) | `notion-tasks criar-subpagina <pagina_pai_id> <titulo>` |
+| Investigar a estrutura de um projeto de referência antes de replicar (sem editar nada) | `notion-tasks inspecionar-estrutura <pagina_id> --profundidade 3` |
+| Copiar a forma (subpáginas + schema de databases) de um projeto existente para outro | `notion-tasks clonar-estrutura <pagina_referencia_id> <pagina_destino_id>` |
+| Aplicar o padrão de projeto (Acompanhamento + Planejamento e documentação) do zero | `notion-tasks montar-estrutura-projeto <pagina_id>` |
+
+### Como montar o padrão de projeto (Acompanhamento + Planejamento e documentação)
+
+Toda página de projeto segue a mesma moldura fixa (ver o mapeamento original na
+seção 1): `## Acompanhamento` + divisória, 4 subpáginas (`Estado atual`,
+`Trabalho em andamento`, `Problemas encontrados`, `Decisões e registros`),
+`## Planejamento e documentação` + divisória, 2 databases (`Próximos passos`,
+`Documentações`). Duas formas de aplicar:
+
+- **Do zero**, numa página nova: `notion-tasks montar-estrutura-projeto <pagina_id>`
+  cria a moldura com subpáginas vazias e databases com schema mínimo
+  (título + Observações) — depois preencha o conteúdo real do projeto.
+- **Copiando de uma referência**, quando o padrão da página de origem tem
+  variações que valem a pena preservar (ex.: databases extras, propriedades
+  próprias): `notion-tasks inspecionar-estrutura <referência>` primeiro, para
+  entender a forma exata, e `notion-tasks clonar-estrutura <referência> <destino>`
+  para replicá-la (títulos de subpágina + schema de databases, sem linhas nem
+  conteúdo específico do projeto de origem).
+
+Nos dois casos, o conteúdo de cada subpágina (Estado atual, Decisões e
+registros, …) continua sendo escrito à mão com `notion-tasks escrever`, a
+partir de dados reais do projeto (README, `IA.md`, histórico de commits) —
+essas ferramentas só cuidam da moldura estrutural, nunca do texto.
 
 ## Checklist ao montar/organizar um workspace
 
@@ -49,3 +76,4 @@
 - [ ] Arquivo original anexado quando a linha nasce de um documento.
 - [ ] Reorganização por re-parent; remoção por arquivamento.
 - [ ] Tudo executado por scripts/CLI (regra do hub), com import idempotente.
+- [ ] Página de projeto segue a moldura fixa: README + `## Acompanhamento` (4 subpáginas) + `## Planejamento e documentação` (2 databases) — via `montar-estrutura-projeto` ou `clonar-estrutura`.
