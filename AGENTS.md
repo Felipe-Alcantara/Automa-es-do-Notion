@@ -104,6 +104,10 @@ A CLI gerencia os perfis locais de workspaces/keys com
 | Escrever/editar/apagar blocos | `notion-tasks escrever / editar-bloco / apagar-bloco` (apagar exige `--sim`; o Notion arquiva, não destrói) |
 | Clonar páginas/estruturas | `notion-tasks clonar <id>` |
 | Criar database com schema tipado | `notion-tasks criar-database <pagina_id> <titulo> --prop "Coluna=tipo"` (tipos em português; `--inline`, `--icone`, `--descricao`, `--prefixo-id` para unique_id — prefixo único por workspace) |
+| Criar uma subpágina simples (não é linha de database) | `notion-tasks criar-subpagina <pagina_pai_id> <titulo> --conteudo "Markdown opcional"` |
+| Investigar a estrutura (subpáginas/databases) de uma página de referência, sem editar nada | `notion-tasks inspecionar-estrutura <pagina_id> --profundidade 3` |
+| Copiar a forma de um projeto (títulos de subpágina + schema de databases) para outra página | `notion-tasks clonar-estrutura <pagina_referencia_id> <pagina_destino_id>` |
+| Aplicar do zero o padrão de projeto do workspace (`## Acompanhamento` com 4 subpáginas + `## Planejamento e documentação` com 2 databases) | `notion-tasks montar-estrutura-projeto <pagina_id>` — ver [`DESIGN-WORKSPACE-NOTION.md`](DESIGN-WORKSPACE-NOTION.md) |
 | Importar planilha (.xlsx/.csv) para um database | `notion-tasks importar-planilha <database_id> <arquivo>` (upsert idempotente por Origem; `--tipo "Coluna=numero/data/..."` converte formato BR, inválidos vão para Observações) |
 | Anexar arquivo local (até 20 MB) numa linha | `notion-tasks anexar-arquivo <page_id> <arquivo>` (preserva anexos existentes; `--substituir` troca) |
 | Mover (re-parentear) página ou database | `notion-tasks mover-pagina <id> <novo_pai_id>` / `mover-database <id> <novo_pai_id>` (página que contém databases: mova cada database e descarte a página vazia) |
