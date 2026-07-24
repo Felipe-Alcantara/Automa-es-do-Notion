@@ -104,6 +104,7 @@ A CLI gerencia os perfis locais de workspaces/keys com
 | Escrever/editar/apagar blocos | `notion-tasks escrever / editar-bloco / apagar-bloco` (apagar exige `--sim`; o Notion arquiva, não destrói) |
 | Clonar páginas/estruturas | `notion-tasks clonar <id>` |
 | Criar database com schema tipado | `notion-tasks criar-database <pagina_id> <titulo> --prop "Coluna=tipo"` (tipos em português; `--inline`, `--icone`, `--descricao`, `--prefixo-id` para unique_id — prefixo único por workspace) |
+| Adicionar coluna a um database já existente (nenhum outro comando faz isso — `criar-database` só define schema na criação) | `notion-tasks garantir-coluna <database_id> <nome_coluna> <tipo>` — idempotente, não mexe em nada se a coluna já existe |
 | Criar uma subpágina simples (não é linha de database) | `notion-tasks criar-subpagina <pagina_pai_id> <titulo> --conteudo "Markdown opcional"` |
 | Investigar a estrutura (subpáginas/databases) de uma página de referência, sem editar nada | `notion-tasks inspecionar-estrutura <pagina_id> --profundidade 3` |
 | Copiar a forma de um projeto (títulos de subpágina + schema de databases) para outra página | `notion-tasks clonar-estrutura <pagina_referencia_id> <pagina_destino_id>` |
