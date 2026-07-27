@@ -133,6 +133,8 @@ Primeiro `python bootstrap.py` (clona ou atualiza os módulos em `modules/`). De
 | Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
 | Subcomandos do CLI, saída JSON, `--help` | notion-tasks-cli | `cli/notion_tasks.py` |
 | Regra de negócio compartilhada (tarefas, clonagem, conteúdo, ingestão, sync GitHub, exportação DOCX, anexos, import retomável) | notion-starter | `src/notion_starter/services/` |
+| Relatório por dia em um database (upsert pela data; anexa em vez de duplicar) | notion-starter | `src/notion_starter/services/relatorios_diarios.py` |
+| Histórico de um repositório git agrupado por dia (lógica pura, sem rede) | notion-starter | `src/notion_starter/git_historico.py` |
 | Fonte de planilha (.xlsx/.csv) do framework de ingestão | notion-starter | `src/notion_starter/services/ingestao.py` (`FontePlanilha`) |
 | Normalização de números/datas no formato brasileiro | notion-starter | `src/notion_starter/valores_br.py` |
 | Re-parent (mover página/database), File Upload API, schema de coluna por tipo | notion-starter | `src/notion_starter/client.py`, `properties.py` (`schema_propriedade`) |
