@@ -38,6 +38,11 @@ notion-tasks atualizar-github --contas minha-conta,outra-conta
 # Vários perfis de uma vez — aceita login, @handle ou URL do perfil
 notion-tasks atualizar-github --contas https://github.com/conta-um,outra-conta
 
+# Um repositório específico, sem importar a conta inteira — aceita "owner/repo"
+# ou a URL completa do repositório
+notion-tasks atualizar-github --contas dono/projeto
+notion-tasks atualizar-github --contas https://github.com/dono/projeto
+
 # Usando GITHUB_CONTAS e NOTION_DATABASE_ID do .env
 notion-tasks atualizar-github
 
@@ -60,11 +65,15 @@ erros**, então dá para ver quanto o modo incremental economizou.
 ### Vários perfis de uma vez, com verificação de duplicatas
 
 Passe vários perfis em `--contas` (CSV) — cada um pode ser o login (`conta-um`),
-`@conta-um` ou a URL do perfil (`https://github.com/conta-um`). A sincronização:
+`@conta-um`, a URL do perfil (`https://github.com/conta-um`) **ou um repositório
+específico** (`dono/projeto` / `https://github.com/dono/projeto`). A distinção é
+automática: uma entrada com `owner/repo` traz só aquele repositório (via
+`GitHubClient.detalhar_repo`), sem listar o resto da conta — útil quando você só
+quer inventariar um projeto pontual de outra pessoa/organização. A sincronização:
 
 - **Não duplica**: repositórios são casados por URL; um repo que apareça em mais de
-  uma conta, ou que já exista na database, vira *upsert* (atualiza, não cria linha
-  nova).
+  uma conta, listado avulso ou que já exista na database, vira *upsert* (atualiza,
+  não cria linha nova).
 - **É resiliente por conta**: se um perfil falhar (não existe, rate limit), os
   outros continuam e o erro entra no resumo.
 - **Inclui privados** do usuário autenticado quando há `GITHUB_TOKEN` cujo login

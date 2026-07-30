@@ -27,6 +27,7 @@
 | [🧱 CONTRATOS.md](CONTRATOS.md) | Contrato fixado pelo Agente 0: objetos de domínio, rotas REST, formato de erro e estrutura de pastas do servidor. |
 | [🤖 IA-CAMADA.md](IA-CAMADA.md) | Camada de IA plugável: ProvedorIA, OpenRouter, catálogo de modelos, caso de uso copiloto (NL → tasklist). |
 | [🔗 MCP.md](MCP.md) | Camada MCP: ferramentas `notion.*`, transportes, confirmação no catálogo do Felixo-AI-Core e estado da integração. |
+| [🗄️ ia-archive/](ia-archive/) | Registros antigos do [`IA.md`](../IA.md) movidos na íntegra (compactação sem perda): linha do tempo completa = `IA.md` + archives. |
 
 ---
 
