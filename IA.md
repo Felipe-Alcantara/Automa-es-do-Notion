@@ -402,3 +402,35 @@ VALIDAÇÃO: todas as linhas não vazias do `IA.md` anterior continuam no arquiv
 archive; links locais e comandos do CLI foram conferidos; `check-dev.py` e compilação do hub
 passaram; `notion-starter` 235 testes, `notion-tasks-cli` 127, `notion-workspace-app` 256 com
 2 skips, Ruff limpo nos três, Oxlint e build Vite verdes, e `npm audit` sem vulnerabilidades.
+
+[2026-08-10] CONTEXTO: a página **Artigos** (`1fc91f95497e81d68ed0fd5befb68b0b`) vai virar a central
+de escrita do blog e precisava estar pronta antes da produção começar. Estado encontrado: uma
+database com duas colunas apenas (`Nome` e `Data de inicio da escrita`) e duas linhas — um artigo
+completo com fontes e uma pauta só com título. Sem etapa, sem tema, sem resumo, sem URL: não dava
+para saber o que estava pronto, o que estava parado nem o que já tinha ido ao ar.
+DECISÃO: organizar a database no lugar, sem recriá-la, seguindo o `DESIGN-WORKSPACE-NOTION.md`.
+Sete colunas tipadas acrescentadas com `garantir-coluna` (idempotente, não apaga nada): `Etapa`
+(select — Ideia, Rascunho, Revisão, Publicado, Modelo), `Temas`, `Resumo`, `Data de publicação`,
+`URL publicada`, `Tempo de leitura (min)` e `Observações`. As duas linhas existentes foram
+padronizadas com `editar-linha`, e toda inferência foi para `Observações` em vez de virar dado
+silencioso — a regra do design de que informação ambígua nunca é descartada. O modelo de artigo
+virou **uma linha** (Etapa `Modelo`, criada por `importar-planilha`), não uma subpágina: a API do
+Notion não cria template nativo de database, e a regra da página é que o trabalho acontece nas
+linhas, nunca em blocos soltos abaixo da tabela. O fluxo foi documentado na subpágina "Como
+funciona a central de artigos", pendurada num tópico `## Como usar` + divisória, no formato de
+tópico do design.
+VALIDAÇÃO: tudo executado pela CLI (`garantir-coluna`, `editar-linha`, `importar-planilha`,
+`escrever`, `criar-subpagina`, `editar-bloco`, `apagar-bloco`), nenhuma mudança manual. Releitura
+das três linhas e da subpágina depois de escrever. A revisão encontrou um defeito de dado que não
+estava no pedido: o título do artigo publicável tinha a letra "ê" gravada como caractere de
+substituição (U+FFFD), de uma gravação anterior com codificação errada — corrigido, com o motivo
+registrado em `Observações`, e uma varredura confirmou que não sobrou nenhum outro na página.
+PENDÊNCIA: a database continua sem ícone, descrição e `unique_id` com prefixo, que o design pede.
+A CLI só define os três na criação (`criar-database`) e não expõe alteração posterior; o
+`unique_id`, além disso, não pode ser acrescentado a uma database existente pela API do Notion —
+retrofitá-lo exigiria recriar a database e mover as linhas, ao custo dos links e do histórico das
+páginas atuais. Fica como pedido de comando novo na CLI (atualizar metadados de database), não
+como esquecimento. `reordenar-bloco --inicio` também não conseguiu pôr um heading acima da
+database (`child_database` não é reordenável pela API): os dois blocos criados para isso foram
+apagados e a página ficou com a database no topo, que é o conteúdo principal dela de qualquer
+forma.
