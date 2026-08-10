@@ -434,3 +434,24 @@ como esquecimento. `reordenar-bloco --inicio` também não conseguiu pôr um hea
 database (`child_database` não é reordenável pela API): os dois blocos criados para isso foram
 apagados e a página ficou com a database no topo, que é o conteúdo principal dela de qualquer
 forma.
+
+[2026-08-10] CONTEXTO: pergunta de acompanhamento sobre a central de artigos — dá para criar um
+template NATIVO de database no Notion (o menu do botão "Novo") em vez de um modelo em linha comum?
+DECISÃO: verificar contra a API antes de responder, em vez de repetir a suposição registrada no
+dia. Sondagem: `POST /pages` com `is_template: true` responde 400 ("should be not present");
+`GET /data_sources/{id}/templates` existe e responde 200 (lista vazia), mas não há `POST`
+correspondente ("Invalid request URL"); e o campo `template` do `POST /pages` aceita apenas
+`none`, `default` ou `template_id` — serve para APLICAR um template existente, nunca para criar.
+Conclusão: criar só à mão pela interface; uma vez criado à mão, o template passa a ser listável e
+aplicável pela API, então linhas novas podem nascer dele programaticamente. Isso muda a
+recomendação registrada antes, que tratava o template nativo como inviável de ponta a ponta.
+O modelo em linha (Etapa `Modelo`) foi então elevado de esqueleto a especificação executável:
+tese com teste de validade, resumo em três frases, leitor único, estrutura por seção com regra de
+fonte e ressalva metodológica, voz, lista de anti-padrões que reprovam o rascunho, definição de
+pronto e uma seção final com as regras que valem quando quem escreve é um modelo de IA
+(não inventar número nem link, declarar a lacuna em `Observações`, entregar sem as instruções do
+modelo). Renomeado para "🧩 Template para artigos — duplicar para começar".
+VALIDAÇÃO: sondagem executada com o token do perfil, sem criar nada no workspace (todas as
+tentativas de criação retornaram erro de validação). Corpo do modelo reescrito com
+`escrever --substituir`, propriedades por `editar-linha`, subpágina de fluxo atualizada por
+`editar-bloco` e `escrever`. Releitura da linha e da subpágina depois de gravar.
