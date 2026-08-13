@@ -455,3 +455,21 @@ VALIDAÇÃO: sondagem executada com o token do perfil, sem criar nada no workspa
 tentativas de criação retornaram erro de validação). Corpo do modelo reescrito com
 `escrever --substituir`, propriedades por `editar-linha`, subpágina de fluxo atualizada por
 `editar-bloco` e `escrever`. Releitura da linha e da subpágina depois de gravar.
+
+[2026-08-13] CONTEXTO: Felipe notou que as entradas na database
+[Relatórios](https://app.notion.com/p/Relat-rios-32591f95497e812bb975d9f8c8999dcc?source=copy_link)
+registram bem o dia, mas nem sempre a hora — enquanto alguns agentes mais cuidadosos já anotavam
+manualmente hora e duração (ex.: "Commit automático do Fetch All das 08:36"). Pedido: tornar isso
+o padrão.
+DECISÃO: automatizar em vez de depender de cada agente lembrar — `git_historico.py` no
+`notion-starter` já extraía a hora de cada commit; ganhou `DiaDeTrabalho.duracao_minutos` e
+`.duracao_por_extenso()` (diferença entre primeiro e último commit do dia, formatada como
+`"5h30"`/`"35 min"`), e `resumo_markdown()` passou a incluir isso na linha de resumo. Novo
+`docs/PADRAO-RELATORIOS.md` registra a regra (hora sempre; duração quando houver mais de um
+commit; registro manual `HH:MM–HH:MM` quando não há commits associados) e é referenciado a partir
+do `AGENTS.md`, na linha de roteamento de `relatorios_diarios.py`.
+VALIDAÇÃO: testes novos em `test_git_historico.py` (5), 295 testes do `notion-starter` verdes,
+`ruff` limpo. Correção de processo: a mudança nasceu em branch por engano — pequena e coesa,
+não se encaixava em nenhuma das três exceções de `docs/GIT-POLITICA-DE-VERSIONAMENTO.md` (feature
+grande, refatoração significativa ou alto risco) — corrigida com fast-forward para o `main` e a
+branch apagada (local e remota) nos dois repositórios (`notion-starter` e este hub).
