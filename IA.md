@@ -402,3 +402,74 @@ VALIDAÇÃO: todas as linhas não vazias do `IA.md` anterior continuam no arquiv
 archive; links locais e comandos do CLI foram conferidos; `check-dev.py` e compilação do hub
 passaram; `notion-starter` 235 testes, `notion-tasks-cli` 127, `notion-workspace-app` 256 com
 2 skips, Ruff limpo nos três, Oxlint e build Vite verdes, e `npm audit` sem vulnerabilidades.
+
+[2026-08-10] CONTEXTO: a página **Artigos** (`1fc91f95497e81d68ed0fd5befb68b0b`) vai virar a central
+de escrita do blog e precisava estar pronta antes da produção começar. Estado encontrado: uma
+database com duas colunas apenas (`Nome` e `Data de inicio da escrita`) e duas linhas — um artigo
+completo com fontes e uma pauta só com título. Sem etapa, sem tema, sem resumo, sem URL: não dava
+para saber o que estava pronto, o que estava parado nem o que já tinha ido ao ar.
+DECISÃO: organizar a database no lugar, sem recriá-la, seguindo o `DESIGN-WORKSPACE-NOTION.md`.
+Sete colunas tipadas acrescentadas com `garantir-coluna` (idempotente, não apaga nada): `Etapa`
+(select — Ideia, Rascunho, Revisão, Publicado, Modelo), `Temas`, `Resumo`, `Data de publicação`,
+`URL publicada`, `Tempo de leitura (min)` e `Observações`. As duas linhas existentes foram
+padronizadas com `editar-linha`, e toda inferência foi para `Observações` em vez de virar dado
+silencioso — a regra do design de que informação ambígua nunca é descartada. O modelo de artigo
+virou **uma linha** (Etapa `Modelo`, criada por `importar-planilha`), não uma subpágina: a API do
+Notion não cria template nativo de database, e a regra da página é que o trabalho acontece nas
+linhas, nunca em blocos soltos abaixo da tabela. O fluxo foi documentado na subpágina "Como
+funciona a central de artigos", pendurada num tópico `## Como usar` + divisória, no formato de
+tópico do design.
+VALIDAÇÃO: tudo executado pela CLI (`garantir-coluna`, `editar-linha`, `importar-planilha`,
+`escrever`, `criar-subpagina`, `editar-bloco`, `apagar-bloco`), nenhuma mudança manual. Releitura
+das três linhas e da subpágina depois de escrever. A revisão encontrou um defeito de dado que não
+estava no pedido: o título do artigo publicável tinha a letra "ê" gravada como caractere de
+substituição (U+FFFD), de uma gravação anterior com codificação errada — corrigido, com o motivo
+registrado em `Observações`, e uma varredura confirmou que não sobrou nenhum outro na página.
+PENDÊNCIA: a database continua sem ícone, descrição e `unique_id` com prefixo, que o design pede.
+A CLI só define os três na criação (`criar-database`) e não expõe alteração posterior; o
+`unique_id`, além disso, não pode ser acrescentado a uma database existente pela API do Notion —
+retrofitá-lo exigiria recriar a database e mover as linhas, ao custo dos links e do histórico das
+páginas atuais. Fica como pedido de comando novo na CLI (atualizar metadados de database), não
+como esquecimento. `reordenar-bloco --inicio` também não conseguiu pôr um heading acima da
+database (`child_database` não é reordenável pela API): os dois blocos criados para isso foram
+apagados e a página ficou com a database no topo, que é o conteúdo principal dela de qualquer
+forma.
+
+[2026-08-10] CONTEXTO: pergunta de acompanhamento sobre a central de artigos — dá para criar um
+template NATIVO de database no Notion (o menu do botão "Novo") em vez de um modelo em linha comum?
+DECISÃO: verificar contra a API antes de responder, em vez de repetir a suposição registrada no
+dia. Sondagem: `POST /pages` com `is_template: true` responde 400 ("should be not present");
+`GET /data_sources/{id}/templates` existe e responde 200 (lista vazia), mas não há `POST`
+correspondente ("Invalid request URL"); e o campo `template` do `POST /pages` aceita apenas
+`none`, `default` ou `template_id` — serve para APLICAR um template existente, nunca para criar.
+Conclusão: criar só à mão pela interface; uma vez criado à mão, o template passa a ser listável e
+aplicável pela API, então linhas novas podem nascer dele programaticamente. Isso muda a
+recomendação registrada antes, que tratava o template nativo como inviável de ponta a ponta.
+O modelo em linha (Etapa `Modelo`) foi então elevado de esqueleto a especificação executável:
+tese com teste de validade, resumo em três frases, leitor único, estrutura por seção com regra de
+fonte e ressalva metodológica, voz, lista de anti-padrões que reprovam o rascunho, definição de
+pronto e uma seção final com as regras que valem quando quem escreve é um modelo de IA
+(não inventar número nem link, declarar a lacuna em `Observações`, entregar sem as instruções do
+modelo). Renomeado para "🧩 Template para artigos — duplicar para começar".
+VALIDAÇÃO: sondagem executada com o token do perfil, sem criar nada no workspace (todas as
+tentativas de criação retornaram erro de validação). Corpo do modelo reescrito com
+`escrever --substituir`, propriedades por `editar-linha`, subpágina de fluxo atualizada por
+`editar-bloco` e `escrever`. Releitura da linha e da subpágina depois de gravar.
+
+[2026-08-13] CONTEXTO: Felipe notou que as entradas na database
+[Relatórios](https://app.notion.com/p/Relat-rios-32591f95497e812bb975d9f8c8999dcc?source=copy_link)
+registram bem o dia, mas nem sempre a hora — enquanto alguns agentes mais cuidadosos já anotavam
+manualmente hora e duração (ex.: "Commit automático do Fetch All das 08:36"). Pedido: tornar isso
+o padrão.
+DECISÃO: automatizar em vez de depender de cada agente lembrar — `git_historico.py` no
+`notion-starter` já extraía a hora de cada commit; ganhou `DiaDeTrabalho.duracao_minutos` e
+`.duracao_por_extenso()` (diferença entre primeiro e último commit do dia, formatada como
+`"5h30"`/`"35 min"`), e `resumo_markdown()` passou a incluir isso na linha de resumo. Novo
+`docs/PADRAO-RELATORIOS.md` registra a regra (hora sempre; duração quando houver mais de um
+commit; registro manual `HH:MM–HH:MM` quando não há commits associados) e é referenciado a partir
+do `AGENTS.md`, na linha de roteamento de `relatorios_diarios.py`.
+VALIDAÇÃO: testes novos em `test_git_historico.py` (5), 295 testes do `notion-starter` verdes,
+`ruff` limpo. Correção de processo: a mudança nasceu em branch por engano — pequena e coesa,
+não se encaixava em nenhuma das três exceções de `docs/GIT-POLITICA-DE-VERSIONAMENTO.md` (feature
+grande, refatoração significativa ou alto risco) — corrigida com fast-forward para o `main` e a
+branch apagada (local e remota) nos dois repositórios (`notion-starter` e este hub).
