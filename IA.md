@@ -473,3 +473,42 @@ VALIDAÇÃO: testes novos em `test_git_historico.py` (5), 295 testes do `notion-
 não se encaixava em nenhuma das três exceções de `docs/GIT-POLITICA-DE-VERSIONAMENTO.md` (feature
 grande, refatoração significativa ou alto risco) — corrigida com fast-forward para o `main` e a
 branch apagada (local e remota) nos dois repositórios (`notion-starter` e este hub).
+
+---
+
+## [2026-08-17] Lacunas de uso viradas em ferramenta — sessão de trabalho real
+
+**Contexto.** Uma sessão longa operando o Notion pela CLI (17 tarefas criadas
+com corpo rico, 16 reescritas e 48 ligações simétricas montadas entre elas)
+serviu de teste de uso real do ecossistema. Toda fricção encontrada virou
+mudança nos módulos, não anotação. Detalhes técnicos nos `IA.md` de
+`notion-starter` e `notion-tasks-cli`, mesma data.
+
+**O que faltava e passou a existir:**
+
+1. **Ler o schema.** Não havia comando para descobrir as colunas de um database
+   — foi preciso chamar `/v1/databases/<id>` cru para saber os valores de
+   `Prioridade` e a configuração das relações. Virou `notion-tasks schema`.
+
+2. **Ligar duas linhas.** Foi preciso escrever à mão um script que gravasse as
+   duas pontas de cada ligação. Virou `notion-tasks relacionar`, que **confere**
+   a outra ponta em vez de deduzir do tipo declarado — porque o tipo não prevê o
+   comportamento (experimento registrado no `IA.md` do `notion-starter`).
+
+3. **Reescrever sem destruir.** `escrever --substituir` apagava imagem e
+   `child_database` em silêncio; foi preciso escrever uma limpeza sob medida
+   para preservar a imagem de uma tarefa. Virou o padrão da biblioteca.
+
+4. **A regra do link virou guarda.** Escrever numa página que contém database
+   agora **falha** com a lista das databases e o caminho pronto para as linhas.
+   Era regra escrita no `AGENTS.md` que modelos mais fracos ignoravam — regra em
+   documento não segura modelo fraco, ferramenta que recusa segura.
+
+5. **Criar linha completa numa chamada.** `criar --set --conteudo` fecha o ciclo
+   que eram três comandos. E o erro pós-criação passa a trazer o ID da linha, em
+   vez de deixar órfã.
+
+**Decisão de fundo registrada:** quando uma regra de operação do Notion for
+importante o bastante para estar no `AGENTS.md`, avaliar se ela pode virar
+**comportamento da ferramenta**. Documentação orienta quem lê; guarda protege
+quem não leu. As duas coisas juntas é o padrão daqui em diante.
