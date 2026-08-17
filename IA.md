@@ -512,3 +512,47 @@ mudança nos módulos, não anotação. Detalhes técnicos nos `IA.md` de
 importante o bastante para estar no `AGENTS.md`, avaliar se ela pode virar
 **comportamento da ferramenta**. Documentação orienta quem lê; guarda protege
 quem não leu. As duas coisas juntas é o padrão daqui em diante.
+
+---
+
+## [2026-08-17] Publicação em lote no Notion: o que só aparece depois de publicar
+
+**Contexto.** Publicação de **201 relatórios diários** reconstruídos do git (115
+criados, 86 complementados) na database `62971953…`. Três lições que só
+apareceram porque o resultado foi **lido** depois de escrito.
+
+### 1. Ler o resultado publicado é parte da entrega
+
+A ferramenta tinha 20 testes verdes e um `--dry-run` conferido — e mesmo assim
+publicou o mesmo repositório **duas vezes por dia**, uma com o nome de produto
+(`--repo`) e outra com o nome da pasta (`--descobrir`). Os testes cobriam a
+agregação; o defeito estava na **montagem da lista de entrada**, que nenhum
+teste tocava. O bug foi encontrado abrindo um relatório publicado, não pela
+suíte. Corrigido deduplicando por caminho resolvido, com teste de regressão.
+
+**Regra que fica:** escrita em lote sobre dados que já existem termina com uma
+leitura de amostra do que foi gravado, não com o "ok" do comando.
+
+### 2. `select` do Notion aceita valor inválido — e cria a opção
+
+A publicação passou `--area "Projetos"`, que não existe naquele database (as
+opções são Trabalho, Pessoal, Estudos, Saúde, Outro). A API **não recusou**:
+criou a opção nova e poluiu o schema. Corrigido nas 115 páginas e a opção foi
+removida.
+
+Isso reforça a regra do `schema`: rodar `notion-tasks schema <id>` **antes** de
+escrever responde exatamente essa pergunta — e teria evitado o estrago.
+
+### 3. Retry sem espera não é retry
+
+O script de limpeza tinha `for tentativa in range(5)` com `continue` puro no
+429. As cinco tentativas queimavam no mesmo instante e o rate limit virava
+falha fatal no meio do lote. Corrigido com espera exponencial respeitando
+`Retry-After`, e paralelismo reduzido de 6 para 3 trabalhadores.
+
+### Padrão de escrita em lote adotado daqui em diante
+
+1. `--dry-run` primeiro, sempre.
+2. Script **idempotente e retomável** — ele vai ser interrompido.
+3. Backoff de verdade em cima de 429/409/5xx.
+4. Amostrar o resultado publicado antes de considerar concluído.
