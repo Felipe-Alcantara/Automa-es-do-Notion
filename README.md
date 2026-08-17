@@ -129,9 +129,15 @@ notion-tasks --perfil <alias> <comando> # usa outro perfil só nesta execução
 ### Comandos principais
 
 ```bash
+# 1. SEMPRE comece lendo o que o link é
+notion-tasks conteudo <id>       # propriedades + corpo. Se vier "databases_dentro",
+                                 # o conteúdo são as LINHAS da tabela, não esta página
+notion-tasks schema <id>         # colunas, tipos, valores aceitos e relações do database
+
 # Tarefas
 notion-tasks listar
-notion-tasks criar --titulo "Tarefa" --status "Em andamento"
+notion-tasks criar "Tarefa" --status "Em andamento" \
+  --set "Prioridade=Alta" --conteudo "## Contexto..."   # linha completa numa chamada
 notion-tasks mover <id> --status "Concluído"
 
 # Workspace
@@ -142,10 +148,10 @@ notion-tasks linhas <id>         # lista linhas de um database
 # Linha de database (propriedades ANTES do conteúdo)
 notion-tasks editar-linha <id> --set "Status=Feito"      # substitui uma coluna
 notion-tasks editar-linha <id> --append "Resumo=..."     # acrescenta sem perder o atual
+notion-tasks relacionar <a> <b> --coluna "Relacionadas"  # liga nos dois sentidos
 
 # Conteúdo de páginas
-notion-tasks conteudo <id>       # lê como Markdown
-notion-tasks escrever <id>       # anexa Markdown
+notion-tasks escrever <id>       # anexa Markdown (recusa página que contém database)
 notion-tasks editar-bloco <id>   # substitui texto
 
 # Relatórios diários (saída programática: acabamento fino pode pedir ajuste manual no Word)

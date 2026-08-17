@@ -34,10 +34,37 @@ Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o 
 
 **Regras de operação no Notion (valem para CLI e MCP):**
 
+> **Se você só for ler uma linha deste arquivo, leia esta.** Recebeu um link do
+> Notion? Rode `notion-tasks conteudo <id>` **antes de escrever qualquer coisa**.
+> Se a resposta trouxer `databases_dentro`, **o conteúdo daquela página são as
+> LINHAS da tabela, não o corpo da página** — vá para `linhas <database_id>`.
+
 1. **Regra do link**: ao receber um link ou ID do Notion, **leia e entenda do que se trata antes de qualquer escrita** (`notion-tasks conteudo <id>`; se for database, `notion-tasks linhas <id>`). Se o alvo é um database, o trabalho é **nas linhas**: localize a linha certa e atualize-a — nunca ignore o database e escreva blocos soltos abaixo dele.
-2. **Regra de leitura**: propriedades e corpo são partes da **mesma página**. Comece a leitura pelas propriedades (colunas) e só depois pelo corpo — há páginas com mais informação nas propriedades do que no corpo. `conteudo <id>` já devolve as duas partes, propriedades primeiro.
-3. **Regra de escrita**: numa linha de database, edite primeiro as propriedades (`editar-linha`) e depois o corpo (`escrever`).
-4. **Regra de organização**: se o usuário não indicar um jeito específico de organizar o workspace, use o modelo padrão registrado em [`DESIGN-WORKSPACE-NOTION.md`](DESIGN-WORKSPACE-NOTION.md) (tópicos = heading + divisória + links full-page, databases tipadas com ícone/descrição/unique_id, relações em vez de fusão, arquivo original anexado, re-parent/arquivamento).
+
+   *A CLI agora faz isso valer sozinha*: `escrever` numa página que contém database **falha** com a lista das databases e o caminho pronto. Só passa com `--mesmo-com-database`, quando o bloco solto é mesmo a intenção.
+
+2. **Regra do schema**: antes de escrever num database que você não conhece, rode **`notion-tasks schema <database_id>`**. Ele responde de uma vez: nome exato de cada coluna, tipo, **valores aceitos** por select/status, o que é calculado pelo Notion (e recusa PATCH) e como cada relação está configurada. Escrever antes disso é adivinhar — e o erro só aparece depois de gravado.
+
+3. **Regra de leitura**: propriedades e corpo são partes da **mesma página**. Comece a leitura pelas propriedades (colunas) e só depois pelo corpo — há páginas com mais informação nas propriedades do que no corpo. `conteudo <id>` já devolve as duas partes, propriedades primeiro.
+
+4. **Regra de escrita**: numa linha de database, edite primeiro as propriedades (`editar-linha`) e depois o corpo (`escrever`). Para uma linha **nova**, `criar "Título" --set "Coluna=valor" --conteudo "# Markdown"` faz as três coisas numa chamada só, na ordem certa.
+
+5. **Regra da relação**: para ligar duas linhas use **`relacionar <a> <b> --coluna "Nome"`**, nunca `editar-linha` na mão. O tipo declarado (`single_property`/`dual_property`) **não permite prever** se o Notion espelha a outra ponta — medido no workspace real em 2026-08-17, uma relação auto-referente reportada como `single_property` espelhou sozinha. `relacionar` confere a outra ponta e grava só o que faltar, então funciona nos dois casos e é idempotente.
+
+6. **Regra da reescrita**: `escrever --substituir` apaga o corpo antes de escrever, mas **preserva** o que não se recria a partir de Markdown — imagem, arquivo, embed, subpágina e `child_database`. A saída lista o que foi preservado. `--apagar-tudo` remove essas exceções também: use com cuidado, porque URL de arquivo do Notion expira e apagar um `child_database` leva o database inteiro.
+
+7. **Regra de organização**: se o usuário não indicar um jeito específico de organizar o workspace, use o modelo padrão registrado em [`DESIGN-WORKSPACE-NOTION.md`](DESIGN-WORKSPACE-NOTION.md) (tópicos = heading + divisória + links full-page, databases tipadas com ícone/descrição/unique_id, relações em vez de fusão, arquivo original anexado, re-parent/arquivamento).
+
+**Receita completa — "coloque isto no meu database":**
+
+```bash
+notion-tasks conteudo <id_do_link>        # 1. o que é isto? tem database dentro?
+notion-tasks schema <database_id>         # 2. que colunas existem e o que aceitam
+notion-tasks linhas <database_id>         # 3. já existe linha para este assunto?
+notion-tasks criar "Título" \             # 4. cria completa numa chamada
+  --status "Entrada" --set "Prioridade=Alta" --conteudo "## Contexto..."
+notion-tasks relacionar <nova> <outra> --coluna "Subtarefas relacionadas"
+```
 
 ### MODO DESENVOLVIMENTO — modificar código das ferramentas
 
@@ -94,14 +121,16 @@ A CLI gerencia os perfis locais de workspaces/keys com
 
 | Você quer… | Comando |
 | --- | --- |
-| Listar/criar/editar/mover/concluir tarefas | `notion-tasks listar / criar / editar / mover / concluir` |
+| Listar/criar/editar/mover/concluir tarefas | `notion-tasks listar / criar / editar / mover / concluir`. `criar` aceita `--set "Coluna=valor"` e `--conteudo "# Markdown"` para nascer completa numa chamada só (evita o vaivém criar → editar-linha → escrever) |
 | Descobrir status, durações e áreas válidas | `notion-tasks opcoes` (sempre antes de criar/mover) |
 | Mapear o workspace inteiro | `notion-tasks mapear` |
 | Pesquisar páginas e databases | `notion-tasks buscar <termo>` |
 | Listar databases / linhas de um database | `notion-tasks databases` / `notion-tasks linhas <id>` |
-| Ler uma página como Markdown | `notion-tasks conteudo <id>` |
+| Ler uma página como Markdown | `notion-tasks conteudo <id>` — avisa em `databases_dentro` quando a página **contém** database (aí o trabalho é nas linhas dela) |
+| **Descobrir as colunas de um database antes de escrever** (nome exato, tipo, valores aceitos, o que é calculado, como cada relação está configurada) | `notion-tasks schema <database_id>` (`--editaveis` esconde o que o Notion calcula). **Faça isto antes de qualquer escrita em database desconhecido** |
+| Ligar duas linhas por uma coluna de relação, garantindo os dois sentidos | `notion-tasks relacionar <page_a> <page_b> --coluna "Nome"` (`--desfazer` remove). Confere a outra ponta e grava só o que faltar — idempotente. O tipo `single_property`/`dual_property` **não** permite prever se o Notion espelha sozinho |
 | Editar propriedades (colunas) de uma linha de database | `notion-tasks editar-linha <id> --set "Nome=valor"` (substitui) / `--append "Nome=texto"` (acrescenta preservando). **Faça isto antes de escrever o conteúdo.** |
-| Escrever/editar/apagar blocos | `notion-tasks escrever / editar-bloco / apagar-bloco` (apagar exige `--sim`; o Notion arquiva, não destrói) |
+| Escrever/editar/apagar blocos | `notion-tasks escrever / editar-bloco / apagar-bloco` (apagar exige `--sim`; o Notion arquiva, não destrói). `escrever` **recusa** página que contém database — libere com `--mesmo-com-database`. `--substituir` **preserva** imagem/arquivo/embed/subpágina/`child_database`; `--apagar-tudo` remove essas também |
 | Clonar páginas/estruturas | `notion-tasks clonar <id>` |
 | Criar database com schema tipado | `notion-tasks criar-database <pagina_id> <titulo> --prop "Coluna=tipo"` (tipos em português; `--inline`, `--icone`, `--descricao`, `--prefixo-id` para unique_id — prefixo único por workspace) |
 | Adicionar coluna a um database já existente (nenhum outro comando faz isso — `criar-database` só define schema na criação) | `notion-tasks garantir-coluna <database_id> <nome_coluna> <tipo>` — idempotente, não mexe em nada se a coluna já existe. Para ligar dois databases: `<tipo>` = `relacao` + `--relacionar-com <database_alvo_id>` (relação bidirecional; o Notion cria a coluna espelho no alvo) |
@@ -126,7 +155,9 @@ Primeiro `python bootstrap.py` (clona ou atualiza os módulos em `modules/`). De
 | O pedido mexe em… | Repositório | Onde |
 | --- | --- | --- |
 | Cliente HTTP, retries, rate limit, erros da API | notion-starter | `src/notion_starter/client.py` |
-| Schema de databases, comparação | notion-starter | `src/notion_starter/schema.py` |
+| Schema de databases: comparação (`comparar_schema`) e **leitura legível** (`descrever_database`, `DescricaoDatabase`, `Coluna`, `Relacao`) | notion-starter | `src/notion_starter/schema.py` |
+| Ligar linhas por relação nos dois sentidos (confere a outra ponta antes de gravar) | notion-starter | `src/notion_starter/services/relacoes.py` |
+| Guarda contra escrever bloco solto em página que contém database; preservação de blocos não recriáveis na reescrita | notion-starter | `src/notion_starter/services/conteudo.py` (`databases_da_pagina`, `TIPOS_NAO_RECRIAVEIS`, `EscritaAbaixoDeDatabaseError`) |
 | Modelo de tarefas (`Tarefa`, `TaskList`) | notion-starter | `src/notion_starter/tasks.py` |
 | Conversão Markdown ↔ blocos; builders de propriedade (fatia de texto >2000) | notion-starter | `src/notion_starter/content.py`, `properties.py`, `readers.py` |
 | Ler/editar propriedades de uma página (`obter_pagina`/`atualizar_pagina`) | notion-starter | `src/notion_starter/client.py` |
