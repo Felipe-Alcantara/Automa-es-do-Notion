@@ -31,6 +31,8 @@ MODULES_DIR = RAIZ / "modules"
 CLI_PACOTE = "notion-tasks-cli"
 CLI_MODULO = "cli.notion_tasks"
 CLI_INSTALL_URL = "git+https://github.com/Felipe-Alcantara/notion-tasks-cli.git"
+STARTER_DIR = MODULES_DIR / "notion-starter"
+CLI_DIR = MODULES_DIR / "notion-tasks-cli"
 
 # Variáveis que o menu ajuda a preencher no .env. GITHUB_CONTAS alimenta o
 # comando `atualizar-github` (sincroniza a database GITHUB do Notion).
@@ -85,6 +87,30 @@ def _cli_instalada() -> bool:
     """A CLI notion-tasks está importável neste Python?"""
 
     return importlib.util.find_spec(CLI_MODULO) is not None
+
+
+def _instalar_cli_dos_modulos() -> int:
+    """Instala a biblioteca e a CLI a partir dos working copies locais.
+
+    O modo editável mantém o executável sincronizado com ``modules/`` e evita
+    que uma cópia antiga em ``site-packages`` seja usada silenciosamente.
+    """
+
+    faltantes = [str(p) for p in (STARTER_DIR, CLI_DIR) if not p.exists()]
+    if faltantes:
+        print("Módulos ausentes; execute o bootstrap antes da instalação:")
+        print(f"  {sys.executable} {BOOTSTRAP}")
+        print("Ausentes: " + ", ".join(faltantes))
+        return 1
+
+    for modulo in (STARTER_DIR, CLI_DIR):
+        codigo = _rodar(
+            [sys.executable, "-m", "pip", "install", "--editable", str(modulo)],
+            descricao=f"Instalando {modulo.name} a partir de modules/…",
+        )
+        if codigo != 0:
+            return codigo
+    return 0
 
 
 def _cmd_cli(*args: str) -> list[str]:
@@ -215,15 +241,17 @@ def acao_instalar(console) -> None:
     if not opcoes:
         return
 
-    if "cli" in opcoes:
-        _rodar(
-            [sys.executable, "-m", "pip", "install", CLI_INSTALL_URL],
-            descricao="Instalando a CLI notion-tasks…",
-        )
-    if "tui" in opcoes:
-        _instalar_deps_tui()
     if "modulos" in opcoes:
         _rodar([sys.executable, str(BOOTSTRAP)], descricao="Clonando/atualizando módulos…")
+    if "cli" in opcoes:
+        if not STARTER_DIR.exists() or not CLI_DIR.exists():
+            _rodar(
+                [sys.executable, str(BOOTSTRAP)],
+                descricao="Módulos necessários ausentes; preparando modules/…",
+            )
+        _instalar_cli_dos_modulos()
+    if "tui" in opcoes:
+        _instalar_deps_tui()
 
 
 def acao_configurar(console) -> None:

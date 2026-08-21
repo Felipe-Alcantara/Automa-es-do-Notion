@@ -40,6 +40,13 @@
 - **Pendência aberta**: CLI avisar quando `NOTION_TOKEN` é ignorado por perfil
   ativo (melhoria nos módulos — ver resumo de [2026-07-13]).
 
+[2026-08-21] O setup do hub passou a instalar `notion-starter` antes de
+`notion-tasks-cli`, ambos em modo editável a partir de `modules/`. Isso evita
+que o executável global use uma cópia antiga em `site-packages` e mantém a CLI
+alinhada ao working copy preparado pelo `bootstrap.py`. O README documenta o
+fluxo multiplataforma e o gate foi validado com 352 testes do starter e 168 da
+CLI, além do `ruff` da CLI.
+
 [2026-07-18] Registros de junho/2026 (era monorepo) movidos na íntegra para
 `docs/ia-archive/IA-ARCHIVE-2026-06.md` (compactação sem perda do template).
 

@@ -100,9 +100,28 @@ Automações do Notion/
 
 ### Instalação (uma vez)
 
+Para garantir que a CLI use exatamente o código presente em `modules/` (e não
+uma cópia antiga do `site-packages`), use o menu de entrada e escolha
+**Instalar/Setup → CLI notion-tasks**. O setup prepara os módulos e instala,
+na ordem correta, `notion-starter` e `notion-tasks-cli` em modo editável com o
+mesmo Python que executa o menu:
+
 ```bash
-pip install git+https://github.com/Felipe-Alcantara/notion-tasks-cli.git
+python start_app.py
 ```
+
+Isso funciona em Windows, macOS e Linux. Para uma instalação manual equivalente:
+
+```bash
+python bootstrap.py
+python -m pip install --editable modules/notion-starter
+python -m pip install --editable modules/notion-tasks-cli
+python -m cli.notion_tasks --help
+```
+
+Use sempre `python -m pip` (não um `pip` de outro Python). A instalação
+editável é intencional: atualizações feitas nos módulos ficam disponíveis para
+`notion-tasks` sem reinstalar outra cópia.
 
 Configure o token:
 
