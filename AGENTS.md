@@ -55,6 +55,13 @@ Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o 
 
 7. **Regra de organização**: se o usuário não indicar um jeito específico de organizar o workspace, use o modelo padrão registrado em [`DESIGN-WORKSPACE-NOTION.md`](DESIGN-WORKSPACE-NOTION.md) (tópicos = heading + divisória + links full-page, databases tipadas com ícone/descrição/unique_id, relações em vez de fusão, arquivo original anexado, re-parent/arquivamento).
 
+8. **Regra do fechamento**: ao **terminar uma tarefa**, registre o que foi feito em **dois lugares, sempre**:
+
+   - **No corpo da própria tarefa**, acrescentando (`escrever <page_id>`, sem `--substituir`) uma seção `## O QUE FOI FEITO` com a data, o que mudou de fato, os arquivos e commits envolvidos, como foi validado e o que ficou de fora. Só então mova o status para concluído.
+   - **No relatório do dia**, na database de relatórios diários, complementando a linha `Relatório DD/MM/YYYY` daquela data — nunca criando uma segunda linha para o mesmo dia.
+
+   Marcar concluído sem escrever o que foi feito apaga a informação mais cara do ciclo: por que a solução foi essa, o que foi tentado antes e como saber que funcionou. O título da tarefa diz o que era para fazer; só o fechamento diz o que aconteceu. Se a tarefa foi fechada sem executar (virou obsoleta, foi absorvida por outra, o problema não se confirmou), escreva isso — "não era problema, medi e o número já estava dentro" vale tanto quanto uma correção.
+
 **Receita completa — "coloque isto no meu database":**
 
 ```bash
