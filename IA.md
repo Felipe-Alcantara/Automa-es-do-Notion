@@ -563,3 +563,68 @@ falha fatal no meio do lote. Corrigido com espera exponencial respeitando
 2. Script **idempotente e retomável** — ele vai ser interrompido.
 3. Backoff de verdade em cima de 429/409/5xx.
 4. Amostrar o resultado publicado antes de considerar concluído.
+
+---
+
+## [2026-08-23] Precedência perfil × ambiente: fica como está, e o porquê
+
+**Contexto.** A tarefa *"Qualidade — deixar a suíte e o lint verdes numa máquina
+com perfil configurado"* nasceu de uma medição feita hoje mais cedo: um teste do
+`notion-tasks-cli` vermelho (`test_database_atual_traz_titulo_real`) e 8 erros de
+`ruff`. O teste falhava porque `aplicar_perfil` sobrescreve `NOTION_DATABASE_ID`
+no ambiente do processo, e o teste tentava isolar só o ambiente.
+
+### Medição de hoje, no clone local
+
+| Verificação | Resultado |
+| --- | --- |
+| `notion-tasks-cli` **com o store de perfis real na raiz do módulo** | **168 passaram** |
+| `notion-starter` | **354 passaram** |
+| `ruff check .` (antes) | 8 erros, todos em `check-dev.py` |
+
+O teste **não falha mais**: `tests/conftest.py` ganhou, em `03f2980`
+(17/08/2026), a fixture `perfis_isolados`, que aponta `workspaces.ARQUIVO_PADRAO`
+para um `tmp_path` e limpa `NOTION_TOKEN`/`NOTION_DATABASE_ID`/`NOTION_PROFILE`.
+Ou seja, o item "isolar o perfil no teste" já estava resolvido antes da tarefa
+ser escrita — a medição que a originou pegou outro estado da máquina (a cópia
+instalada em `site-packages`, cujo store fica ao lado do pacote).
+
+Verificado copiando o store **real** para a raiz do módulo e rodando a suíte:
+168/168. O isolamento segura o caso que a tarefa temia.
+
+### A decisão
+
+**A precedência fica como está:** `--perfil` > perfil ativo salvo > ambiente
+(`NOTION_TOKEN`/`NOTION_DATABASE_ID`, inclusive vindos do `.env`).
+
+O comportamento usual de CLI seria o inverso (ambiente vence arquivo de
+configuração), e foi por isso que a alternativa foi levada ao dono do projeto com
+o efeito colateral **medido**: o `.env` deste repositório define
+`NOTION_DATABASE_ID=30296e2d…` (o To Do da HOME), e `core/config.py` só exporta a
+chave quando ela ainda não está no ambiente. Inverter a ordem faria **todo comando
+rodado de dentro do repositório** mirar a HOME em vez do perfil ativo — troca de
+alvo silenciosa, exatamente o tipo de surpresa que a mudança pretendia evitar.
+
+Decisão do dono, em 23/08/2026: **manter**. O custo aceito é conhecido e já está
+documentado no `AGENTS.md` ("vence mesmo que `NOTION_TOKEN` esteja exportado,
+silenciosamente") e na regra 8 da skill de operação do Notion — quando um ID
+válido devolve "Recurso não encontrado", o primeiro passo é `perfis listar`.
+
+### Lint
+
+Os 8 erros eram todos de `check-dev.py`, que veio no pull: `import subprocess`
+sem uso, cinco f-strings sem placeholder e os imports-sonda `pytest`/`requests`.
+Os dois últimos viraram `importlib.util.find_spec` — a pergunta ali é
+*disponibilidade*, e importar de verdade só para descobrir isso executa o módulo
+inteiro; de quebra, agora o script diz **qual** pacote falta em vez de parar no
+primeiro. `ruff check .`: **All checks passed**.
+
+### Achado fora do escopo, registrado
+
+`notion-workspace-app` tem **3 testes vermelhos** (`test_services_conteudo.py`
+×2 e `test_mcp_server.py::test_append_content_conta_blocos`): esperam um `PATCH`
+e o código faz um `GET` de leitura antes de escrever. **Não** é divergência entre
+cópias do `notion_starter` — o `client.py` instalado e o do módulo são iguais no
+trecho envolvido. São testes desatualizados em relação ao comportamento de
+"ler antes de escrever". Fora do critério desta tarefa (que cobre `notion-starter`
+e `notion-tasks-cli`); virou tarefa própria.

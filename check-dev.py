@@ -10,7 +10,7 @@ Uso: python check-dev.py
 
 from __future__ import annotations
 
-import subprocess
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -34,7 +34,7 @@ def tabuleiro() -> tuple[bool, list[str]]:
 
     # 2. bootstrap.py rodou?
     if not MODULOS_DIR.exists():
-        msgs.append(f"[FALHA] `modules/` não existe. Rode: python bootstrap.py")
+        msgs.append("[FALHA] `modules/` não existe. Rode: python bootstrap.py")
         ok = False
     else:
         mensagens_modulos: list[str] = []
@@ -46,7 +46,7 @@ def tabuleiro() -> tuple[bool, list[str]]:
             else:
                 mensagens_modulos.append(f"  [FALHA] {m}")
                 faltam.append(m)
-        msgs.append(f"[OK] modules/")
+        msgs.append("[OK] modules/")
         msgs.extend(mensagens_modulos)
         if faltam:
             msgs.append(f"  (faltam: {', '.join(faltam)} — rode `python bootstrap.py`)")
@@ -55,18 +55,21 @@ def tabuleiro() -> tuple[bool, list[str]]:
     # 3. .env?
     env_file = ROOT / ".env"
     if env_file.exists():
-        msgs.append(f"[OK] .env existente")
+        msgs.append("[OK] .env existente")
     else:
-        msgs.append(f"[INFO] .env não encontrado (necessário para usar a CLI)")
+        msgs.append("[INFO] .env não encontrado (necessário para usar a CLI)")
 
     # 4. Deps instaladas?
-    try:
-        import pytest
-        import requests
-
-        msgs.append(f"[OK] pytest, requests instalados")
-    except ImportError as e:
-        msgs.append(f"[AVISO] Alguns pacotes faltam: {e}")
+    #
+    # `find_spec` em vez de `import`: aqui a pergunta e se o pacote esta
+    # disponivel, e importar de verdade so para descobrir isso executa o modulo
+    # inteiro e deixa um import sem uso que o lint (com razao) acusa. Assim
+    # tambem da para dizer QUAL pacote falta, em vez de parar no primeiro.
+    faltam_pacotes = [nome for nome in ("pytest", "requests") if importlib.util.find_spec(nome) is None]
+    if faltam_pacotes:
+        msgs.append(f"[AVISO] Alguns pacotes faltam: {', '.join(faltam_pacotes)}")
+    else:
+        msgs.append("[OK] pytest, requests instalados")
 
     return ok, msgs
 
