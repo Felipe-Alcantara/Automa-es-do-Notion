@@ -100,9 +100,48 @@ Automações do Notion/
 
 ### Instalação (uma vez)
 
+Para garantir que a CLI use exatamente o código presente em `modules/` (e não
+uma cópia antiga do `site-packages`), use o menu de entrada e escolha
+**Instalar/Setup → CLI notion-tasks**. O setup prepara os módulos e instala,
+na ordem correta, `notion-starter` e `notion-tasks-cli` em modo editável com o
+mesmo Python que executa o menu:
+
 ```bash
-pip install git+https://github.com/Felipe-Alcantara/notion-tasks-cli.git
+python start_app.py
 ```
+
+Isso funciona em Windows, macOS e Linux. Para uma instalação manual equivalente:
+
+```bash
+python bootstrap.py
+python -m pip install --editable modules/notion-tasks-cli
+python -m pip install --editable modules/notion-starter   # por último, de propósito
+python -m cli.notion_tasks --help
+python check-dev.py            # confirma de onde o notion_starter está vindo
+```
+
+Use sempre `python -m pip` (não um `pip` de outro Python). A instalação
+editável é intencional: atualizações feitas nos módulos ficam disponíveis para
+`notion-tasks` sem reinstalar outra cópia.
+
+> **A ordem é o contrário da intuitiva, e isso não é detalhe.** O
+> `notion-tasks-cli` declara `notion-starter @ git+https://github.com/...`, então
+> instalar a CLI **baixa o starter do GitHub e desinstala** o editável que
+> estivesse no lugar. Instalando o starter por último, ele fica sendo a última
+> palavra. Na ordem inversa nada quebra — a CLI continua funcionando, só que com
+> outro código, e as edições em `modules/notion-starter` deixam de ter efeito.
+> `python check-dev.py` responde de onde o `notion_starter` está vindo; se ele
+> avisar que não vem de `modules/`, refaça a instalação nesta ordem.
+>
+> **Instalar os dois de uma vez só não funciona.** `pip install -e A -e B` falha com
+> `ResolutionImpossible`, porque o pip não concilia "o starter é o local" com "o
+> starter é o do GitHub" — são dois passos, sempre.
+>
+> A partir do `notion-tasks-cli` 0.2.1, os perfis salvos (`.notion-workspaces.json`)
+> ficam na **pasta de configuração do usuário** (`~/.config/notion-tasks/` ou
+> `%APPDATA%\notion-tasks\`), e não mais ao lado do pacote instalado — então trocar o
+> modo de instalação não mexe mais neles. Quem tinha perfis salvos antes disso não
+> precisa fazer nada: a CLI migra o arquivo na primeira execução e avisa.
 
 Configure o token:
 

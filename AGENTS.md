@@ -101,6 +101,17 @@ O pedido é: *corrigir bug, adicionar comando, mudar frontend, melhorar resilên
 3. Teste dentro do módulo: `cd modules/<nome> && python -m pytest`.
 4. Commit e push **dentro do módulo**, não no hub.
 
+> **Antes de confiar num teste do `notion-starter`, rode `python check-dev.py`.**
+> Ele diz de onde o `notion_starter` está sendo importado. Se não vier de
+> `modules/notion-starter`, sua edição **não está sendo executada** — nem pela CLI
+> do PATH, nem pela suíte de quem depende dela — e nada avisa: o comando continua
+> funcionando, só que com o código baixado do GitHub. A causa é a dependência
+> `notion-starter @ git+https://github.com/...` declarada pelo `notion-tasks-cli`
+> e pelo `notion-workspace-app`: instalar qualquer um dos dois desinstala o starter
+> editável. Conserto: instalar a CLI **primeiro** e o starter **por último**, ambos
+> `--editable`, ou usar `python start_app.py → Instalar/Setup`, que já faz nessa ordem.
+> Medido em 24/08/2026 — ver `IA.md`.
+
 Nunca desenvolva funcionalidade neste hub; este é documentação e roteamento.
 
 ---

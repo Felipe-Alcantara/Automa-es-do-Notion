@@ -40,6 +40,13 @@
 - **Pendência aberta**: CLI avisar quando `NOTION_TOKEN` é ignorado por perfil
   ativo (melhoria nos módulos — ver resumo de [2026-07-13]).
 
+[2026-08-21] O setup do hub passou a instalar `notion-starter` antes de
+`notion-tasks-cli`, ambos em modo editável a partir de `modules/`. Isso evita
+que o executável global use uma cópia antiga em `site-packages` e mantém a CLI
+alinhada ao working copy preparado pelo `bootstrap.py`. O README documenta o
+fluxo multiplataforma e o gate foi validado com 352 testes do starter e 168 da
+CLI, além do `ruff` da CLI.
+
 [2026-07-18] Registros de junho/2026 (era monorepo) movidos na íntegra para
 `docs/ia-archive/IA-ARCHIVE-2026-06.md` (compactação sem perda do template).
 
@@ -556,3 +563,145 @@ falha fatal no meio do lote. Corrigido com espera exponencial respeitando
 2. Script **idempotente e retomável** — ele vai ser interrompido.
 3. Backoff de verdade em cima de 429/409/5xx.
 4. Amostrar o resultado publicado antes de considerar concluído.
+
+---
+
+## [2026-08-23] Precedência perfil × ambiente: fica como está, e o porquê
+
+**Contexto.** A tarefa *"Qualidade — deixar a suíte e o lint verdes numa máquina
+com perfil configurado"* nasceu de uma medição feita hoje mais cedo: um teste do
+`notion-tasks-cli` vermelho (`test_database_atual_traz_titulo_real`) e 8 erros de
+`ruff`. O teste falhava porque `aplicar_perfil` sobrescreve `NOTION_DATABASE_ID`
+no ambiente do processo, e o teste tentava isolar só o ambiente.
+
+### Medição de hoje, no clone local
+
+| Verificação | Resultado |
+| --- | --- |
+| `notion-tasks-cli` **com o store de perfis real na raiz do módulo** | **168 passaram** |
+| `notion-starter` | **354 passaram** |
+| `ruff check .` (antes) | 8 erros, todos em `check-dev.py` |
+
+O teste **não falha mais**: `tests/conftest.py` ganhou, em `03f2980`
+(17/08/2026), a fixture `perfis_isolados`, que aponta `workspaces.ARQUIVO_PADRAO`
+para um `tmp_path` e limpa `NOTION_TOKEN`/`NOTION_DATABASE_ID`/`NOTION_PROFILE`.
+Ou seja, o item "isolar o perfil no teste" já estava resolvido antes da tarefa
+ser escrita — a medição que a originou pegou outro estado da máquina (a cópia
+instalada em `site-packages`, cujo store fica ao lado do pacote).
+
+Verificado copiando o store **real** para a raiz do módulo e rodando a suíte:
+168/168. O isolamento segura o caso que a tarefa temia.
+
+### A decisão
+
+**A precedência fica como está:** `--perfil` > perfil ativo salvo > ambiente
+(`NOTION_TOKEN`/`NOTION_DATABASE_ID`, inclusive vindos do `.env`).
+
+O comportamento usual de CLI seria o inverso (ambiente vence arquivo de
+configuração), e foi por isso que a alternativa foi levada ao dono do projeto com
+o efeito colateral **medido**: o `.env` deste repositório define
+`NOTION_DATABASE_ID=30296e2d…` (o To Do da HOME), e `core/config.py` só exporta a
+chave quando ela ainda não está no ambiente. Inverter a ordem faria **todo comando
+rodado de dentro do repositório** mirar a HOME em vez do perfil ativo — troca de
+alvo silenciosa, exatamente o tipo de surpresa que a mudança pretendia evitar.
+
+Decisão do dono, em 23/08/2026: **manter**. O custo aceito é conhecido e já está
+documentado no `AGENTS.md` ("vence mesmo que `NOTION_TOKEN` esteja exportado,
+silenciosamente") e na regra 8 da skill de operação do Notion — quando um ID
+válido devolve "Recurso não encontrado", o primeiro passo é `perfis listar`.
+
+### Lint
+
+Os 8 erros eram todos de `check-dev.py`, que veio no pull: `import subprocess`
+sem uso, cinco f-strings sem placeholder e os imports-sonda `pytest`/`requests`.
+Os dois últimos viraram `importlib.util.find_spec` — a pergunta ali é
+*disponibilidade*, e importar de verdade só para descobrir isso executa o módulo
+inteiro; de quebra, agora o script diz **qual** pacote falta em vez de parar no
+primeiro. `ruff check .`: **All checks passed**.
+
+### Achado fora do escopo, registrado
+
+`notion-workspace-app` tem **3 testes vermelhos** (`test_services_conteudo.py`
+×2 e `test_mcp_server.py::test_append_content_conta_blocos`): esperam um `PATCH`
+e o código faz um `GET` de leitura antes de escrever. **Não** é divergência entre
+cópias do `notion_starter` — o `client.py` instalado e o do módulo são iguais no
+trecho envolvido. São testes desatualizados em relação ao comportamento de
+"ler antes de escrever". Fora do critério desta tarefa (que cobre `notion-starter`
+e `notion-tasks-cli`); virou tarefa própria.
+
+---
+
+## [2026-08-24] As três cópias do `notion-starter`: a ordem de instalação era o bug
+
+**Correção de rota da entrada [2026-08-21] acima.** Aquela entrada registrou que o
+setup passou a instalar `notion-starter` **antes** de `notion-tasks-cli` "para evitar
+que o executável use uma cópia antiga em `site-packages`". Medido agora, a ordem faz
+exatamente o contrário do que a entrada prometia.
+
+### O que foi medido (24/08/2026, venv limpo, Python 3.12)
+
+O `pyproject.toml` do `notion-tasks-cli` declara
+`notion-starter @ git+https://github.com/Felipe-Alcantara/notion-starter.git`.
+Consequência: **instalar a CLI baixa o starter do GitHub e desinstala o editável**.
+
+| Ordem | Resultado de `notion_starter.__file__` |
+| --- | --- |
+| starter, depois CLI (a documentada) | `site-packages/notion_starter/__init__.py` — a cópia do GitHub |
+| CLI, depois starter | `modules/notion-starter/src/notion_starter/__init__.py` — o código local |
+
+A saída do pip é explícita no passo errado: `Attempting uninstall: notion-starter` →
+`Successfully uninstalled` → instala a baixada. Nada falha, nada avisa.
+
+Instalar os dois de uma vez (`pip install -e A -e B`) **não é alternativa**: falha com
+`ResolutionImpossible`, e não por defasagem de versão — as duas cópias já estavam em
+0.2.0, no mesmo commit `55c866d`. O conflito é o *pin por URL direta* em si.
+
+### Decisão
+
+Fonte de verdade continua sendo **o GitHub publicado** — é o que faz
+`pip install git+…/notion-tasks-cli` funcionar em qualquer máquina, e é o que o
+`bootstrap.py` clona. Descartada a dependência por caminho relativo: tornaria o
+repo autossuficiente ao preço de quebrar a instalação de quem não tem o hub clonado.
+O que muda é o **ambiente de desenvolvimento**, que passa a sobrepor o starter pela
+cópia editável de `modules/`.
+
+### O que mudou
+
+- `start_app.py`: `_instalar_cli_dos_modulos` instala `(CLI_DIR, STARTER_DIR)` — starter
+  por último, com o porquê na docstring.
+- `check-dev.py`: `origem_do_starter` responde de onde o `notion_starter` vem e, quando
+  não vem de `modules/`, diz como consertar. Este é o guarda: o modo de falha era
+  silencioso, agora tem quem grite.
+- `tests/test_check_dev.py`: três casos de comportamento do guarda (editável, cópia
+  errada, não instalado). Primeira suíte do hub.
+- `README.md` e `AGENTS.md`: ordem corrigida e o motivo explicado onde ele é lido.
+
+### Efeito colateral que quase passou por perdido
+
+Trocar o modo de instalação **parece apagar os perfis salvos**: `perfis listar` passou a
+dizer "Nenhum perfil configurado". Não apaga — `core/workspaces.py` define
+`ARQUIVO_PADRAO = Path(__file__).resolve().parents[1] / ".notion-workspaces.json"`, ou
+seja, o arquivo mora **ao lado do pacote instalado**, e mudar a instalação muda o
+endereço. Bastou copiar o arquivo da pasta antiga para `modules/notion-tasks-cli/`
+(o `.gitignore` do módulo já o cobre; nada disso vai para commit). Que o estado do
+usuário siga o local de instalação é frágil por si só — virou tarefa própria.
+
+### Estado final da máquina
+
+`notion_starter` e `cli` importando de `modules/`, ambos 0.2.0, `pip check` sem
+nenhuma quebra envolvendo notion, `check-dev.py` em `[OK]`, e uma marca inserida em
+`modules/notion-starter` apareceu no import sem reinstalar nada (marca revertida).
+
+---
+
+## [2026-08-24] Perfis migrados para a pasta de configuração do usuário
+
+Complemento da entrada anterior. O efeito colateral ali registrado — trocar o modo de
+instalação parecer apagar os perfis — foi corrigido na origem: o `notion-tasks-cli`
+0.2.1 (`e6206c1`) passou a guardar o store em `~/.config/notion-tasks/`
+(`%APPDATA%\notion-tasks\` no Windows), com migração automática do endereço antigo.
+
+O aviso que este README trazia, mandando copiar o arquivo à mão, deixou de valer e foi
+substituído. Medido na máquina: instalação trocada de editável para não editável e de
+volta, `perfis listar` idêntico nos dois modos, e uma única cópia do store restante no
+disco — fora de qualquer repositório git.

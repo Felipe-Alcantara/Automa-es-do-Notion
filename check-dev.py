@@ -10,13 +10,40 @@ Uso: python check-dev.py
 
 from __future__ import annotations
 
-import subprocess
+import importlib.util
 import sys
 from pathlib import Path
 
 MODULOS = ["notion-starter", "notion-tasks-cli", "notion-workspace-app"]
 ROOT = Path(__file__).resolve().parent
 MODULOS_DIR = ROOT / "modules"
+
+
+def origem_do_starter(modulos_dir: Path) -> str:
+    """Diz de onde o ``notion_starter`` importado neste Python vem.
+
+    Esta pergunta existe porque a resposta errada é silenciosa: o
+    ``notion-tasks-cli`` declara o starter como ``git+https://github.com/...``,
+    então instalar a CLI depois do starter troca a cópia editável de
+    ``modules/`` por uma baixada do GitHub. Nada quebra — o comando continua
+    funcionando, só que com outro código, e a correção feita aqui do lado não é
+    exercida por ninguém. Medido em 24/08/2026.
+    """
+
+    spec = importlib.util.find_spec("notion_starter")
+    if spec is None or not spec.origin:
+        return "[INFO] notion_starter não está instalado neste Python"
+
+    local = (modulos_dir / "notion-starter" / "src").resolve()
+    origem = Path(spec.origin).resolve()
+    if local in origem.parents:
+        return "[OK] notion_starter vem de modules/notion-starter (editável)"
+    return (
+        "[AVISO] notion_starter NÃO vem de modules/: edições locais não têm efeito.\n"
+        f"  Importando de: {origem.parent}\n"
+        "  Conserte com: python start_app.py → Instalar/Setup → CLI notion-tasks\n"
+        "  (ou instale a CLI primeiro e o starter POR ÚLTIMO, ambos --editable)"
+    )
 
 
 def tabuleiro() -> tuple[bool, list[str]]:
@@ -34,7 +61,7 @@ def tabuleiro() -> tuple[bool, list[str]]:
 
     # 2. bootstrap.py rodou?
     if not MODULOS_DIR.exists():
-        msgs.append(f"[FALHA] `modules/` não existe. Rode: python bootstrap.py")
+        msgs.append("[FALHA] `modules/` não existe. Rode: python bootstrap.py")
         ok = False
     else:
         mensagens_modulos: list[str] = []
@@ -46,7 +73,7 @@ def tabuleiro() -> tuple[bool, list[str]]:
             else:
                 mensagens_modulos.append(f"  [FALHA] {m}")
                 faltam.append(m)
-        msgs.append(f"[OK] modules/")
+        msgs.append("[OK] modules/")
         msgs.extend(mensagens_modulos)
         if faltam:
             msgs.append(f"  (faltam: {', '.join(faltam)} — rode `python bootstrap.py`)")
@@ -55,18 +82,24 @@ def tabuleiro() -> tuple[bool, list[str]]:
     # 3. .env?
     env_file = ROOT / ".env"
     if env_file.exists():
-        msgs.append(f"[OK] .env existente")
+        msgs.append("[OK] .env existente")
     else:
-        msgs.append(f"[INFO] .env não encontrado (necessário para usar a CLI)")
+        msgs.append("[INFO] .env não encontrado (necessário para usar a CLI)")
 
     # 4. Deps instaladas?
-    try:
-        import pytest
-        import requests
+    #
+    # `find_spec` em vez de `import`: aqui a pergunta e se o pacote esta
+    # disponivel, e importar de verdade so para descobrir isso executa o modulo
+    # inteiro e deixa um import sem uso que o lint (com razao) acusa. Assim
+    # tambem da para dizer QUAL pacote falta, em vez de parar no primeiro.
+    faltam_pacotes = [nome for nome in ("pytest", "requests") if importlib.util.find_spec(nome) is None]
+    if faltam_pacotes:
+        msgs.append(f"[AVISO] Alguns pacotes faltam: {', '.join(faltam_pacotes)}")
+    else:
+        msgs.append("[OK] pytest, requests instalados")
 
-        msgs.append(f"[OK] pytest, requests instalados")
-    except ImportError as e:
-        msgs.append(f"[AVISO] Alguns pacotes faltam: {e}")
+    # 5. O notion_starter que roda é o de modules/ ou uma cópia do GitHub?
+    msgs.append(origem_do_starter(MODULOS_DIR))
 
     return ok, msgs
 
