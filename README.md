@@ -114,14 +114,32 @@ Isso funciona em Windows, macOS e Linux. Para uma instalação manual equivalent
 
 ```bash
 python bootstrap.py
-python -m pip install --editable modules/notion-starter
 python -m pip install --editable modules/notion-tasks-cli
+python -m pip install --editable modules/notion-starter   # por último, de propósito
 python -m cli.notion_tasks --help
+python check-dev.py            # confirma de onde o notion_starter está vindo
 ```
 
 Use sempre `python -m pip` (não um `pip` de outro Python). A instalação
 editável é intencional: atualizações feitas nos módulos ficam disponíveis para
 `notion-tasks` sem reinstalar outra cópia.
+
+> **A ordem é o contrário da intuitiva, e isso não é detalhe.** O
+> `notion-tasks-cli` declara `notion-starter @ git+https://github.com/...`, então
+> instalar a CLI **baixa o starter do GitHub e desinstala** o editável que
+> estivesse no lugar. Instalando o starter por último, ele fica sendo a última
+> palavra. Na ordem inversa nada quebra — a CLI continua funcionando, só que com
+> outro código, e as edições em `modules/notion-starter` deixam de ter efeito.
+> `python check-dev.py` responde de onde o `notion_starter` está vindo; se ele
+> avisar que não vem de `modules/`, refaça a instalação nesta ordem.
+>
+> **Instalar os dois de uma vez só não funciona.** `pip install -e A -e B` falha com
+> `ResolutionImpossible`, porque o pip não concilia "o starter é o local" com "o
+> starter é o do GitHub" — são dois passos, sempre.
+>
+> Os perfis salvos (`.notion-workspaces.json`) ficam **ao lado do pacote instalado**,
+> então trocar o modo de instalação parece apagá-los. Eles não se perdem: o arquivo
+> continua na pasta da instalação anterior; copie-o para `modules/notion-tasks-cli/`.
 
 Configure o token:
 

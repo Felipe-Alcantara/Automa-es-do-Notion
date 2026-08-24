@@ -19,6 +19,33 @@ ROOT = Path(__file__).resolve().parent
 MODULOS_DIR = ROOT / "modules"
 
 
+def origem_do_starter(modulos_dir: Path) -> str:
+    """Diz de onde o ``notion_starter`` importado neste Python vem.
+
+    Esta pergunta existe porque a resposta errada é silenciosa: o
+    ``notion-tasks-cli`` declara o starter como ``git+https://github.com/...``,
+    então instalar a CLI depois do starter troca a cópia editável de
+    ``modules/`` por uma baixada do GitHub. Nada quebra — o comando continua
+    funcionando, só que com outro código, e a correção feita aqui do lado não é
+    exercida por ninguém. Medido em 24/08/2026.
+    """
+
+    spec = importlib.util.find_spec("notion_starter")
+    if spec is None or not spec.origin:
+        return "[INFO] notion_starter não está instalado neste Python"
+
+    local = (modulos_dir / "notion-starter" / "src").resolve()
+    origem = Path(spec.origin).resolve()
+    if local in origem.parents:
+        return "[OK] notion_starter vem de modules/notion-starter (editável)"
+    return (
+        "[AVISO] notion_starter NÃO vem de modules/: edições locais não têm efeito.\n"
+        f"  Importando de: {origem.parent}\n"
+        "  Conserte com: python start_app.py → Instalar/Setup → CLI notion-tasks\n"
+        "  (ou instale a CLI primeiro e o starter POR ÚLTIMO, ambos --editable)"
+    )
+
+
 def tabuleiro() -> tuple[bool, list[str]]:
     """Verifica o estado do workspace."""
 
@@ -70,6 +97,9 @@ def tabuleiro() -> tuple[bool, list[str]]:
         msgs.append(f"[AVISO] Alguns pacotes faltam: {', '.join(faltam_pacotes)}")
     else:
         msgs.append("[OK] pytest, requests instalados")
+
+    # 5. O notion_starter que roda é o de modules/ ou uma cópia do GitHub?
+    msgs.append(origem_do_starter(MODULOS_DIR))
 
     return ok, msgs
 
