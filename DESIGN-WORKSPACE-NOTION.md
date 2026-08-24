@@ -9,6 +9,7 @@
 - **Uma página raiz** ("Central") concentra tudo; nenhum item órfão no workspace.
 - Cada projeto/assunto é um **tópico** na página raiz: `## Heading` + **divisória** (`---`) + databases/páginas **full-page linkadas** logo abaixo. **Sem parágrafos de introdução** entre o heading e os itens.
 - Toda linha de tarefa deve ter repositório em propriedade própria, prioridade, esforço e contexto acionável; tarefas com dependência ou causa comum devem usar relação bidirecional, nunca referências soltas apenas no título.
+- Implementações feitas por agente ficam em `Aguardando resposta` com instruções de verificação humana; somente a pessoa responsável encerra em `Concluído`.
 - Projeto com muitas bases ganha uma **página-pasta** (ex.: "Descontos VIP") com **subtópicos** internos no mesmo formato (ex.: "Bases do projeto" e "Rede de Amplificação Cruzada").
 - Hierarquia de pastas (ex.: vindas do Drive) vira tópicos/subtópicos; **só os arquivos/registros finais viram linhas de database** (ex.: Relatórios ECOVS → subtópico por membro → uma database por membro).
 

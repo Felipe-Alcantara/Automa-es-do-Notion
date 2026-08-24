@@ -134,6 +134,7 @@ notion-tasks conteudo <id>       # propriedades + corpo. Se vier "databases_dent
                                  # o conteúdo são as LINHAS da tabela, não esta página
 notion-tasks schema <id>         # colunas, tipos, valores aceitos e relações do database
                               # tarefas também exigem Repositório, prioridade, esforço, contexto e relação quando aplicável
+                              # implementação concluída pelo agente fica em Aguardando resposta para revisão humana
 
 # Tarefas
 notion-tasks listar

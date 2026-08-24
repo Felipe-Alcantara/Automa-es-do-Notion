@@ -72,6 +72,12 @@ Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o 
 
    Marcar concluído sem escrever o que foi feito apaga a informação mais cara do ciclo: por que a solução foi essa, o que foi tentado antes e como saber que funcionou. O título da tarefa diz o que era para fazer; só o fechamento diz o que aconteceu. Se a tarefa foi fechada sem executar (virou obsoleta, foi absorvida por outra, o problema não se confirmou), escreva isso — "não era problema, medi e o número já estava dentro" vale tanto quanto uma correção.
 
+   **A IA nunca encerra a verificação humana.** Depois de implementar, testar e registrar commit, mova a tarefa para o status existente `Aguardando resposta` e acrescente `## VERIFICAÇÃO HUMANA` com passos reproduzíveis, páginas/rotas, viewports, comportamento esperado, regressões a conferir e o que não foi validado. Só a pessoa responsável pode mover para `Concluído` após conferir.
+
+10. **Regra absoluta de rastreabilidade**: qualquer descoberta, alteração, correção, melhoria, refactor ou decisão relevante passa pelo fluxo `descobrir → investigar → criar/atualizar TASK → definir aceite e risco → implementar quando permitido → testar → revisar diff → commitar → atualizar TASK com arquivos, commit, testes e verificação humana → Aguardando resposta`. Não existe alteração relevante sem task. Antes de criar, pesquise e atualize a tarefa existente quando houver equivalência semântica.
+
+   Cada implementação deve registrar também `## ALTERAÇÃO REALIZADA`, `## ARQUIVOS ALTERADOS`, `## TESTES EXECUTADOS`, `## RESULTADO`, `## RISCO` e `## VERIFICAÇÃO HUMANA`. Registre tentativas descartadas, limitações, regressões possíveis e validações que ficaram fora.
+
 **Receita completa — "coloque isto no meu database":**
 
 ```bash
