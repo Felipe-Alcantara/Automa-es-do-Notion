@@ -133,7 +133,7 @@ notion-tasks --perfil <alias> <comando> # usa outro perfil só nesta execução
 notion-tasks conteudo <id>       # propriedades + corpo. Se vier "databases_dentro",
                                  # o conteúdo são as LINHAS da tabela, não esta página
 notion-tasks schema <id>         # colunas, tipos, valores aceitos e relações do database
-                              # tarefas também exigem prioridade, esforço, contexto e relação quando aplicável
+                              # tarefas também exigem Repositório, prioridade, esforço, contexto e relação quando aplicável
 
 # Tarefas
 notion-tasks listar

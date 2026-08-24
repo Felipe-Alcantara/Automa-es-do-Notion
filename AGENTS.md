@@ -61,6 +61,7 @@ Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o 
    - no corpo, as seções `## Contexto`, `## Evidência`, `## Impacto`, `## Resolução sugerida`, `## Validação` e `## Confiança`;
    - a relação **`Tarefas relacionadas`** quando houver dependência, mesmo componente, causa comum ou sequência de execução. Se não houver relação real, não invente uma;
    - título específico, com projeto/área e verbo de ação. `Melhorar o frontend` não é tarefa suficiente.
+   - a propriedade separada **`Repositório`** deve conter o projeto afetado; não dependa apenas do prefixo do título para identificar onde mexer.
 
    Para preencher uma tarefa existente, leia primeiro propriedades e corpo, consulte o schema e use `editar-linha` para propriedades, `escrever` para o contexto e `relacionar` para relações. Não atribua prioridade, esforço, evidência ou relação por inferência sem base no código, histórico ou decisão do usuário.
 
