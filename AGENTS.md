@@ -55,7 +55,16 @@ Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o 
 
 7. **Regra de organização**: se o usuário não indicar um jeito específico de organizar o workspace, use o modelo padrão registrado em [`DESIGN-WORKSPACE-NOTION.md`](DESIGN-WORKSPACE-NOTION.md) (tópicos = heading + divisória + links full-page, databases tipadas com ícone/descrição/unique_id, relações em vez de fusão, arquivo original anexado, re-parent/arquivamento).
 
-8. **Regra do fechamento**: ao **terminar uma tarefa**, registre o que foi feito em **dois lugares, sempre**:
+8. **Regra da qualidade da tarefa**: toda tarefa nova ou revisada deve ser uma unidade acionável e conter, antes de ser considerada pronta para execução:
+
+   - **Prioridade** (`Urgente`, `Alta`, `Média` ou `Baixa`) e **Esforço** (`Poucos minutos`, `Muitos minutos` ou `Poucas horas`), escolhidos pelo impacto e pelo trabalho real — nunca deixados vazios por conveniência;
+   - no corpo, as seções `## Contexto`, `## Evidência`, `## Impacto`, `## Resolução sugerida`, `## Validação` e `## Confiança`;
+   - a relação **`Tarefas relacionadas`** quando houver dependência, mesmo componente, causa comum ou sequência de execução. Se não houver relação real, não invente uma;
+   - título específico, com projeto/área e verbo de ação. `Melhorar o frontend` não é tarefa suficiente.
+
+   Para preencher uma tarefa existente, leia primeiro propriedades e corpo, consulte o schema e use `editar-linha` para propriedades, `escrever` para o contexto e `relacionar` para relações. Não atribua prioridade, esforço, evidência ou relação por inferência sem base no código, histórico ou decisão do usuário.
+
+9. **Regra do fechamento**: ao **terminar uma tarefa**, registre o que foi feito em **dois lugares, sempre**:
 
    - **No corpo da própria tarefa**, acrescentando (`escrever <page_id>`, sem `--substituir`) uma seção `## O QUE FOI FEITO` com a data, o que mudou de fato, os arquivos e commits envolvidos, como foi validado e o que ficou de fora. Só então mova o status para concluído.
    - **No relatório do dia**, na database de relatórios diários, complementando a linha `Relatório DD/MM/YYYY` daquela data — nunca criando uma segunda linha para o mesmo dia.
