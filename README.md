@@ -137,9 +137,11 @@ editável é intencional: atualizações feitas nos módulos ficam disponíveis 
 > `ResolutionImpossible`, porque o pip não concilia "o starter é o local" com "o
 > starter é o do GitHub" — são dois passos, sempre.
 >
-> Os perfis salvos (`.notion-workspaces.json`) ficam **ao lado do pacote instalado**,
-> então trocar o modo de instalação parece apagá-los. Eles não se perdem: o arquivo
-> continua na pasta da instalação anterior; copie-o para `modules/notion-tasks-cli/`.
+> A partir do `notion-tasks-cli` 0.2.1, os perfis salvos (`.notion-workspaces.json`)
+> ficam na **pasta de configuração do usuário** (`~/.config/notion-tasks/` ou
+> `%APPDATA%\notion-tasks\`), e não mais ao lado do pacote instalado — então trocar o
+> modo de instalação não mexe mais neles. Quem tinha perfis salvos antes disso não
+> precisa fazer nada: a CLI migra o arquivo na primeira execução e avisa.
 
 Configure o token:
 

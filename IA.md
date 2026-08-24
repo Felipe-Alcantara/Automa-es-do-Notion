@@ -691,3 +691,17 @@ usuário siga o local de instalação é frágil por si só — virou tarefa pr�
 `notion_starter` e `cli` importando de `modules/`, ambos 0.2.0, `pip check` sem
 nenhuma quebra envolvendo notion, `check-dev.py` em `[OK]`, e uma marca inserida em
 `modules/notion-starter` apareceu no import sem reinstalar nada (marca revertida).
+
+---
+
+## [2026-08-24] Perfis migrados para a pasta de configuração do usuário
+
+Complemento da entrada anterior. O efeito colateral ali registrado — trocar o modo de
+instalação parecer apagar os perfis — foi corrigido na origem: o `notion-tasks-cli`
+0.2.1 (`e6206c1`) passou a guardar o store em `~/.config/notion-tasks/`
+(`%APPDATA%\notion-tasks\` no Windows), com migração automática do endereço antigo.
+
+O aviso que este README trazia, mandando copiar o arquivo à mão, deixou de valer e foi
+substituído. Medido na máquina: instalação trocada de editável para não editável e de
+volta, `perfis listar` idêntico nos dois modos, e uma única cópia do store restante no
+disco — fora de qualquer repositório git.
