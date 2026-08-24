@@ -72,9 +72,15 @@ Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o 
 
    Marcar concluído sem escrever o que foi feito apaga a informação mais cara do ciclo: por que a solução foi essa, o que foi tentado antes e como saber que funcionou. O título da tarefa diz o que era para fazer; só o fechamento diz o que aconteceu. Se a tarefa foi fechada sem executar (virou obsoleta, foi absorvida por outra, o problema não se confirmou), escreva isso — "não era problema, medi e o número já estava dentro" vale tanto quanto uma correção.
 
-   **A IA nunca encerra a verificação humana.** Depois de implementar, testar e registrar commit, mova a tarefa para o status existente `Aguardando resposta` e acrescente `## VERIFICAÇÃO HUMANA` com passos reproduzíveis, páginas/rotas, viewports, comportamento esperado, regressões a conferir e o que não foi validado. Só a pessoa responsável pode mover para `Concluído` após conferir.
+   **Terminou de verdade? Mova para `Concluído`.** Depois de implementar, testar e registrar o commit, altere a propriedade `Etapa` para `Concluído` e prefixe o título com `✅`. As duas coisas, sempre: o ✅ é sinal visual, mas quem filtra a database filtra por `Etapa` — título marcado com etapa aberta faz a tarefa reaparecer na fila para sempre.
 
-10. **Regra absoluta de rastreabilidade**: qualquer descoberta, alteração, correção, melhoria, refactor ou decisão relevante passa pelo fluxo `descobrir → investigar → criar/atualizar TASK → definir aceite e risco → implementar quando permitido → testar → revisar diff → commitar → atualizar TASK com arquivos, commit, testes e verificação humana → Aguardando resposta`. Não existe alteração relevante sem task. Antes de criar, pesquise e atualize a tarefa existente quando houver equivalência semântica.
+   Acrescente ainda `## VERIFICAÇÃO HUMANA` com passos reproduzíveis, páginas/rotas, viewports, comportamento esperado e regressões a conferir. Conferir depois é bom; segurar a tarefa aberta esperando a conferência não é — a fila para de refletir o que já foi entregue.
+
+   **`Concluído` significa entregue por inteiro.** Se sobrou qualquer parte, a tarefa **não** é concluída: prefixe o título com `⏳`, escreva no relato o que ficou de fora e mantenha a etapa aberta. Meia entrega marcada como concluída é pior que nenhuma, porque some da fila. O mesmo vale para o que depende de terceiros: se falta decisão sua, autorização de push ou alinhamento com Backend/Infra, use `Aguardando resposta` e diga no corpo o que está travando.
+
+   A database tem duas opções parecidas, `Concluído` e `Concluída`. A que vale é **`Concluído`**.
+
+10. **Regra absoluta de rastreabilidade**: qualquer descoberta, alteração, correção, melhoria, refactor ou decisão relevante passa pelo fluxo `descobrir → investigar → criar/atualizar TASK → definir aceite e risco → implementar quando permitido → testar → revisar diff → commitar → atualizar TASK com arquivos, commit, testes e verificação humana → Etapa: Concluído + ✅ no título`. Não existe alteração relevante sem task. Antes de criar, pesquise e atualize a tarefa existente quando houver equivalência semântica.
 
    Cada implementação deve registrar também `## ALTERAÇÃO REALIZADA`, `## ARQUIVOS ALTERADOS`, `## TESTES EXECUTADOS`, `## RESULTADO`, `## RISCO` e `## VERIFICAÇÃO HUMANA`. Registre tentativas descartadas, limitações, regressões possíveis e validações que ficaram fora.
 
