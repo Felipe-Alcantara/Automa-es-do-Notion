@@ -94,6 +94,14 @@ def _instalar_cli_dos_modulos() -> int:
 
     O modo editável mantém o executável sincronizado com ``modules/`` e evita
     que uma cópia antiga em ``site-packages`` seja usada silenciosamente.
+
+    **A ordem importa, e é o contrário da intuitiva.** O ``pyproject.toml`` do
+    ``notion-tasks-cli`` declara ``notion-starter @ git+https://github.com/...``:
+    instalar a CLI baixa o starter do GitHub e **desinstala** o editável que
+    estivesse no lugar. Instalando o starter por último, ele é a última palavra
+    e ``modules/notion-starter`` fica sendo o código que roda de fato. Medido em
+    24/08/2026 num venv limpo: na ordem inversa, ``notion_starter.__file__``
+    aponta para ``site-packages``; nesta ordem, aponta para ``modules/``.
     """
 
     faltantes = [str(p) for p in (STARTER_DIR, CLI_DIR) if not p.exists()]
@@ -103,7 +111,7 @@ def _instalar_cli_dos_modulos() -> int:
         print("Ausentes: " + ", ".join(faltantes))
         return 1
 
-    for modulo in (STARTER_DIR, CLI_DIR):
+    for modulo in (CLI_DIR, STARTER_DIR):  # starter por último: ver docstring
         codigo = _rodar(
             [sys.executable, "-m", "pip", "install", "--editable", str(modulo)],
             descricao=f"Instalando {modulo.name} a partir de modules/…",

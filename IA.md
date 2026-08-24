@@ -628,3 +628,66 @@ cópias do `notion_starter` — o `client.py` instalado e o do módulo são igua
 trecho envolvido. São testes desatualizados em relação ao comportamento de
 "ler antes de escrever". Fora do critério desta tarefa (que cobre `notion-starter`
 e `notion-tasks-cli`); virou tarefa própria.
+
+---
+
+## [2026-08-24] As três cópias do `notion-starter`: a ordem de instalação era o bug
+
+**Correção de rota da entrada [2026-08-21] acima.** Aquela entrada registrou que o
+setup passou a instalar `notion-starter` **antes** de `notion-tasks-cli` "para evitar
+que o executável use uma cópia antiga em `site-packages`". Medido agora, a ordem faz
+exatamente o contrário do que a entrada prometia.
+
+### O que foi medido (24/08/2026, venv limpo, Python 3.12)
+
+O `pyproject.toml` do `notion-tasks-cli` declara
+`notion-starter @ git+https://github.com/Felipe-Alcantara/notion-starter.git`.
+Consequência: **instalar a CLI baixa o starter do GitHub e desinstala o editável**.
+
+| Ordem | Resultado de `notion_starter.__file__` |
+| --- | --- |
+| starter, depois CLI (a documentada) | `site-packages/notion_starter/__init__.py` — a cópia do GitHub |
+| CLI, depois starter | `modules/notion-starter/src/notion_starter/__init__.py` — o código local |
+
+A saída do pip é explícita no passo errado: `Attempting uninstall: notion-starter` →
+`Successfully uninstalled` → instala a baixada. Nada falha, nada avisa.
+
+Instalar os dois de uma vez (`pip install -e A -e B`) **não é alternativa**: falha com
+`ResolutionImpossible`, e não por defasagem de versão — as duas cópias já estavam em
+0.2.0, no mesmo commit `55c866d`. O conflito é o *pin por URL direta* em si.
+
+### Decisão
+
+Fonte de verdade continua sendo **o GitHub publicado** — é o que faz
+`pip install git+…/notion-tasks-cli` funcionar em qualquer máquina, e é o que o
+`bootstrap.py` clona. Descartada a dependência por caminho relativo: tornaria o
+repo autossuficiente ao preço de quebrar a instalação de quem não tem o hub clonado.
+O que muda é o **ambiente de desenvolvimento**, que passa a sobrepor o starter pela
+cópia editável de `modules/`.
+
+### O que mudou
+
+- `start_app.py`: `_instalar_cli_dos_modulos` instala `(CLI_DIR, STARTER_DIR)` — starter
+  por último, com o porquê na docstring.
+- `check-dev.py`: `origem_do_starter` responde de onde o `notion_starter` vem e, quando
+  não vem de `modules/`, diz como consertar. Este é o guarda: o modo de falha era
+  silencioso, agora tem quem grite.
+- `tests/test_check_dev.py`: três casos de comportamento do guarda (editável, cópia
+  errada, não instalado). Primeira suíte do hub.
+- `README.md` e `AGENTS.md`: ordem corrigida e o motivo explicado onde ele é lido.
+
+### Efeito colateral que quase passou por perdido
+
+Trocar o modo de instalação **parece apagar os perfis salvos**: `perfis listar` passou a
+dizer "Nenhum perfil configurado". Não apaga — `core/workspaces.py` define
+`ARQUIVO_PADRAO = Path(__file__).resolve().parents[1] / ".notion-workspaces.json"`, ou
+seja, o arquivo mora **ao lado do pacote instalado**, e mudar a instalação muda o
+endereço. Bastou copiar o arquivo da pasta antiga para `modules/notion-tasks-cli/`
+(o `.gitignore` do módulo já o cobre; nada disso vai para commit). Que o estado do
+usuário siga o local de instalação é frágil por si só — virou tarefa própria.
+
+### Estado final da máquina
+
+`notion_starter` e `cli` importando de `modules/`, ambos 0.2.0, `pip check` sem
+nenhuma quebra envolvendo notion, `check-dev.py` em `[OK]`, e uma marca inserida em
+`modules/notion-starter` apareceu no import sem reinstalar nada (marca revertida).
