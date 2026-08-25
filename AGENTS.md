@@ -74,9 +74,15 @@ Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o 
 
    **Terminou de verdade? Mova para `Concluído`.** Depois de implementar, testar e registrar o commit, altere a propriedade `Etapa` para `Concluído` e prefixe o título com `✅`. As duas coisas, sempre: o ✅ é sinal visual, mas quem filtra a database filtra por `Etapa` — título marcado com etapa aberta faz a tarefa reaparecer na fila para sempre.
 
+   **Antes de mover, valide de verdade** — o que for aplicável ao tipo de mudança: build, lint, testes automatizados, erros de console, erros de TypeScript, imports quebrados, o fluxo alterado testado de fato (não só a suíte), responsividade em desktop e mobile, rotas/páginas afetadas, chamadas de API, `git diff` revisado e nenhum segredo/credencial commitado. Falhou algo dessa lista? Não mova para `Concluído` — corrija e valide de novo antes de tentar de novo.
+
+   **Não abra uma task nova só para registrar que outra terminou.** O relato e a troca de `Etapa` acontecem **na task original** que gerou o trabalho — nunca crie uma segunda linha para anunciar a conclusão da primeira.
+
    Acrescente ainda `## VERIFICAÇÃO HUMANA` com passos reproduzíveis, páginas/rotas, viewports, comportamento esperado e regressões a conferir. Conferir depois é bom; segurar a tarefa aberta esperando a conferência não é — a fila para de refletir o que já foi entregue.
 
-   **`Concluído` significa entregue por inteiro.** Se sobrou qualquer parte, a tarefa **não** é concluída: prefixe o título com `⏳`, escreva no relato o que ficou de fora e mantenha a etapa aberta. Meia entrega marcada como concluída é pior que nenhuma, porque some da fila. O mesmo vale para o que depende de terceiros: se falta decisão sua, autorização de push ou alinhamento com Backend/Infra, use `Aguardando resposta` e diga no corpo o que está travando.
+   **`Concluído` significa entregue por inteiro.** Se sobrou qualquer parte, a tarefa **não** é concluída: prefixe o título com `⏳`, escreva no relato o que ficou de fora e mantenha a etapa aberta. Meia entrega marcada como concluída é pior que nenhuma, porque some da fila. O mesmo vale para o que depende de terceiros: se falta decisão sua, autorização de push ou alinhamento com Backend/Infra, use `Aguardando resposta` e diga no corpo o que está travando — e o mesmo para erro não corrigido, teste falhando ou parte relevante deixada para depois.
+
+   **Fora esses casos — entrega parcial, dependência de terceiro/decisão pendente, erro ou teste falhando — não existe motivo para uma task genuinamente pronta ficar parada em `Entrada`, `Assim que possível`, `Em breve`, `Urgente` ou `Adiada`.** Essas etapas são fila de trabalho, não arquivo de histórico; trabalho executado e validado sem ressalva vira `Concluído` no mesmo fechamento, sem precisar perguntar se deve atualizar o Notion.
 
    A database tem duas opções parecidas, `Concluído` e `Concluída`. A que vale é **`Concluído`**.
 

@@ -705,3 +705,41 @@ O aviso que este README trazia, mandando copiar o arquivo à mão, deixou de val
 substituído. Medido na máquina: instalação trocada de editável para não editável e de
 volta, `perfis listar` idêntico nos dois modos, e uma única cópia do store restante no
 disco — fora de qualquer repositório git.
+
+---
+
+## [2026-08-25] Regra do fechamento (regra 9) ganhou checklist explícito, e a `To do list!` foi auditada
+
+**Contexto.** André reforçou pessoalmente a regra 9 do `AGENTS.md` — não é mudança de
+substância, é formalização: a regra já previa que dependência de terceiro/decisão
+pendente mantém a task em `Aguardando resposta`, mas faltava uma lista concreta do que
+validar antes de fechar, e ficava implícito que não se abre task nova só para anunciar
+que outra terminou.
+
+**Decisão.** `AGENTS.md` (regra 9) ganhou: (1) checklist de validação pré-fechamento
+(build, lint, testes, console/TypeScript, imports quebrados, fluxo testado de fato,
+responsividade desktop/mobile, rotas/API afetadas, `git diff` revisado, nenhum segredo
+commitado); (2) proibição explícita de abrir task nova só para registrar a conclusão de
+outra — o relato e a troca de `Etapa` vão na task original; (3) a lista fechada de
+etapas que uma task genuinamente pronta não deve ocupar (`Entrada`, `Assim que
+possível`, `Em breve`, `Urgente`, `Adiada`) — mantendo, como já valia, a exceção de
+`Aguardando resposta` para dependência de terceiro/decisão pendente/erro não corrigido.
+
+**Auditoria feita no mesmo pedido.** Consultada a database `To do list!`
+(`3c3a8288-3584-80c1-8e89-d06622bcef9b`, 100 linhas) via API direta
+(`NotionClient.consultar_database(..., buscar_todos=True)`, script descartável, não
+commitado) para comparar `Etapa` × prefixo do título em todas as linhas de uma vez, sem
+abrir o corpo de cada uma. **Resultado: nenhuma linha com `✅` e `Etapa != Concluído`,
+nenhuma com `Etapa == Concluído` sem `✅`, nenhuma `Concluído` com `Em andamento`
+marcado.** O bug histórico das "24 tarefas" (regra 9, ver `regra-fechamento-de-tarefa`
+na memória) não recorreu. 34 linhas em `Aguardando resposta`: as com prefixo `⏳` são
+trabalho feito e travado em terceiro (ex.: PR aberto em repositório do Felipe); as sem
+prefixo são achados de auditoria ainda não iniciados — não é conclusão escondida. Não
+foi feita leitura do corpo das ~63 linhas sem marca (custo alto, sinal mecânico já
+negativo); fica como auditoria mais profunda sob demanda, não como pendência.
+
+**Também corrigido nesta sessão:** o Apêndice B de um prompt de fluxo externo (fora
+deste repositório, entregue por um app cliente) tinha o ID e o schema do database de
+Relatórios desatualizados. O ID e o schema corretos já estavam documentados na memória
+`database-relatorios-andre-notion`; a divergência era só no artefato externo, não neste
+hub.
