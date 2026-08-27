@@ -752,7 +752,7 @@ qualquer arquivo criado em `%APPDATA%\notion-tasks\` — incluindo o store de to
 completo e commit no `IA.md` do `notion-tasks-cli` (`51bf659`); virou task própria lá,
 não consertada aqui em cima da hora.
 
-### Critério de aceite — como ficou
+### Critério de aceite — como ficou (até 27/08)
 
 - `check-dev.py` responde `[OK]` no Windows depois do setup pelo menu. **Feito.**
   Linux já estava medido (24/08). macOS **não medido** — sem máquina.
@@ -760,3 +760,52 @@ não consertada aqui em cima da hora.
   macOS **não medido**.
 - Se algum sistema divergir, o motivo fica registrado — não divergiu em nenhum dos
   dois sistemas medidos até aqui.
+
+## [2026-08-27] macOS validado — os três sistemas fecham sem divergência
+
+**Continuação da entrada acima, mesmo dia.** Máquina Apple ficou disponível na
+sessão seguinte; fecha a lacuna que a validação de Windows deixou.
+
+### O que foi medido (macOS, Python 3.14.7, Darwin 24.5.0)
+
+Ambiente isolado em `/tmp/notion-macos-validation/`: os três módulos
+(`notion-starter`, `notion-tasks-cli`, `notion-workspace-app`) clonados do zero
+como irmãos do hub, também clonado do zero ali — para exercitar de propósito o
+caminho de risco citado no ponto de atenção da task: `bootstrap.py` criando
+**symlink** de verdade (não junction — isso é coisa de Windows), reusando o
+clone-irmão em vez de duplicar.
+
+| Verificação | Resultado |
+| --- | --- |
+| `bootstrap.py` cria symlink (não clone separado), sem privilégio elevado | ✔ — `ls -la modules/` mostra `lrwxr-xr-x` apontando para `/private/tmp/notion-macos-validation/<módulo>`; nenhum `sudo` envolvido |
+| `check-dev.py` depois do setup pela ordem nova | `[OK] notion_starter vem de modules/notion-starter (editável)` |
+| Marca inserida em `modules/notion-starter/src/notion_starter/__init__.py` aparece no import sem reinstalar | ✔ — `import notion_starter` enxergou o atributo novo direto do clone-irmão via symlink; revertido com `git checkout --` em seguida, `git status` limpo |
+| `pasta_configuracao()` sem `XDG_CONFIG_HOME` definido | `~/.config/notion-tasks` — o fallback documentado, medido com `env -i` para garantir que a variável não estava setada por acidente no shell |
+
+A instalação foi disparada chamando `_instalar_cli_dos_modulos()` diretamente (mesma
+função do menu do `start_app.py`), mesmo motivo já registrado na entrada de Windows:
+o menu usa `rich` e não tem modo não interativo para automação.
+
+### Nada divergiu
+
+Symlink em vez de junction é a única diferença estrutural entre macOS e Windows, e já
+era esperada (é o próprio código que faz essa distinção por `os.name`). Fora isso, os
+três sistemas — Linux (24/08), Windows e macOS (27/08) — concordam: ordem de instalação
+(CLI antes do `notion-starter`) resolve o problema original, `check-dev.py` confirma
+editável, marca aparece sem reinstalar, pasta de configuração cai no padrão XDG.
+
+### Critério de aceite — fechado nos três sistemas
+
+- `check-dev.py` responde `[OK]` depois do setup pelo menu (ou pela função direta) em
+  Linux, Windows e macOS. **Feito nos três.**
+- A marca aparece sem reinstalação nos três sistemas. **Feito nos três.**
+- `pasta_configuracao()` medida (não suposta) nos três sistemas. **Feito nos três** —
+  Linux e macOS caem no fallback XDG, Windows usa `%APPDATA%`.
+- Se algum sistema divergir, o motivo fica registrado — **nenhum divergiu** além da
+  diferença esperada symlink/junction.
+
+### Evidência de origem
+
+Task: `3c991f95-497e-81af-bec1-e86f4febbec6` (subtarefa de
+`3c691f95-497e-81e0-ab46-fd05af43fd36`). Validação de Windows: entrada acima, mesmo
+`IA.md`, 27/08/2026.
