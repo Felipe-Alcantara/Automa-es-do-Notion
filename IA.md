@@ -705,3 +705,58 @@ O aviso que este README trazia, mandando copiar o arquivo à mão, deixou de val
 substituído. Medido na máquina: instalação trocada de editável para não editável e de
 volta, `perfis listar` idêntico nos dois modos, e uma única cópia do store restante no
 disco — fora de qualquer repositório git.
+
+---
+
+## [2026-08-27] A ordem de instalação validada em Windows — Linux não bastava
+
+**Continuação de [2026-08-24] acima.** Aquela entrada corrigiu a ordem de instalação
+(CLI antes do `notion-starter`) e mediu só em Linux, Python 3.12, com a ressalva
+explícita: "isso não se supõe, se mede". Ficou tarefa própria até cobrir Windows e
+macOS. Esta entrada fecha o Windows; macOS continua sem máquina disponível para medir.
+
+### O que foi medido (Windows, Python 3.14 — não o mesmo Python da medição original)
+
+Ambiente isolado: hub clonado do zero num diretório novo, ao lado dos três módulos já
+clonados nesta máquina (`E:\Programação\Github\{notion-starter,notion-tasks-cli,
+notion-workspace-app}`), para exercitar de propósito o caminho de risco que o próprio
+ponto de atenção da task citava — o `bootstrap.py` criando **junction**, não clonando
+separado.
+
+| Verificação | Resultado |
+| --- | --- |
+| `bootstrap.py` cria junction (não clone separado) | ✔ — `icacls`/`Get-Item` confirmam `LinkType=Junction`, sem privilégio de administrador |
+| `check-dev.py` depois do setup pela ordem nova | `[OK] notion_starter vem de modules/notion-starter (editável)` |
+| Marca inserida em `modules/notion-starter/src/notion_starter/__init__.py` aparece no import sem reinstalar | ✔ — testado no arquivo real do clone-irmão (via junction), revertido com `git checkout --` em seguida |
+| `.notion-workspaces.json` — `pasta_configuracao()` | `%APPDATA%\notion-tasks`, o valor real do ambiente, não o fallback |
+
+A instalação foi disparada chamando `_instalar_cli_dos_modulos()` diretamente (a mesma
+função que o menu do `start_app.py` chama) num venv limpo — o menu em si usa `rich` e
+não tem modo não interativo para automação; a função é o que estava sob teste, não a
+navegação do menu.
+
+### O que ficou fora
+
+**macOS não foi medido** — sem máquina disponível nesta sessão. Continua exatamente a
+mesma lacuna que a entrada de 24/08 já declarava, agora restrita a um sistema em vez de
+dois.
+
+### Um achado que não estava no escopo original, mas é do mesmo trabalho
+
+A parte da task sobre o endereço dos perfis (item acrescentado em 24/08) pedia
+confirmar se a ACL herdada no Windows é aceitável para guardar token. **Não é, nesta
+máquina**: `%APPDATA%\Roaming` concede Leitura e Execução ao grupo
+`CodexSandboxUsers` (sandbox do Codex CLI já presente aqui), e isso propaga para
+qualquer arquivo criado em `%APPDATA%\notion-tasks\` — incluindo o store de token.
+`os.chmod`, que o código já sabia ser no-op no Windows, não protege disso. Detalhe
+completo e commit no `IA.md` do `notion-tasks-cli` (`51bf659`); virou task própria lá,
+não consertada aqui em cima da hora.
+
+### Critério de aceite — como ficou
+
+- `check-dev.py` responde `[OK]` no Windows depois do setup pelo menu. **Feito.**
+  Linux já estava medido (24/08). macOS **não medido** — sem máquina.
+- A marca aparece sem reinstalação nos três sistemas. **Feito em Linux e Windows.**
+  macOS **não medido**.
+- Se algum sistema divergir, o motivo fica registrado — não divergiu em nenhum dos
+  dois sistemas medidos até aqui.
