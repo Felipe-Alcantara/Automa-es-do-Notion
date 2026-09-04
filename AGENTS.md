@@ -22,7 +22,9 @@ O `bootstrap.py` **reusa clones existentes**: se um módulo já estiver clonado 
 
 O pedido é: *criar tarefa, ler página, mapear workspace, buscar dados, sincronizar…*
 
-**Ação:** instale uma vez (`pip install notion-tasks-cli`), depois execute comandos.
+**Ação:** instale uma vez a distribuição pública (`pipx install
+"notion-automacoes[app]"`), depois execute comandos. O executável histórico
+`notion-tasks` continua disponível como alias.
 
 ```bash
 notion-tasks listar
@@ -103,9 +105,10 @@ Nunca desenvolva funcionalidade neste hub; este é documentação e roteamento.
 
 ## Roteamento — MODO USO
 
-Após a confirmação do nome e da publicação: `python -m pip install "notion-automacoes[app]"`
-(`pipx install "notion-automacoes[app]"` é a forma recomendada para uso global).
-Até essa confirmação, o fluxo de desenvolvimento continua sendo `python bootstrap.py`
+Para uso global, instale a distribuição pública: `pipx install
+"notion-automacoes[app]"` (`python -m pip install "notion-automacoes[app]"` também
+é válido em um ambiente virtual).
+Para desenvolvimento pelo checkout, o fluxo continua sendo `python bootstrap.py`
 seguido da instalação editável dos módulos.
 Requer autenticação: um **perfil ativo** salvo na CLI **ou** `NOTION_TOKEN` (e opcionalmente
 `NOTION_DATABASE_ID`) no ambiente/`.env` — veja a precedência abaixo.
@@ -162,7 +165,7 @@ A CLI gerencia os perfis locais de workspaces/keys com
 | Importar/atualizar repositórios do GitHub numa database (vários perfis de uma vez, com dedup) | `notion-tasks atualizar-github --contas <login/@handle/URL,...>` (upsert por URL, propriedades ricas e README em subpágina). Flags: `--sem-readme` (só propriedades), `--sem-arquivados` (ignora arquivados), `--apenas-mudancas` (pula sem alteração). Guia: [`docs/GITHUB-DATABASE.md`](docs/GITHUB-DATABASE.md) |
 | Trocar de workspace / gerenciar keys salvas | `notion-tasks perfis listar / adicionar / usar / mostrar / remover`; numa única execução, `--perfil <alias>` |
 | Interface gráfica ou servidor MCP | use o `notion-workspace-app` (`python start_app.py`) |
-| **CLI distribuída sem clone** | instale `notion-automacoes[app]`; use `notion-automacoes tasks`, `auth`, `doctor`, `app start` e `mcp start` (publicação pendente de confirmar nome/ownership) |
+| **CLI distribuída sem clone** | instale `notion-automacoes[app]`; use `notion-automacoes tasks`, `auth`, `doctor`, `app start` e `mcp start` (versão pública atual: `0.3.0`) |
 
 ## Roteamento — MODO DESENVOLVIMENTO
 

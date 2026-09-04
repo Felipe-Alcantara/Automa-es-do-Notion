@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Menu de entrada do hub Automações do Notion — a porta de entrada única.
+"""Menu de desenvolvimento do hub Automações do Notion — a porta de entrada única.
 
-Rode ``python start_app.py`` para abrir um menu interativo onde você instala a
-CLI, sincroniza os módulos de desenvolvimento, configura o token do Notion, vê o
-estado do ambiente e opera o Notion pela CLI. Não é preciso decorar comando.
+Rode ``python start_app.py`` para abrir um menu interativo onde você prepara os
+módulos de desenvolvimento, configura o token do Notion, vê o estado do ambiente
+e opera o Notion pela CLI. Para uso sem checkout, instale
+``notion-automacoes[app]`` conforme ``docs/DISTRIBUICAO.md``.
 
 Este repositório é o **hub** do ecossistema: ele roteia pedidos de *uso* (via a
-CLI ``notion-tasks``) e de *desenvolvimento* (os módulos em ``modules/``). O menu
+CLI ``notion-automacoes``/``notion-tasks``) e de *desenvolvimento* (os módulos em ``modules/``). O menu
 reflete essas duas frentes, seguindo o contrato de menu de entrada do Felixo
 System Design: interativo, colorido e descritivo, com no mínimo Iniciar/Rodar,
 Instalar/Setup, Configurar e Status/Sair. Cross-platform (Windows, Linux, macOS),
@@ -26,11 +27,10 @@ BOOTSTRAP = RAIZ / "bootstrap.py"
 CHECK_DEV = RAIZ / "check-dev.py"
 MODULES_DIR = RAIZ / "modules"
 
-# Pacote pip que expõe a CLI e o módulo importável usado para rodá-la de qualquer
-# diretório (``python -m cli.notion_tasks``).
-CLI_PACOTE = "notion-tasks-cli"
+# Pacote público que expõe a CLI; o módulo abaixo também é usado no modo editável
+# para rodá-la de qualquer diretório (``python -m cli.notion_tasks``).
+CLI_PACOTE = "notion-automacoes"
 CLI_MODULO = "cli.notion_tasks"
-CLI_INSTALL_URL = "git+https://github.com/Felipe-Alcantara/notion-tasks-cli.git"
 STARTER_DIR = MODULES_DIR / "notion-starter"
 CLI_DIR = MODULES_DIR / "notion-tasks-cli"
 
@@ -84,7 +84,7 @@ def _rodar(comando: list[str], *, descricao: str = "") -> int:
 
 
 def _cli_instalada() -> bool:
-    """A CLI notion-tasks está importável neste Python?"""
+    """A CLI distribuída e seu alias estão importáveis neste Python?"""
 
     return importlib.util.find_spec(CLI_MODULO) is not None
 
@@ -95,13 +95,11 @@ def _instalar_cli_dos_modulos() -> int:
     O modo editável mantém o executável sincronizado com ``modules/`` e evita
     que uma cópia antiga em ``site-packages`` seja usada silenciosamente.
 
-    **A ordem importa, e é o contrário da intuitiva.** O ``pyproject.toml`` do
-    ``notion-tasks-cli`` declara ``notion-starter @ git+https://github.com/...``:
-    instalar a CLI baixa o starter do GitHub e **desinstala** o editável que
-    estivesse no lugar. Instalando o starter por último, ele é a última palavra
-    e ``modules/notion-starter`` fica sendo o código que roda de fato. Medido em
-    24/08/2026 num venv limpo: na ordem inversa, ``notion_starter.__file__``
-    aponta para ``site-packages``; nesta ordem, aponta para ``modules/``.
+    **A ordem importa no desenvolvimento.** O CLI e o starter são instalados em
+    modo editável, com o starter por último, para garantir que
+    ``modules/notion-starter`` seja a cópia executada. A distribuição pública,
+    por outro lado, resolve a dependência versionada no PyPI e não depende deste
+    checkout. Medido em 24/08/2026 num venv limpo.
     """
 
     faltantes = [str(p) for p in (STARTER_DIR, CLI_DIR) if not p.exists()]
@@ -165,7 +163,7 @@ def _gravar_env(nome: str, valor: str) -> None:
 # Ações do menu                                                               #
 # --------------------------------------------------------------------------- #
 def acao_usar(console) -> None:
-    """Iniciar/Rodar (uso): operar o Notion pela CLI notion-tasks."""
+    """Iniciar/Rodar (desenvolvimento): operar o Notion pela CLI."""
 
     import questionary
 
@@ -232,7 +230,7 @@ def acao_desenvolver(console) -> None:
 
 
 def acao_instalar(console) -> None:
-    """Instalar / Setup: CLI notion-tasks, deps do menu e módulos de dev."""
+    """Instalar / Setup: CLI, deps do menu e módulos de desenvolvimento."""
 
     import questionary
 
@@ -240,7 +238,7 @@ def acao_instalar(console) -> None:
         "O que instalar/preparar?",
         choices=[
             questionary.Choice(
-                f"CLI notion-tasks ({CLI_PACOTE})", value="cli", checked=not _cli_instalada()
+                f"CLI ({CLI_PACOTE}; alias notion-tasks)", value="cli", checked=not _cli_instalada()
             ),
             questionary.Choice("Dependências do menu (rich, questionary)", value="tui"),
             questionary.Choice("Módulos de desenvolvimento (bootstrap.py)", value="modulos"),
@@ -305,7 +303,7 @@ def acao_status(console) -> None:
     def marca(ok: bool) -> str:
         return "[green]OK[/green]" if ok else "[red]falta[/red]"
 
-    tabela.add_row("CLI notion-tasks instalada", marca(_cli_instalada()))
+    tabela.add_row("CLI notion-automacoes instalada", marca(_cli_instalada()))
     tabela.add_row("Módulos clonados (modules/)", marca(MODULES_DIR.exists()))
     tabela.add_row(".env presente", marca(ENV_FILE.exists()))
 

@@ -12,6 +12,12 @@
 > **Documento vivo**: evolui junto com `README.md` e `IA.md`. Os esboços de
 > [PLANO.md](PLANO.md) (Fase 2) são a origem; este documento os fixa.
 
+> **Localização atual:** a implementação está distribuída entre
+> [`notion-starter`](https://github.com/Felipe-Alcantara/notion-starter),
+> [`notion-tasks-cli`](https://github.com/Felipe-Alcantara/notion-tasks-cli) e
+> [`notion-workspace-app`](https://github.com/Felipe-Alcantara/notion-workspace-app).
+> Os caminhos de código usados nos exemplos apontam para esses repositórios.
+
 ---
 
 ## 📋 Índice
@@ -30,7 +36,7 @@ Os objetos de domínio são **simples e estáveis**: a forma que front, IA e int
 consomem, sem conhecer o JSON cru do Notion. A tradução entre o Notion e estes objetos é
 responsabilidade da camada `integrations` (`notion_starter`), nunca da API nem do front.
 
-### `Tarefa` (em [`tasks.py`](../src/notion_starter/tasks.py))
+### `Tarefa` (em [`tasks.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/tasks.py))
 
 A unidade central. **Este é o contrato — não redefinir os campos existentes; só estender.**
 
@@ -176,10 +182,10 @@ Notion.
 
 ```json
 {
-  "id": "30296e2d-cd39-4cf3-8bbd-3fb2f53c0195",
+  "id": "<database_id>",
   "titulo": "Tarefas — HOME (pessoal)",
   "data_sources": ["Tarefas — HOME (pessoal)"],
-  "url": "https://app.notion.com/p/30296e2dcd394cf38bbd3fb2f53c0195"
+  "url": "https://www.notion.so/<page_url>"
 }
 ```
 
@@ -241,8 +247,8 @@ front/              SPA React + Tailwind + Vite (consome a API REST) — ciclo 2
 
 ## 5. Helpers de leitura (Fase 0)
 
-Entregues em [`src/notion_starter/readers.py`](../src/notion_starter/readers.py) — o par de
-**leitura** dos helpers de **escrita** de [`properties.py`](../src/notion_starter/properties.py).
+Entregues em [`readers.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/readers.py) — o par de
+**leitura** dos helpers de **escrita** de [`properties.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/properties.py).
 Funções puras (sem rede), cada uma devolvendo um valor simples e tratando o campo vazio.
 
 ```python
@@ -266,4 +272,4 @@ r.extrair_valores(pagina) -> dict[str, Any]   # { nome_da_coluna: valor_simples 
 
 `extrair_valores` é o atalho recomendado para front/IA/integrações lerem uma página
 inteira de uma vez. Coberto por testes puros em
-[`tests/test_readers.py`](../tests/test_readers.py).
+[`tests/test_readers.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/tests/test_readers.py).

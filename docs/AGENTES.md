@@ -15,11 +15,16 @@
 
 ---
 
-> **Estado [2026-06-26]:** o **Ciclo 1** (Agentes 0–7 abaixo) está **concluído** — a base
+> **Estado histórico [2026-06-26]:** o **Ciclo 1** (Agentes 0–7 abaixo) está **concluído** — a base
 > existe (cliente, robustez, API + front mínimo, ingestão, GitHub, IA, MCP). O trabalho
-> ativo agora é o **[Ciclo 2](#-ciclo-2--agentes-do-front-rico-cli-e-multi-tabela)** (front
+> descrito naquela época era o **[Ciclo 2](#-ciclo-2--agentes-do-front-rico-cli-e-multi-tabela)** (front
 > React, CLI para IA, multi-tabela), no fim deste arquivo. As seções dos Agentes 0–7
 > ficam como **referência histórica** do que cada papel entregou.
+
+> **Estado operacional atual [2026-09-04]:** o Ciclo 2 e a modularização foram
+> entregues nos três repositórios. Para uma tarefa nova, siga o
+> [`AGENTS.md`](../AGENTS.md) da raiz, que é o roteamento autoritativo; este
+> playbook preserva o detalhamento histórico dos papéis.
 
 ## 🔢 Resumo para configurar o canvas
 

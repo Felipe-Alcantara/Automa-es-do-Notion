@@ -4,6 +4,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
+[![PyPI](https://img.shields.io/pypi/v/notion-automacoes?style=for-the-badge&label=PyPI)](https://pypi.org/project/notion-automacoes/)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
 **Hub do ecossistema de automações do Notion — arquitetura, documentação e roteamento dos módulos que nasceram aqui.**
@@ -100,12 +101,9 @@ Automações do Notion/
 
 ### Instalação distribuída (sem clone)
 
-O caminho de usuário será a distribuição única `notion-automacoes`, com o alias
-legado `notion-tasks` preservado. A release 0.3.0 já está preparada nos três
-módulos; a publicação no PyPI aguarda confirmação de nome, ownership e metadados
-legais, porque essa decisão é irreversível.
-
-Após a confirmação, instale o produto completo com uma linha:
+O caminho de usuário é a distribuição pública `notion-automacoes`, com o alias
+legado `notion-tasks` preservado. A versão atual é `0.3.0` e os três pacotes já
+estão publicados no PyPI. O produto completo pode ser instalado com uma linha:
 
 ```bash
 pipx install "notion-automacoes[app]"
@@ -116,14 +114,27 @@ notion-automacoes doctor
 
 Esse caminho não baixa Git, não exige clone/Node/npm e serve a SPA a partir do
 wheel Python. Consulte [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md) para o
-contrato de release, smoke multiplataforma e o limite explícito do primeiro
-release (sem binários nativos).
+contrato de release, os links dos pacotes, o smoke multiplataforma e o limite
+explícito do primeiro release (sem binários nativos).
+
+Pacotes publicados:
+
+| Pacote | Papel | Link |
+| --- | --- | --- |
+| `notion-automacoes==0.3.0` | CLI única, perfis e fachada para app/MCP | [PyPI](https://pypi.org/project/notion-automacoes/) |
+| `notion-starter==0.3.0` | Biblioteca base e serviços compartilhados | [PyPI](https://pypi.org/project/notion-starter/) |
+| `notion-workspace-app==0.3.0` | API Django, SPA, launcher e servidor MCP | [PyPI](https://pypi.org/project/notion-workspace-app/) |
+| `notion-automacoes[app]` | Instalação recomendada do produto completo | [guia de distribuição](docs/DISTRIBUICAO.md) |
+
+Para usar somente a CLI, sem a interface local, instale `pipx install
+notion-automacoes`. Para atualizar uma instalação gerenciada pela ferramenta,
+execute `notion-automacoes update` e siga o comando exibido.
 
 ### Instalação (uma vez)
 
 Para desenvolvimento, ou para garantir que a CLI use exatamente o código presente em `modules/` (e não
 uma cópia antiga do `site-packages`), use o menu de entrada e escolha
-**Instalar/Setup → CLI notion-tasks**. O setup prepara os módulos e instala,
+**Instalar/Setup → CLI notion-automacoes (alias notion-tasks)**. O setup prepara os módulos e instala,
 na ordem correta, `notion-starter` e `notion-tasks-cli` em modo editável com o
 mesmo Python que executa o menu:
 
@@ -192,7 +203,7 @@ notion-tasks schema <id>         # colunas, tipos, valores aceitos e relações 
 
 # Tarefas
 notion-tasks listar
-notion-tasks criar "Tarefa" --status "Em andamento" \
+notion-tasks criar "Tarefa" --status "Entrada" \
   --set "Prioridade=Alta" --conteudo "## Contexto..."   # linha completa numa chamada
 notion-tasks mover <id> --status "Concluído"
 
@@ -361,7 +372,7 @@ Este projeto está sob a licença MIT — veja o arquivo [`LICENSE`](LICENSE).
 
 ## 👤 Autor
 
-**Felipe Martin**
+**Felipe Alcantara**
 
 - GitHub: [@Felipe-Alcantara](https://github.com/Felipe-Alcantara)
 - Módulos: [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) · [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) · [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app)

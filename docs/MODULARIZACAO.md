@@ -1,188 +1,136 @@
-# Análise de Modularização: Automações do Notion
+# 🧩 Modularização — Automações do Notion
 
-## Contexto do Projeto Atual
+> **Estado em 2026-09-04:** a separação do antigo monorepo foi concluída. O hub
+> permanece como documentação e roteamento; o código vive em três repositórios
+> independentes, com releases Python publicados em `0.3.0`.
 
-O repositório "Automações do Notion" começou como um `notion-starter-boilerplate` e evoluiu para incluir múltiplas responsabilidades:
-1. **Core Python** (`src/notion_starter/`) - Cliente Notion tipado com helpers
-2. **Servidor Django** (`server/`) - API REST completa com services
-3. **SPA React** (`front/`) - Interface web para tarefas e exploração
-4. **CLI para IA** (`cli/`) - Interface JSON estável para agentes
-5. **Servidor MCP** (`server/mcp_server.py`) - Integração com Felixo-AI-Core
-6. **Inventário GitHub** (`server/services/inventario_github.py`) - Sincronização com GitHub
+Este documento substitui a proposta antiga de separar core, servidor, frontend e
+CLI. A proposta continua registrada no histórico do projeto, mas os nomes e
+caminhos abaixo são a referência operacional atual.
 
-## Problemas Identificados
+## Arquitetura implementada
 
-1. **Acoplamento excessivo**: O cliente Notion básico está acoplado a Django e React
-2. **Escopo amplo demais**: Um único repositório tenta servir como boilerplate, app local, ferramenta CLI e servidor MCP
-3. **Complexidade de manutenção**: A estrutura `server/` tem todas as camadas (API, services, integrations) que dependem do core
-4. **Dificuldade de reuso**: Para usar apenas o cliente Notion, precisa-se do Django e dependências do servidor
-
-## Princípios de Separação (Baseados no Padrão de Qualidade)
-
-- **Bordas finas**: API deve apenas validar HTTP, regra em services
-- **Trabalho direto no main**: Por padrão, evitar branches complexos
-- **Gate obrigatório antes de entregar**: `quality_check.py` deve passar
-- **Documentação viva atualizada no mesmo commit**
-- **Não versione segredos, IDs reais ou artefatos locais**
-
-## Proposta de Arquitetura Modular
-
-### Módulo 1: `notion-py-starter` (Biblioteca Core)
-**Foco**: Cliente Python puro para API do Notion
-**Conteúdo atual**:
-- `src/notion_starter/` (client.py, properties.py, content.py, tasks.py, etc.)
-- Testes unitários relacionados
-- `pyproject.toml` simplificado (só `requests` como dependência)
-
-**Benefícios**:
-- Pode ser publicado no PyPI como `notion-starter`
-- Reutilizável em outros projetos Python
-- Mantém a filosofia atual de "ferramenta antes da solução específica"
-- Alinhado com a origem do projeto como boilerplate open-source
-
-### Módulo 2: `notion-api-server` (Servidor Django)
-**Foco**: API REST completa com serviços e integrações
-**Conteúdo atual**:
-- `server/` (Django completo: api/, services/, integrations/, core/)
-- MCP server como parte do servidor
-- Dependências Django específicas
-
-**Benefícios**:
-- Foco claro: servir como backend para frontend e integrações
-- Dependências Python otimizadas para servidor
-- Pode evoluir independentemente do core
-- Mantém a stack Django + SQLite conforme decisões fixadas
-
-### Módulo 3: `notion-tasks-ui` (SPA React)
-**Foco**: Interface web para gerenciamento de tarefas
-**Conteúdo atual**:
-- `front/` (React + Vite + Tailwind)
-- Configuração Vite atual
-- Assets e componentes específicos
-
-**Benefícios**:
-- Frontend independente do backend
-- Pode consumir qualquer servidor que siga o contrato da API
-- Mais fácil de customizar para diferentes casos de uso
-- Mantém o foco na experiência do usuário
-
-### Módulo 4: `notion-cli-tools` (Ferramentas CLI)
-**Foco**: CLI para automações e integração com IA
-**Conteúdo atual**:
-- `cli/` (interface JSON estável)
-- `examples/` (scripts executáveis)
-- Scripts de qualidade
-
-**Benefícios**:
-- Instalação minimalista para automações locais
-- Pode virar pacote CLI global (`pip install notion-cli`)
-- Mantém a filosofia de "entrada única" via menu (`start_app.py`)
-- Integração MCP pode ser módulo opcional
-
-## Organização do Monorepo vs Multi-repo
-
-### Opção A: Monorepo com estrutura clara
-```
-automações-do-notion/
-├── packages/
-│   ├── notion-starter/          (Módulo 1)
-│   ├── notion-api-server/       (Módulo 2)
-│   ├── notion-tasks-ui/         (Módulo 3)
-│   └── notion-cli-tools/        (Módulo 4)
-├── docs/                        (Documentação unificada)
-└── scripts/                     (Scripts de qualidade/CI)
+```text
+Automa-es-do-Notion (hub)
+├── documentação, roteamento e bootstrap
+├── notion-starter
+│   └── biblioteca base + serviços compartilhados
+├── notion-tasks-cli
+│   └── borda CLI publicada como notion-automacoes
+└── notion-workspace-app
+    └── API Django + SPA React + MCP + launcher
 ```
 
-### Opção B: Multi-repo independente
-- Repo 1: `notion-starter` (PyPI package)
-- Repo 2: `notion-api-server` (standalone Django app)
-- Repo 3: `notion-tasks-ui` (React SPA)
-- Repo 4: `notion-cli` (CLI tools)
-- Repo 5: `automações-do-notion` (orquestração/docs)
+O `notion-starter` é a base de domínio. CLI e app são consumidores com bordas
+finas: adaptam entrada/saída, mas não duplicam a regra de negócio. O frontend
+continua dentro do app porque API, SPA, MCP e launcher formam um único produto
+local e são empacotados juntos quando a opção `app` é instalada.
 
-## Linha do Tempo de Migração
+## Responsabilidade de cada repositório
 
-### Fase 1: Extrair o core (2-3 semanas)
-1. Criar repo `notion-starter` com conteúdo de `src/notion_starter/`
-2. Configurar publicação PyPI
-3. Atualizar referências nos outros módulos
+| Repositório | Pacote público | Responsabilidade | Fonte |
+| --- | --- | --- | --- |
+| [`notion-starter`](https://github.com/Felipe-Alcantara/notion-starter) | `notion-starter==0.3.0` | `NotionClient`, schema, propriedades, conteúdo, tarefas, inventário, adaptadores e services compartilhados | [PyPI](https://pypi.org/project/notion-starter/) |
+| [`notion-tasks-cli`](https://github.com/Felipe-Alcantara/notion-tasks-cli) | `notion-automacoes==0.3.0` | comandos de terminal, perfis, saída JSON, fachada `tasks`/`auth`, `doctor`, `app` e `mcp` | [PyPI](https://pypi.org/project/notion-automacoes/) |
+| [`notion-workspace-app`](https://github.com/Felipe-Alcantara/notion-workspace-app) | `notion-workspace-app==0.3.0` | API REST Django, SPA React, servidor MCP, operações SQLite e launcher `start_app.py` | [PyPI](https://pypi.org/project/notion-workspace-app/) |
+| `Automa-es-do-Notion` | — | bootstrap, sincronização, roteamento de agentes e documentação integrada | [GitHub](https://github.com/Felipe-Alcantara/Automa-es-do-Notion) |
 
-### Fase 2: Separar frontend (1-2 semanas)
-1. Criar repo `notion-tasks-ui`
-2. Configurar proxy de desenvolvimento para API
-3. Manter contrato de API estável
+## Dependências e fronteiras
 
-### Fase 3: Isolar servidor (2-3 semanas)
-1. Criar repo `notion-api-server` 
-2. Configurar dependências Django otimizadas
-3. Manter integração com core extraído
+```text
+notion-automacoes ──────┐
+                         ├── notion-starter (faixa >=0.3.0,<0.4.0)
+notion-workspace-app ───┘
+```
 
-### Fase 4: CLI como pacote (1 semana)
-1. Criar repo `notion-cli-tools`
-2. Configurar como pacote instalável
-3. Manter compatibilidade com `start_app.py`
+- Só `NotionClient` fala diretamente com a API do Notion.
+- `notion_starter.services` concentra casos de uso compartilhados.
+- A CLI mantém parsing, saída humana/JSON e compatibilidade do comando
+  `notion-tasks`.
+- O app mantém a borda REST, a borda MCP, o launcher e a SPA; seus services
+  comuns são shims para o starter.
+- O hub não recebe funcionalidade de produto. Mudanças de código vão para o
+  módulo responsável e são testadas no próprio repositório.
 
-## Considerações Técnicas
+## Distribuição
 
-### Contratos Mantidos
-- `docs/CONTRATOS.md`: deve ser o guia entre módulos
-- Formato da API REST: mantido entre servidor e frontend
-- Objeto `Tarefa`: padrão entre todos os módulos
-- Formato de erro unificado
+A fachada única é instalada com:
 
-### Dependências
-- Core: apenas `requests` (Python 3.10+)
-- Servidor: Django 5+, SQLite, extras para MCP/GitHub
-- Frontend: React 18+, Vite, Tailwind
-- CLI: depende do core, sem Django
+```bash
+pipx install "notion-automacoes[app]"
+```
 
-### Qualidade por Módulo
-Cada módulo deve ter seu próprio gate de qualidade:
-- Core: ruff + pytest (migração mantida)
-- Servidor: roda migrações Django, testes específicos
-- Frontend: lint + build Vite
-- CLI: testes de integração
+O pacote base instala somente a CLI e o núcleo. O extra `app` acrescenta Django,
+MCP e o app local; a SPA já vem compilada no wheel, portanto Node/npm só são
+necessários para desenvolvimento. O alias `notion-tasks` permanece disponível
+para compatibilidade.
 
-### Integração com Ecossistema Vitis Souls
-1. **Core como base**: pode ser usado por outros produtos da Vitis Souls
-2. **Servidor como microserviço**: integra com outros serviços
-3. **Interface reutilizável**: padrão UI para gestão de conteúdo
-4. **CLI como ferramenta interna**: para automações internas
+Cada repositório possui seu próprio workflow de release. A release `v0.3.0`
+constrói wheel e sdist, valida metadados com `twine check`, executa smoke em
+Ubuntu, Windows e macOS com Python 3.10 e 3.13 e publica por Trusted Publishing.
+O contrato completo está em [`DISTRIBUICAO.md`](DISTRIBUICAO.md).
 
-## Benefícios da Separação
+## Desenvolvimento no workspace
 
-### Para Desenvolvimento
-- **Maior foco**: cada time ou contribuidor trabalha no seu módulo
-- **Builds mais rápidos**: testes e lint específicos por módulo
-- **Releases independentes**: versões podem evoluir separadamente
-- **Múltiplos mantenedores**: especialização por área
+O hub evita duplicar clones e expõe `modules/` como caminho canônico de trabalho:
 
-### Para o Usuário Final
-- **Instalação leve**: só o necessário para cada caso de uso
-- **Menor superfície de ataque**: menos código desnecessário
-- **Atualizações mais seguras**: mudanças em um módulo não quebram outros
+```bash
+python bootstrap.py
+python check-dev.py
+```
 
-### Para o Projeto Vitis Souls
-- **Componentes reutilizáveis**: cada módulo pode ser usado isoladamente
-- **Arquitetura moderna**: alinhada com microserviços e componentes
-- **Escalabilidade**: pode adicionar módulos futuros
-- **Governança clara**: responsabilidades bem definidas
+O `bootstrap.py` atualiza clones existentes ou cria links para clones encontrados
+na pasta vizinha. Depois:
 
-## Próximos Passos
+1. leia [`AGENTS.md`](../AGENTS.md) e o `AGENTS.md` do módulo;
+2. edite somente o repositório responsável;
+3. rode o gate do módulo;
+4. atualize README/IA quando a mudança afetar comportamento, comandos ou arquitetura;
+5. faça commit e push no módulo, nunca no hub para mudanças de código.
 
-1. **Criar análise de dependências**: mapear imports entre módulos
-2. **Definir interfaces estáveis**: contratos entre módulos
-3. **Configurar workspace monorepo**: se for caminho escolhido
-4. **Estabelecer CI/CD por módulo**: pipelines independentes
-5. **Documentar processo de contribuição**: para cada módulo
+## Gatilhos de manutenção
 
-## Decisão Recomendada
+| Mudança | Repositório correto |
+| --- | --- |
+| retry, rate limit, schema, conteúdo, tarefas ou service compartilhado | `notion-starter` |
+| comando, parser, envelope JSON, perfis ou compatibilidade `notion-tasks` | `notion-tasks-cli` |
+| rota REST, MCP, launcher, operação SQLite ou SPA | `notion-workspace-app` |
+| roteamento, bootstrap, contratos entre módulos ou documentação transversal | hub |
 
-**Monorepo com estrutura de pacotes** (Opção A) por:
-1. Manter histórico Git unificado
-2. Facilitar refatoração cruzada
-3. Compartilhar configuração de qualidade
-4. Manter documentação centralizada
-5. Preservar a identidade do projeto
+Se a mudança atravessar a fronteira entre módulos, documente o contrato no hub e
+atualize os consumidores afetados. Não copie uma implementação compartilhada para
+resolver um problema local.
 
-A separação deve preservar a filosofia atual de "entrada única" via `start_app.py`, que pode se tornar um meta-pacote que instala e orquestra os módulos necessários.
+## Gates de qualidade
+
+Cada módulo é autônomo:
+
+```bash
+# notion-starter ou notion-tasks-cli
+python -m ruff check .
+python -m pytest
+
+# além disso, no notion-workspace-app
+cd front
+npm ci
+npm run lint
+npm run build
+```
+
+Os testes usam mocks e não exigem credenciais reais. O hub valida o workspace com
+`python3 -m pytest` e `python3 check-dev.py`. O checklist completo está em
+[`QUALIDADE.md`](QUALIDADE.md).
+
+## O que permanece aberto
+
+A arquitetura atual está entregue; futuras mudanças são contribuições isoladas,
+por exemplo:
+
+- paginação e novas operações de escrita na exploração;
+- novas visualizações para a SPA;
+- suporte a binários nativos, somente após definir assinatura, atualização,
+  rollback e manutenção;
+- novos adaptadores e fontes de ingestão no starter.
+
+Esses itens não alteram a divisão atual nem são pré-requisitos para usar a
+release publicada.

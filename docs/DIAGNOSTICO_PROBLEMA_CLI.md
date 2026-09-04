@@ -1,8 +1,12 @@
-# Diagnóstico do Problema do CLI Notion
+# Diagnóstico do Problema do CLI Notion (registro histórico)
+
+> Este documento registra o diagnóstico original de 2026-06-30. O problema foi
+> corrigido desde então; para a instalação e os comandos atuais, consulte
+> [`DISTRIBUICAO.md`](DISTRIBUICAO.md) e o [README da raiz](../README.md).
 
 ## 🐛 Problema Identificado
 
-O CLI (`python -m cli --json criar`) falha com "Falha ao falar com o Notion", mas:
+O CLI (`notion-automacoes --json tasks criar`) falhava com "Falha ao falar com o Notion", mas:
 - **Leitura funciona**: `listar`, `opcoes`, `databases` funcionam
 - **API direta funciona**: Testes com `requests` criam páginas normalmente
 - **Services funcionam**: `editar_tarefa()` via código Python funciona
@@ -41,7 +45,7 @@ Usamos o service diretamente para atualizar a task "Separar responsabilidades":
 from server.services.tarefas import editar_tarefa
 
 resultado = editar_tarefa(
-    "38f91f95-497e-80f4-ade6-d4b20c3d19a6",
+    "<page_id>",
     nome="Separar responsabilidades - PROPOSTA DE MODULARIZAÇÃO",
     status="Urgente"  # Status válido do database
 )
@@ -76,10 +80,10 @@ requests.patch(f"https://api.notion.com/v1/blocks/{task_id}/children", json=payl
 3. **Conteúdo adicionado** com proposta de modularização
 4. **Documentação criada** deste diagnóstico
 
-### ❌ **Pendente**
-1. **Corrigir CLI** para lidar melhor com erros de validação
-2. **Melhorar mensagens de erro** do CLI
-3. **Validar status disponíveis** antes de tentar criar/editar
+### ✅ **Resolvido**
+1. O CLI valida status contra o schema antes da escrita.
+2. As mensagens de erro informam a opção inválida e os valores disponíveis.
+3. A prevenção e a regressão estão cobertas pela suíte automatizada do módulo.
 
 ## 🔧 Recomendações Técnicas
 
@@ -103,15 +107,14 @@ if status not in status_validos:
 | **Token Notion** | ✅ Funciona | - | - |
 | **API Direta** | ✅ Funciona | - | - |
 | **Services** | ✅ Funciona | Status inválido | Usar status do database |
-| **CLI** | ❌ Falha | Validação/Erro | Corrigir tratamento de erro |
+| **CLI** | ✅ Corrigido | Validação/erro | Validar opções antes da escrita |
 | **Database** | ✅ Acessível | - | - |
 
 ## 🎯 Próximos Passos
 
-1. **Corrigir CLI** para melhor tratamento de erro
-2. **Implementar validação** de status no CLI
-3. **Testar criação** via CLI após correções
-4. **Documentar** processo de correção
+1. Manter a validação alinhada ao schema real do database.
+2. Reaplicar o gate do módulo ao alterar a borda da CLI.
+3. Usar a distribuição pública `notion-automacoes` nos novos exemplos.
 
 ---
 

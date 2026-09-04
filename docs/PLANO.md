@@ -1,5 +1,10 @@
 # 🗺️ PLANO — Roadmap e visão final do projeto
 
+> **Estado em 2026-09-04:** a modularização e o Ciclo 2 estão entregues, e as
+> versões `0.3.0` de `notion-starter`, `notion-automacoes` e
+> `notion-workspace-app` estão publicadas. As fases e frentes marcadas como
+> concluídas abaixo são referência; o trabalho restante é contribuição aberta.
+
 > **O que é este documento**: o plano de longo prazo do projeto — para onde ele caminha,
 > como cada peça se encaixa e como fica no final. Cataloga o que já existe, as ideias
 > levantadas e as fases previstas.
@@ -103,17 +108,19 @@ específica": primeiro a ferramenta reutilizável, depois a aplicação concreta
 
 | Peça | Onde | O que faz |
 |---|---|---|
-| **`NotionClient`** | [`client.py`](../src/notion_starter/client.py) | Cliente HTTP tipado: buscar, get/criar database, consultar (paginação), criar/atualizar/arquivar páginas |
-| **Helpers de propriedade (escrita)** | [`properties.py`](../src/notion_starter/properties.py) | Montam os payloads de `title`, `email`, `select`, `status`, `date`… sem decorar o JSON do Notion |
-| **Helpers de leitura** | [`readers.py`](../src/notion_starter/readers.py) | Par de leitura: `ler_title/ler_select/ler_status/ler_date/ler_relation…` e `extrair_valores(pagina)` → mapa coluna→valor simples (Fase 0) |
-| **`comparar_schema`** | [`schema.py`](../src/notion_starter/schema.py) | Valida se um database tem as colunas/tipos esperados antes de escrever |
-| **`construir_inventario` / `assinatura_perfil`** | [`inventory.py`](../src/notion_starter/inventory.py) | Lógica pura: árvore do workspace, duplicatas, órfãos e assinatura de perfil (colunas + opções) para distinguir databases parecidos |
-| **`TaskList` / `Tarefa` / `CamposTarefa`** | [`tasks.py`](../src/notion_starter/tasks.py) | Camada de alto nível sobre um database de tarefas: listar/criar/atualizar_status/concluir |
-| **Menu de entrada** | [`start_app.py`](../start_app.py) | Porta de entrada única: Iniciar/Rodar, Mapear, Instalar/Setup, Configurar, Status |
-| **Exemplos executáveis** | [`examples/`](../examples/) | `export_rows`, `check_schema`, `sync_from_csv`, `gerenciar_tarefas`, `listar_paginas`, `coletar_mapa`, `gerar_arvore_html` |
+| **`NotionClient`** | [`client.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/client.py) | Cliente HTTP tipado: buscar, get/criar database, consultar (paginação), criar/atualizar/arquivar páginas |
+| **Helpers de propriedade (escrita)** | [`properties.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/properties.py) | Montam os payloads de `title`, `email`, `select`, `status`, `date`… sem decorar o JSON do Notion |
+| **Helpers de leitura** | [`readers.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/readers.py) | Par de leitura: `ler_title/ler_select/ler_status/ler_date/ler_relation…` e `extrair_valores(pagina)` → mapa coluna→valor simples (Fase 0) |
+| **`comparar_schema`** | [`schema.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/schema.py) | Valida se um database tem as colunas/tipos esperados antes de escrever |
+| **`construir_inventario` / `assinatura_perfil`** | [`inventory.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/inventory.py) | Lógica pura: árvore do workspace, duplicatas, órfãos e assinatura de perfil (colunas + opções) para distinguir databases parecidos |
+| **`TaskList` / `Tarefa` / `CamposTarefa`** | [`tasks.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/tasks.py) | Camada de alto nível sobre um database de tarefas: listar/criar/atualizar_status/concluir |
+| **Menu de entrada** | [`start_app.py`](https://github.com/Felipe-Alcantara/notion-workspace-app/blob/main/start_app.py) | Porta de entrada única: Iniciar/Rodar, Mapear, Instalar/Setup, Configurar, Status |
+| **Exemplos executáveis** | [`examples/`](https://github.com/Felipe-Alcantara/notion-starter/tree/main/examples) | `export_rows`, `check_schema`, `sync_from_csv`, `gerenciar_tarefas`, `listar_paginas`, `coletar_mapa`, `gerar_arvore_html` |
 
-Qualidade da base: **53 testes passando** (HTTP mockado via `responses`, sem token
-real), `ruff` limpo e CI configurada.
+Qualidade atual: **355 testes no starter, 198 na CLI e 256 no app (2 skips
+esperados)**, `ruff` limpo nos três módulos, lint/build do frontend aprovados e
+CI configurada. A distribuição pública `0.3.0` está documentada em
+[DISTRIBUICAO.md](DISTRIBUICAO.md).
 
 ---
 
@@ -152,8 +159,8 @@ contratos finais.
 
 ### Fase 0 — Helpers de leitura ✅
 
-> **Entregue** [2026-06-25] em [`src/notion_starter/readers.py`](../src/notion_starter/readers.py),
-> com testes puros em [`tests/test_readers.py`](../tests/test_readers.py). O contrato está
+> **Entregue** [2026-06-25] em [`readers.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/readers.py),
+> com testes puros em [`tests/test_readers.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/tests/test_readers.py). O contrato está
 > em [CONTRATOS.md](CONTRATOS.md) §5.
 
 **Objetivo**: hoje há helpers de *escrita* de propriedade, mas ler valores de volta de
@@ -171,7 +178,7 @@ extrair_valores(pagina) -> dict[str, Any]   # mapa nome_coluna → valor simples
 ```
 
 **Reusar**: o padrão puro e testado de `tarefa_de_pagina` em
-[`tasks.py`](../src/notion_starter/tasks.py).
+[`tasks.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/tasks.py).
 
 **Pronto quando**: leitura coberta por testes (sem rede) para cada tipo, espelhando os
 helpers de escrita.
@@ -490,8 +497,8 @@ Valem para todas as fases:
 - **`notion_starter`** — a biblioteca atual; a camada de dados do Notion deste
   repositório.
 - **`TaskList` / assinatura de perfil** — abstrações já prontas em
-  [`tasks.py`](../src/notion_starter/tasks.py) e
-  [`inventory.py`](../src/notion_starter/inventory.py).
+  [`tasks.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/tasks.py) e
+  [`inventory.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/inventory.py).
 - **OpenRouter** — gateway que dá acesso a vários modelos de IA; lista modelos em
   `https://openrouter.ai/api/v1/models`.
 - **[Openia](https://github.com/Felipe-Alcantara/Openia)** — launcher de CLIs de IA

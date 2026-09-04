@@ -11,16 +11,17 @@ Git) para os checks reais do hub, sem depender de memória de conversa.
 > `notion-workspace-app`), com o próprio `QUALIDADE`/`pytest` de cada repo. Veja o
 > mapa de roteamento no [`AGENTS.md`](../AGENTS.md).
 
-## Gate Local (hub)
+## Gate local do hub
 
-Antes de encerrar uma mudança no hub, rode a porta de entrada e a verificação:
+Antes de encerrar uma mudança no hub, rode somente os testes próprios do hub e a
+verificação do workspace:
 
 ```bash
-python start_app.py     # menu: Instalar/Setup, Configurar, Status, Usar, Desenvolver
-python check-dev.py     # valida Python, módulos clonados, .env e deps
+python3 -m pytest tests  # evita coletar as suítes dos módulos em modules/
+python3 check-dev.py    # valida Python, módulos clonados, .env e deps
 ```
 
-- `start_app.py` é o menu interativo obrigatório (contrato Felixo): instala a CLI,
+- `start_app.py` é o menu interativo de entrada: instala a CLI de desenvolvimento,
   sincroniza os módulos, configura o `.env` e opera o Notion — sem decorar comando.
 - `check-dev.py` confere o ambiente de desenvolvimento (Python 3.10+, `modules/`
   clonado, `.env`, `pytest`/`requests`).
@@ -35,10 +36,20 @@ de `modules/<nome>/`:
 
 ```bash
 cd modules/<nome>
+python -m ruff check .
 python -m pytest
 ```
 
-Aplique a correção nos dois repositórios quando mexer na camada duplicada
+No `notion-workspace-app`, acrescente:
+
+```bash
+cd front
+npm ci
+npm run lint
+npm run build
+```
+
+Aplique a correção nos dois consumidores quando mexer na camada duplicada
 (`core/`, `integrations/`, `services/` existem em `notion-tasks-cli` e em
 `notion-workspace-app/server/` — ver "Dívida conhecida" no `AGENTS.md`).
 
@@ -46,8 +57,9 @@ Aplique a correção nos dois repositórios quando mexer na camada duplicada
 
 Uma mudança só está pronta quando:
 
-- O gate aplicável passou: `check-dev.py` para mudanças no hub; `pytest` do módulo
-  para mudanças de código — ou a impossibilidade foi registrada com motivo objetivo.
+- O gate aplicável passou: `pytest` do hub e `check-dev.py` para mudanças no hub;
+  `ruff` + `pytest` do módulo e, no app, lint/build do front — ou a
+  impossibilidade foi registrada com motivo objetivo.
 - Comportamento novo ou bug corrigido tem teste quando aplicável (no módulo).
 - Documentação viva foi atualizada quando comandos, contratos, arquitetura, UX ou
   o **roteamento** mudam (`README.md`, `AGENTS.md`, `docs/`).
@@ -55,6 +67,10 @@ Uma mudança só está pronta quando:
   apagar a linha de raciocínio anterior.
 - Scripts e ferramentas reutilizáveis foram priorizados antes de edição manual;
   exceções foram registradas objetivamente.
+- Documentação pública não promete estado futuro já resolvido: instalação,
+  versão, links, entry points e limitações conferem com o pacote publicado.
+- Links relativos apontam para arquivos existentes; referências a outro módulo
+  usam o repositório correspondente, nunca um caminho fantasma do antigo monorepo.
 - Segredos, IDs reais e artefatos locais continuam fora do Git.
 - As fronteiras de camada seguem intactas: bordas (CLI/API/MCP) não têm regra de
   negócio; `services/` não conhece HTTP; só o `NotionClient` fala com a API.
@@ -73,3 +89,4 @@ Uma mudança só está pronta quando:
 - [`AGENTS.md`](../AGENTS.md) — roteiro operacional para agentes e mantenedores.
 - [`IA.md`](../IA.md) — memória técnica e decisões do projeto.
 - `Padrão de qualidade - Felixo System Design/` — referência local ignorada pelo Git.
+- [Guia de distribuição](DISTRIBUICAO.md) — contrato público e evidências da release `0.3.0`.
