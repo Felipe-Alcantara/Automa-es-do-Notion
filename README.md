@@ -98,9 +98,30 @@ Automações do Notion/
 
 ## 🚀 Uso — CLI para operar o Notion
 
+### Instalação distribuída (sem clone)
+
+O caminho de usuário será a distribuição única `notion-automacoes`, com o alias
+legado `notion-tasks` preservado. A release 0.3.0 já está preparada nos três
+módulos; a publicação no PyPI aguarda confirmação de nome, ownership e metadados
+legais, porque essa decisão é irreversível.
+
+Após a confirmação, instale o produto completo com uma linha:
+
+```bash
+pipx install "notion-automacoes[app]"
+# ou: uv tool install "notion-automacoes[app]"
+notion-automacoes --version
+notion-automacoes doctor
+```
+
+Esse caminho não baixa Git, não exige clone/Node/npm e serve a SPA a partir do
+wheel Python. Consulte [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md) para o
+contrato de release, smoke multiplataforma e o limite explícito do primeiro
+release (sem binários nativos).
+
 ### Instalação (uma vez)
 
-Para garantir que a CLI use exatamente o código presente em `modules/` (e não
+Para desenvolvimento, ou para garantir que a CLI use exatamente o código presente em `modules/` (e não
 uma cópia antiga do `site-packages`), use o menu de entrada e escolha
 **Instalar/Setup → CLI notion-tasks**. O setup prepara os módulos e instala,
 na ordem correta, `notion-starter` e `notion-tasks-cli` em modo editável com o
@@ -124,18 +145,14 @@ Use sempre `python -m pip` (não um `pip` de outro Python). A instalação
 editável é intencional: atualizações feitas nos módulos ficam disponíveis para
 `notion-tasks` sem reinstalar outra cópia.
 
-> **A ordem é o contrário da intuitiva, e isso não é detalhe.** O
-> `notion-tasks-cli` declara `notion-starter @ git+https://github.com/...`, então
-> instalar a CLI **baixa o starter do GitHub e desinstala** o editável que
-> estivesse no lugar. Instalando o starter por último, ele fica sendo a última
-> palavra. Na ordem inversa nada quebra — a CLI continua funcionando, só que com
-> outro código, e as edições em `modules/notion-starter` deixam de ter efeito.
-> `python check-dev.py` responde de onde o `notion_starter` está vindo; se ele
-> avisar que não vem de `modules/`, refaça a instalação nesta ordem.
+> No caminho de desenvolvimento, a ordem continua importante: instale a CLI e
+> o starter em modo editável, com o starter por último, e rode `check-dev.py`.
+> A distribuição publicada usa a dependência versionada do PyPI e não depende de
+> checkout vizinho.
 >
-> **Instalar os dois de uma vez só não funciona.** `pip install -e A -e B` falha com
-> `ResolutionImpossible`, porque o pip não concilia "o starter é o local" com "o
-> starter é o do GitHub" — são dois passos, sempre.
+> O comando distribuído não usa esta ordem nem instala cópia de checkout: ele
+> resolve `notion-starter` por versão no PyPI. A ordem acima é apenas o fluxo de
+> desenvolvimento local e deve ser validada com `check-dev.py`.
 >
 > A partir do `notion-tasks-cli` 0.2.1, os perfis salvos (`.notion-workspaces.json`)
 > ficam na **pasta de configuração do usuário** (`~/.config/notion-tasks/` ou
@@ -279,16 +296,18 @@ Se você é um agente:
 ## 📐 Arquitetura do ecossistema
 
 ```
-┌─────────────────────────────────────────────────┐
-│                 notion-starter                  │
-│   biblioteca base (cliente, schema, tarefas)    │
-└────────────┬───────────────────────┬────────────┘
-             │                       │
-   ┌─────────▼─────────┐   ┌─────────▼──────────┐
-   │  notion-tasks-cli │   │ notion-workspace-  │
-   │  "MCP via CLI"    │   │ app (Django+React  │
-   │  para IAs         │   │  + MCP + TUI)      │
-   └───────────────────┘   └────────────────────┘
+┌─────────────────────────────────────────┐
+│ notion-starter — biblioteca base        │
+│ cliente, schema, tarefas, services      │
+└────────────────────┬────────────────────┘
+                     │
+             ┌───────┴────────┐
+             │                │
+   ┌─────────▼─────────┐ ┌────▼────────────────┐
+   │ notion-automacoes  │ │ notion-workspace-   │
+   │ fachada + alias    │ │ app                 │
+   │ notion-tasks       │ │ Django + React + MCP│
+   └────────────────────┘ └─────────────────────┘
 ```
 
 ### Módulos
@@ -327,6 +346,7 @@ Este projeto faz parte de um ecossistema maior de desenvolvimento com multiagent
 - **[AGENTS.md](AGENTS.md)** — roteamento uso vs desenvolvimento, fluxo de trabalho, convenções.
 - **[CLAUDE.md](CLAUDE.md)** — contexto automático para Claude Code.
 - **[IA.md](IA.md)** — histórico de decisões de arquitetura.
+- **[docs/DISTRIBUICAO.md](docs/DISTRIBUICAO.md)** — contrato da CLI única, pacotes e release.
 - **[docs/GITHUB-DATABASE.md](docs/GITHUB-DATABASE.md)** — importar e manter seus repositórios do GitHub numa database do Notion.
 - **[docs/QUALIDADE.md](docs/QUALIDADE.md)** — contrato de qualidade do hub e dos módulos.
 - **[docs/](docs/)** — material de arquitetura, contratos, MCP, modularização, escala.

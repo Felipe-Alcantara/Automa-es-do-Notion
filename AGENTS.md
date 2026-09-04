@@ -82,12 +82,12 @@ O pedido é: *corrigir bug, adicionar comando, mudar frontend, melhorar resilên
 > Ele diz de onde o `notion_starter` está sendo importado. Se não vier de
 > `modules/notion-starter`, sua edição **não está sendo executada** — nem pela CLI
 > do PATH, nem pela suíte de quem depende dela — e nada avisa: o comando continua
-> funcionando, só que com o código baixado do GitHub. A causa é a dependência
-> `notion-starter @ git+https://github.com/...` declarada pelo `notion-tasks-cli`
-> e pelo `notion-workspace-app`: instalar qualquer um dos dois desinstala o starter
-> editável. Conserto: instalar a CLI **primeiro** e o starter **por último**, ambos
-> `--editable`, ou usar `python start_app.py → Instalar/Setup`, que já faz nessa ordem.
-> Medido em 24/08/2026 — ver `IA.md`.
+> funcionando, só que com uma cópia antiga instalada. No desenvolvimento, instale
+> a CLI **primeiro** e o starter **por último**, ambos `--editable`, ou use
+> `python start_app.py → Instalar/Setup`, que já faz nessa ordem. A distribuição
+> publicada usa a dependência versionada do PyPI e não depende de checkout vizinho.
+> Medido em 24/08/2026; o contrato de distribuição está em
+> [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md).
 
 Nunca desenvolva funcionalidade neste hub; este é documentação e roteamento.
 
@@ -103,7 +103,10 @@ Nunca desenvolva funcionalidade neste hub; este é documentação e roteamento.
 
 ## Roteamento — MODO USO
 
-Instale uma vez: `pip install git+https://github.com/Felipe-Alcantara/notion-tasks-cli.git`
+Após a confirmação do nome e da publicação: `python -m pip install "notion-automacoes[app]"`
+(`pipx install "notion-automacoes[app]"` é a forma recomendada para uso global).
+Até essa confirmação, o fluxo de desenvolvimento continua sendo `python bootstrap.py`
+seguido da instalação editável dos módulos.
 Requer autenticação: um **perfil ativo** salvo na CLI **ou** `NOTION_TOKEN` (e opcionalmente
 `NOTION_DATABASE_ID`) no ambiente/`.env` — veja a precedência abaixo.
 `notion-tasks --help` traz o guia completo, escrito para ser lido por modelos.
@@ -159,6 +162,7 @@ A CLI gerencia os perfis locais de workspaces/keys com
 | Importar/atualizar repositórios do GitHub numa database (vários perfis de uma vez, com dedup) | `notion-tasks atualizar-github --contas <login/@handle/URL,...>` (upsert por URL, propriedades ricas e README em subpágina). Flags: `--sem-readme` (só propriedades), `--sem-arquivados` (ignora arquivados), `--apenas-mudancas` (pula sem alteração). Guia: [`docs/GITHUB-DATABASE.md`](docs/GITHUB-DATABASE.md) |
 | Trocar de workspace / gerenciar keys salvas | `notion-tasks perfis listar / adicionar / usar / mostrar / remover`; numa única execução, `--perfil <alias>` |
 | Interface gráfica ou servidor MCP | use o `notion-workspace-app` (`python start_app.py`) |
+| **CLI distribuída sem clone** | instale `notion-automacoes[app]`; use `notion-automacoes tasks`, `auth`, `doctor`, `app start` e `mcp start` (publicação pendente de confirmar nome/ownership) |
 
 ## Roteamento — MODO DESENVOLVIMENTO
 
