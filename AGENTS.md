@@ -55,6 +55,41 @@ Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o 
 
 7. **Regra de organização**: se o usuário não indicar um jeito específico de organizar o workspace, use o modelo padrão registrado em [`DESIGN-WORKSPACE-NOTION.md`](DESIGN-WORKSPACE-NOTION.md) (tópicos = heading + divisória + links full-page, databases tipadas com ícone/descrição/unique_id, relações em vez de fusão, arquivo original anexado, re-parent/arquivamento).
 
+8. **Regra da qualidade da tarefa**: toda tarefa nova ou revisada deve ser uma unidade acionável e conter, antes de ser considerada pronta para execução:
+
+   - **Prioridade** (`Urgente`, `Alta`, `Média` ou `Baixa`) e **Esforço** (`Poucos minutos`, `Muitos minutos` ou `Poucas horas`), escolhidos pelo impacto e pelo trabalho real — nunca deixados vazios por conveniência;
+   - no corpo, as seções `## Contexto`, `## Evidência`, `## Impacto`, `## Resolução sugerida`, `## Validação` e `## Confiança`;
+   - a relação **`Tarefas relacionadas`** quando houver dependência, mesmo componente, causa comum ou sequência de execução. Se não houver relação real, não invente uma;
+   - título específico, com projeto/área e verbo de ação. `Melhorar o frontend` não é tarefa suficiente.
+   - a propriedade separada **`Repositório`** deve conter o projeto afetado; não dependa apenas do prefixo do título para identificar onde mexer.
+
+   Para preencher uma tarefa existente, leia primeiro propriedades e corpo, consulte o schema e use `editar-linha` para propriedades, `escrever` para o contexto e `relacionar` para relações. Não atribua prioridade, esforço, evidência ou relação por inferência sem base no código, histórico ou decisão do usuário.
+
+9. **Regra do fechamento**: ao **terminar uma tarefa**, registre o que foi feito em **dois lugares, sempre**:
+
+   - **No corpo da própria tarefa**, acrescentando (`escrever <page_id>`, sem `--substituir`) uma seção `## O QUE FOI FEITO` com a data, o que mudou de fato, os arquivos e commits envolvidos, como foi validado e o que ficou de fora. Só então mova o status para concluído.
+   - **No relatório do dia**, na database de relatórios diários, complementando a linha `Relatório DD/MM/YYYY` daquela data — nunca criando uma segunda linha para o mesmo dia.
+
+   Marcar concluído sem escrever o que foi feito apaga a informação mais cara do ciclo: por que a solução foi essa, o que foi tentado antes e como saber que funcionou. O título da tarefa diz o que era para fazer; só o fechamento diz o que aconteceu. Se a tarefa foi fechada sem executar (virou obsoleta, foi absorvida por outra, o problema não se confirmou), escreva isso — "não era problema, medi e o número já estava dentro" vale tanto quanto uma correção.
+
+   **Terminou de verdade? Mova para `Concluído`.** Depois de implementar, testar e registrar o commit, altere a propriedade `Etapa` para `Concluído` e prefixe o título com `✅`. As duas coisas, sempre: o ✅ é sinal visual, mas quem filtra a database filtra por `Etapa` — título marcado com etapa aberta faz a tarefa reaparecer na fila para sempre.
+
+   **Antes de mover, valide de verdade** — o que for aplicável ao tipo de mudança: build, lint, testes automatizados, erros de console, erros de TypeScript, imports quebrados, o fluxo alterado testado de fato (não só a suíte), responsividade em desktop e mobile, rotas/páginas afetadas, chamadas de API, `git diff` revisado e nenhum segredo/credencial commitado. Falhou algo dessa lista? Não mova para `Concluído` — corrija e valide de novo antes de tentar de novo.
+
+   **Não abra uma task nova só para registrar que outra terminou.** O relato e a troca de `Etapa` acontecem **na task original** que gerou o trabalho — nunca crie uma segunda linha para anunciar a conclusão da primeira.
+
+   Acrescente ainda `## VERIFICAÇÃO HUMANA` com passos reproduzíveis, páginas/rotas, viewports, comportamento esperado e regressões a conferir. Conferir depois é bom; segurar a tarefa aberta esperando a conferência não é — a fila para de refletir o que já foi entregue.
+
+   **`Concluído` significa entregue por inteiro.** Se sobrou qualquer parte, a tarefa **não** é concluída: prefixe o título com `⏳`, escreva no relato o que ficou de fora e mantenha a etapa aberta. Meia entrega marcada como concluída é pior que nenhuma, porque some da fila. O mesmo vale para o que depende de terceiros: se falta decisão sua, autorização de push ou alinhamento com Backend/Infra, use `Aguardando resposta` e diga no corpo o que está travando — e o mesmo para erro não corrigido, teste falhando ou parte relevante deixada para depois.
+
+   **Fora esses casos — entrega parcial, dependência de terceiro/decisão pendente, erro ou teste falhando — não existe motivo para uma task genuinamente pronta ficar parada em `Entrada`, `Assim que possível`, `Em breve`, `Urgente` ou `Adiada`.** Essas etapas são fila de trabalho, não arquivo de histórico; trabalho executado e validado sem ressalva vira `Concluído` no mesmo fechamento, sem precisar perguntar se deve atualizar o Notion.
+
+   A database tem duas opções parecidas, `Concluído` e `Concluída`. A que vale é **`Concluído`**.
+
+10. **Regra absoluta de rastreabilidade**: qualquer descoberta, alteração, correção, melhoria, refactor ou decisão relevante passa pelo fluxo `descobrir → investigar → criar/atualizar TASK → definir aceite e risco → implementar quando permitido → testar → revisar diff → commitar → atualizar TASK com arquivos, commit, testes e verificação humana → Etapa: Concluído + ✅ no título`. Não existe alteração relevante sem task. Antes de criar, pesquise e atualize a tarefa existente quando houver equivalência semântica.
+
+   Cada implementação deve registrar também `## ALTERAÇÃO REALIZADA`, `## ARQUIVOS ALTERADOS`, `## TESTES EXECUTADOS`, `## RESULTADO`, `## RISCO` e `## VERIFICAÇÃO HUMANA`. Registre tentativas descartadas, limitações, regressões possíveis e validações que ficaram fora.
+
 **Receita completa — "coloque isto no meu database":**
 
 ```bash

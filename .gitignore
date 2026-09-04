@@ -51,3 +51,11 @@ Padrão de qualidade - Felixo System Design/
 
 # Arquivos pessoais/de outros projetos guardados localmente por engano (PR #2)
 Arquivos/
+
+# Artefatos locais e chaves (nunca versionar)
+key.txt
+pj.json
+pj.err
+*.err
+output/
+tmp/
