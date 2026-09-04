@@ -33,7 +33,7 @@
 - **Gate do hub**: `python3 -m pytest tests` + `python3 check-dev.py` (nenhum
   check exige token real). Gate de código é o de cada módulo (`ruff` + `pytest`).
 - **Qualidade dos módulos**: READMEs no design system e contratos `QUALIDADE.md`;
-  gates verdes nesta entrega (starter 355, CLI 198, app 256 + 2 skips; front com
+  gates verdes nesta entrega (starter 355, CLI 198, app 279; front com
   `oxlint` e build Vite aprovados).
 - **Distribuição**: wheel/sdist dos três módulos validados; o app leva a SPA
   compilada, a CLI mantém `notion-tasks` e não há dependência Git em
@@ -857,3 +857,10 @@ uso público e desenvolvimento, corrigir links do antigo monorepo e manter
 `README`, `QUALIDADE`, `CONTRIBUTING`, `AGENTS` e `IA` coerentes. O `LICENSE` do
 hub agora também identifica `Felipe Alcantara`; a menção histórica a André
 Gustavo não representa titularidade.
+
+## [2026-09-04] Gate final da documentação e da distribuição
+
+O gate oficial do app foi reexecutado após alinhar o fixture REST ao schema do
+`notion-starter==0.3.0`: **279 testes passaram** em Python 3.10, 3.11, 3.12 e
+3.13, e o frontend passou por lint/build. As CIs finais do starter e da CLI
+também passaram; os links das execuções estão em `docs/DISTRIBUICAO.md`.

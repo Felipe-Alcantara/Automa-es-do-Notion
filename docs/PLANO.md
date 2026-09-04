@@ -117,9 +117,9 @@ específica": primeiro a ferramenta reutilizável, depois a aplicação concreta
 | **Menu de entrada** | [`start_app.py`](https://github.com/Felipe-Alcantara/notion-workspace-app/blob/main/start_app.py) | Porta de entrada única: Iniciar/Rodar, Mapear, Instalar/Setup, Configurar, Status |
 | **Exemplos executáveis** | [`examples/`](https://github.com/Felipe-Alcantara/notion-starter/tree/main/examples) | `export_rows`, `check_schema`, `sync_from_csv`, `gerenciar_tarefas`, `listar_paginas`, `coletar_mapa`, `gerar_arvore_html` |
 
-Qualidade atual: **355 testes no starter, 198 na CLI e 256 no app (2 skips
-esperados)**, `ruff` limpo nos três módulos, lint/build do frontend aprovados e
-CI configurada. A distribuição pública `0.3.0` está documentada em
+Qualidade atual: **355 testes no starter, 198 na CLI e 279 no app**, `ruff` limpo
+nos três módulos, lint/build do frontend aprovados e CI configurada. A
+distribuição pública `0.3.0` está documentada em
 [DISTRIBUICAO.md](DISTRIBUICAO.md).
 
 ---
