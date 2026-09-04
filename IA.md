@@ -24,21 +24,25 @@
   protegido nas seções datadas abaixo e nos archives.
 -->
 
-Última atualização: [2026-07-18]
+Última atualização: [2026-09-04]
 
-- **Fase**: ecossistema modularizado e estável. O hub concentra documentação,
-  roteamento (`AGENTS.md`) e scripts de workspace (`bootstrap.py`,
-  `check-dev.py`, `sync.py`, `start_app.py`); o código vive nos módulos
-  `notion-starter`, `notion-tasks-cli` e `notion-workspace-app` (em `modules/`).
+- **Fase**: ecossistema modularizado e estável, com a distribuição única
+  `notion-automacoes` preparada em versão candidata `0.3.0`. O hub concentra
+  documentação, roteamento (`AGENTS.md`) e scripts de workspace; o código vive
+  nos módulos `notion-starter`, `notion-tasks-cli` e `notion-workspace-app`.
 - **Gate do hub**: `python start_app.py` + `python check-dev.py` (nenhum check
   exige token real). Gate de código é o de cada módulo (`ruff` + `pytest`).
 - **Qualidade dos módulos**: READMEs no design system e contratos `QUALIDADE.md`;
-  gates verdes em 2026-07-18 (starter 235, CLI 127, app 256 + 2 skips; front com
+  gates verdes nesta entrega (starter 355, CLI 197, app 256 + 2 skips; front com
   `oxlint` e build Vite aprovados).
+- **Distribuição**: wheel/sdist dos três módulos validados; o app leva a SPA
+  compilada, a CLI mantém `notion-tasks` e não há dependência Git em
+  `Requires-Dist`.
 - **Histórico**: registros de junho/2026 (era monorepo) arquivados em
   [`docs/ia-archive/IA-ARCHIVE-2026-06.md`](docs/ia-archive/IA-ARCHIVE-2026-06.md).
-- **Pendência aberta**: CLI avisar quando `NOTION_TOKEN` é ignorado por perfil
-  ativo (melhoria nos módulos — ver resumo de [2026-07-13]).
+- **Pendência aberta**: publicação efetiva aguarda confirmação de nome, ownership,
+  metadados legais e configuração de Trusted Publishing; binários nativos não
+  fazem parte do primeiro release.
 
 [2026-08-21] O setup do hub passou a instalar `notion-starter` antes de
 `notion-tasks-cli`, ambos em modo editável a partir de `modules/`. Isso evita
@@ -809,3 +813,47 @@ editável, marca aparece sem reinstalar, pasta de configuração cai no padrão 
 Task: `3c991f95-497e-81af-bec1-e86f4febbec6` (subtarefa de
 `3c691f95-497e-81e0-ab46-fd05af43fd36`). Validação de Windows: entrada acima, mesmo
 `IA.md`, 27/08/2026.
+
+## [2026-09-04] Distribuição única preparada; publicação aguarda decisão do mantenedor
+
+### Decisão técnica
+
+O caminho de uso sem clone ficou modelado como a distribuição `notion-automacoes`
+(versão candidata `0.3.0`), com `notion-tasks` preservado como alias. O núcleo
+`notion-starter` é publicado como dependência versionada; o extra `app` instala o
+`notion-workspace-app`, que leva o bundle da SPA React dentro do wheel. O primeiro
+release é Python puro para Python 3.10+, usando `pipx`/`uv`; binários nativos foram
+deliberadamente deixados fora até existir decisão separada de manutenção,
+assinatura, update e rollback.
+
+### O que foi implementado
+
+- `notion-starter`, `notion-automacoes` e `notion-workspace-app` receberam
+  metadados de build e versão coerente `0.3.0`;
+- `cli/unificada.py` reúne `tasks`, `auth`, `doctor`, `app start`, `mcp start` e
+  `update`, sem duplicar regra de negócio;
+- a dependência Git direta foi removida do CLI e do app;
+- o app passou a incluir `start_app.py`, entry points públicos e a SPA compilada;
+  no wheel, o launcher serve o bundle via Django e não consulta Node/npm;
+- workflows `release.yml` constroem, validam com `twine check`, exercitam smoke em
+  Ubuntu/Windows/macOS e publicam apenas por Trusted Publishing após os gates;
+- foi corrigido o conflito de importação entre os pacotes legados `core` da CLI e
+  do app, e os testes do app passaram a representar a leitura de schema feita por
+  `TaskList.criar`.
+
+### Evidência e limites
+
+Localmente: starter **355 testes**, CLI **197 testes**, app **256 testes + 2 skips**;
+`ruff` limpo nos três; `npm run lint`, `npm run build` e `twine check` aprovados.
+Um ambiente limpo instalou os wheels, respondeu a `--version`, `--help`,
+`doctor`, `auth listar` e confirmou a rota Django `/` servindo o bundle. A matriz
+Windows/macOS está configurada no GitHub Actions, mas não foi executada nesta
+máquina; a publicação no PyPI também não foi feita.
+
+### Bloqueio explícito
+
+Não há autorização para uma publicação irreversível enquanto não forem confirmados
+o nome final do pacote, o ownership da conta, os autores/licença/metadados legais
+e o vínculo Trusted Publishing nos três repositórios. Por isso, a task de
+distribuição deve terminar em `Aguardando resposta`, com tarefas pendentes abertas,
+em vez de ser marcada como concluída.
