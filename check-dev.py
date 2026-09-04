@@ -22,12 +22,10 @@ MODULOS_DIR = ROOT / "modules"
 def origem_do_starter(modulos_dir: Path) -> str:
     """Diz de onde o ``notion_starter`` importado neste Python vem.
 
-    Esta pergunta existe porque a resposta errada é silenciosa: o
-    ``notion-tasks-cli`` declara o starter como ``git+https://github.com/...``,
-    então instalar a CLI depois do starter troca a cópia editável de
-    ``modules/`` por uma baixada do GitHub. Nada quebra — o comando continua
-    funcionando, só que com outro código, e a correção feita aqui do lado não é
-    exercida por ninguém. Medido em 24/08/2026.
+    O ambiente distribuído resolve o starter pelo PyPI. No desenvolvimento,
+    esta verificação garante que a instalação editável de ``modules/`` é a que
+    está sendo executada; sem isso, uma cópia antiga em ``site-packages`` pode
+    mascarar alterações locais. Medido em 24/08/2026.
     """
 
     spec = importlib.util.find_spec("notion_starter")

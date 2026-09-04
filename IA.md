@@ -27,22 +27,24 @@
 Última atualização: [2026-09-04]
 
 - **Fase**: ecossistema modularizado e estável, com a distribuição única
-  `notion-automacoes` preparada em versão candidata `0.3.0`. O hub concentra
+  `notion-automacoes` publicada em `0.3.0`. O hub concentra
   documentação, roteamento (`AGENTS.md`) e scripts de workspace; o código vive
   nos módulos `notion-starter`, `notion-tasks-cli` e `notion-workspace-app`.
-- **Gate do hub**: `python start_app.py` + `python check-dev.py` (nenhum check
-  exige token real). Gate de código é o de cada módulo (`ruff` + `pytest`).
+- **Gate do hub**: `python3 -m pytest tests` + `python3 check-dev.py` (nenhum
+  check exige token real). Gate de código é o de cada módulo (`ruff` + `pytest`).
 - **Qualidade dos módulos**: READMEs no design system e contratos `QUALIDADE.md`;
-  gates verdes nesta entrega (starter 355, CLI 197, app 256 + 2 skips; front com
+  gates verdes nesta entrega (starter 355, CLI 198, app 256 + 2 skips; front com
   `oxlint` e build Vite aprovados).
 - **Distribuição**: wheel/sdist dos três módulos validados; o app leva a SPA
   compilada, a CLI mantém `notion-tasks` e não há dependência Git em
   `Requires-Dist`.
 - **Histórico**: registros de junho/2026 (era monorepo) arquivados em
   [`docs/ia-archive/IA-ARCHIVE-2026-06.md`](docs/ia-archive/IA-ARCHIVE-2026-06.md).
-- **Pendência aberta**: publicação efetiva aguarda confirmação de nome, ownership,
-  metadados legais e configuração de Trusted Publishing; binários nativos não
-  fazem parte do primeiro release.
+- **Estado legal**: os três pacotes e o hub identificam `Felipe Alcantara` como
+  titular; colaboradores não alteram essa titularidade. Trusted Publishing foi
+  validado pelos workflows de release.
+- **Próximos passos**: melhorias de produto continuam abertas à comunidade;
+  binários nativos não fazem parte do primeiro release e exigem decisão própria.
 
 [2026-08-21] O setup do hub passou a instalar `notion-starter` antes de
 `notion-tasks-cli`, ambos em modo editável a partir de `modules/`. Isso evita
@@ -814,12 +816,12 @@ Task: `3c991f95-497e-81af-bec1-e86f4febbec6` (subtarefa de
 `3c691f95-497e-81e0-ab46-fd05af43fd36`). Validação de Windows: entrada acima, mesmo
 `IA.md`, 27/08/2026.
 
-## [2026-09-04] Distribuição única preparada; publicação aguarda decisão do mantenedor
+## [2026-09-04] Distribuição única publicada e documentação alinhada
 
 ### Decisão técnica
 
-O caminho de uso sem clone ficou modelado como a distribuição `notion-automacoes`
-(versão candidata `0.3.0`), com `notion-tasks` preservado como alias. O núcleo
+O caminho de uso sem clone ficou publicado como a distribuição `notion-automacoes`
+(versão `0.3.0`), com `notion-tasks` preservado como alias. O núcleo
 `notion-starter` é publicado como dependência versionada; o extra `app` instala o
 `notion-workspace-app`, que leva o bundle da SPA React dentro do wheel. O primeiro
 release é Python puro para Python 3.10+, usando `pipx`/`uv`; binários nativos foram
@@ -843,17 +845,15 @@ assinatura, update e rollback.
 
 ### Evidência e limites
 
-Localmente: starter **355 testes**, CLI **197 testes**, app **256 testes + 2 skips**;
+Localmente: starter **355 testes**, CLI **198 testes**, app **256 testes + 2 skips**;
 `ruff` limpo nos três; `npm run lint`, `npm run build` e `twine check` aprovados.
-Um ambiente limpo instalou os wheels, respondeu a `--version`, `--help`,
-`doctor`, `auth listar` e confirmou a rota Django `/` servindo o bundle. A matriz
-Windows/macOS está configurada no GitHub Actions, mas não foi executada nesta
-máquina; a publicação no PyPI também não foi feita.
+Os workflows de release passaram nos três sistemas suportados e publicaram os
+wheels/sdists por Trusted Publishing. Um ambiente limpo instalou os wheels,
+respondeu a `--version`, `--help`, `doctor`, `auth listar` e confirmou a rota
+Django `/` servindo o bundle.
 
-### Bloqueio explícito
-
-Não há autorização para uma publicação irreversível enquanto não forem confirmados
-o nome final do pacote, o ownership da conta, os autores/licença/metadados legais
-e o vínculo Trusted Publishing nos três repositórios. Por isso, a task de
-distribuição deve terminar em `Aguardando resposta`, com tarefas pendentes abertas,
-em vez de ser marcada como concluída.
+Na mesma rodada, a documentação do hub e dos módulos foi atualizada para separar
+uso público e desenvolvimento, corrigir links do antigo monorepo e manter
+`README`, `QUALIDADE`, `CONTRIBUTING`, `AGENTS` e `IA` coerentes. O `LICENSE` do
+hub agora também identifica `Felipe Alcantara`; a menção histórica a André
+Gustavo não representa titularidade.

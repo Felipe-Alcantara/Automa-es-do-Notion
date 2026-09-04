@@ -7,9 +7,15 @@
 > **MCP e CLI são irmãos.** Ambos são **bordas finas sobre os mesmos `services/`** —
 > nenhum reimplementa regra de negócio. O **MCP** serve os agentes do Felixo-AI-Core;
 > a **CLI** ([Ciclo 2](AGENTES.md#-ciclo-2--agentes-do-front-rico-cli-e-multi-tabela),
-> pasta `cli/`) serve uso direto por linha de comando e uma IA local. Quem mexer numa
+> pasta `cli/` do repositório `notion-tasks-cli`) serve uso direto por linha de
+> comando e uma IA local. Quem mexer numa
 > operação deve garantir que a regra continue nos `services`, para as duas bordas
 > herdarem o mesmo comportamento.
+
+> **Estado em 2026-09-04:** o servidor MCP faz parte do pacote publicado
+> `notion-workspace-app` e pode ser iniciado pela fachada
+> `notion-automacoes mcp start`. As instruções com `server/mcp_server.py` são o
+> caminho equivalente para desenvolvimento pelo checkout.
 
 ---
 
@@ -104,11 +110,11 @@ A CLI do Ciclo 2 fica em `cli/` e usa os mesmos casos de uso de
 saída JSON estável sem subir servidor MCP:
 
 ```bash
-python -m cli --json listar
-python -m cli --json criar "Nova tarefa" --status "Entrada"
-python -m cli --json editar <task_id> --status "Assim que possível"
-python -m cli --json opcoes
-python -m cli --json mapear
+notion-automacoes --json tasks listar
+notion-automacoes --json tasks criar "Nova tarefa" --status "Entrada"
+notion-automacoes --json tasks editar <task_id> --status "Assim que possível"
+notion-automacoes --json tasks opcoes
+notion-automacoes --json tasks mapear
 ```
 
 Contrato de saída:
@@ -126,7 +132,10 @@ Em erro:
 ### Pré-requisitos
 
 ```bash
-pip install -e ".[mcp]"    # instala MCP Python SDK 1.x + notion_starter
+pipx install "notion-automacoes[app]"  # uso público
+# ou, no checkout do app:
+cd modules/notion-workspace-app
+python -m pip install -e ".[dev]"
 ```
 
 ### Variáveis de ambiente
@@ -141,7 +150,11 @@ O servidor MCP lê do ambiente (ou do `.env` na raiz):
 ### Execução
 
 ```bash
-# stdio (padrão — o Felixo-AI-Core spawna assim)
+# Instalação pública: stdio (padrão — o Felixo-AI-Core spawna assim)
+notion-automacoes mcp start
+
+# Checkout do app:
+cd modules/notion-workspace-app
 python3 server/mcp_server.py
 
 # Streamable HTTP para debug local (endpoint http://127.0.0.1:8000/mcp)
@@ -151,7 +164,7 @@ python3 server/mcp_server.py --transport streamable-http
 Ou pelo menu interativo:
 
 ```bash
-python3 start_app.py
+python3 modules/notion-workspace-app/start_app.py
 # → "Subir servidor MCP"
 ```
 
@@ -168,9 +181,8 @@ externos do Felixo-AI-Core:
 ```json
 {
   "notion": {
-    "command": "python",
-    "args": ["server/mcp_server.py"],
-    "cwd": "/caminho/para/Automa-es-do-Notion",
+    "command": "notion-automacoes",
+    "args": ["mcp", "start"],
     "env": {
       "NOTION_TOKEN": "${NOTION_TOKEN}",
       "NOTION_DATABASE_ID": "${NOTION_DATABASE_ID}"
@@ -227,10 +239,10 @@ no commit `75c8a12`. As entradas registradas são:
 },
 ```
 
-O catálogo já fixa a política de confirmação do host. A conexão e o ciclo de vida de
-servidores MCP externos ainda dependem da implementação do cliente prevista no roadmap
-do Felixo-AI-Core; até lá, o servidor deste projeto pode ser validado diretamente por
-`stdio` ou Streamable HTTP.
+O catálogo fixa a política de confirmação do host. O status `planned` exibido no
+snapshot acima descreve o catálogo do Felixo-AI-Core em 25/06/2026, não a
+publicação do pacote nem a disponibilidade do servidor neste repositório. O
+servidor pode ser validado diretamente por `stdio` ou Streamable HTTP.
 
 ---
 

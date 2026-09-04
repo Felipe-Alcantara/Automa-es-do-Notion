@@ -7,6 +7,12 @@
 > Veja também: [PLANO.md](PLANO.md) (roadmap e fases) e
 > [PORTABILIDADE.md](PORTABILIDADE.md) (adaptar para outros casos).
 
+> **Estado em 2026-09-04:** biblioteca, CLI, app local, SPA e MCP já estão
+> disponíveis. A instalação pública recomendada é `pipx install
+> "notion-automacoes[app]"`; exemplos com `notion-automacoes` são o fluxo
+> distribuído e exemplos com `python -m cli` representam o checkout de
+> desenvolvimento.
+
 ---
 
 ## 📋 Índice
@@ -26,9 +32,9 @@ parar em qualquer degrau.
 | # | Camada | Como se usa | Quando faz sentido |
 |---|---|---|---|
 | 1 | **Biblioteca** | `from notion_starter import NotionClient, TaskList` | Já existe um script/app seu e você só quer falar com o Notion de forma tipada |
-| 2 | **Menu de entrada** | `python start_app.py` | Quer instalar, configurar o token, escolher database, mapear o workspace ou subir o app sem decorar comando |
+| 2 | **Menu de entrada** | `python start_app.py` no checkout | Quer instalar, configurar o token, escolher database, mapear o workspace ou subir o app sem decorar comando |
 | 3 | **Servidor + front web** | sobe o Django (API) e a SPA **React + Tailwind + Vite** | Quer ver, filtrar e editar suas tarefas reais numa interface própria (grade/lista/kanban) |
-| 4 | **CLI para IA** | `python -m cli`, borda fina sobre `services/` | Quer que uma IA local ou um script leia/edite/mova tarefas, escolha database e receba JSON estável |
+| 4 | **CLI para IA** | `notion-automacoes tasks` (ou `notion-tasks`), borda fina sobre `services/` | Quer que uma IA local ou um script leia/edite/mova tarefas, escolha database e receba JSON estável |
 | 5 | **IA assistida** | a IA sugere, você confirma | Quer ajuda para priorizar, resumir, criar tarefas em linguagem natural |
 | 6 | **Agentes via MCP** | o Felixo-AI-Core orquestra | Quer só ler e adicionar tarefas enquanto agentes executam e registram |
 
@@ -41,12 +47,12 @@ parar em qualquer degrau.
 Exemplos de CLI para consumo por IA/script:
 
 ```bash
-python -m cli --json listar --status "Entrada" --duracao "Dias" --area <area_id>
-python -m cli --json criar "Nova tarefa" --status "Entrada" --duracao "Dias"
-python -m cli --json editar <task_id> --status "Assim que possível" --area <area_id>
-python -m cli --json opcoes
-python -m cli --json normalizar-nomes --dry-run
-python -m cli --json mapear
+notion-automacoes --json tasks listar --status "Entrada" --duracao "Dias" --area <area_id>
+notion-automacoes --json tasks criar "Nova tarefa" --status "Entrada" --duracao "Dias"
+notion-automacoes --json tasks editar <task_id> --status "Assim que possível" --area <area_id>
+notion-automacoes --json tasks opcoes
+notion-automacoes --json tasks normalizar-nomes --dry-run
+notion-automacoes --json tasks mapear
 ```
 
 ---

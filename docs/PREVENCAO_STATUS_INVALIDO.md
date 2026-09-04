@@ -1,4 +1,8 @@
-# Prevenção de Status Inválido - Documentação do Problema Resolvido
+# Prevenção de Status Inválido — Documentação do Problema Resolvido
+
+> Registro histórico da correção de 2026-06-30. O comando público atual é
+> `notion-automacoes --json tasks ...`; `python -m cli ...` representa apenas o
+> checkout antigo da CLI e não deve ser usado em novas instruções.
 
 ## 🐛 Problema Original
 
@@ -96,11 +100,11 @@ Depois: "Status 'Em andamento' inválido. Opções disponíveis: Entrada, Assim 
 ### Exemplo de Uso:
 ```bash
 # Antes (falhava silenciosamente)
-python -m cli --json criar "Tarefa teste" --status "Status Inexistente"
+notion-automacoes --json tasks criar "Tarefa teste" --status "Status Inexistente"
 # Erro: "Falha ao falar com o Notion"
 
 # Agora (feedback útil)
-python -m cli --json criar "Tarefa teste" --status "Status Inexistente"
+notion-automacoes --json tasks criar "Tarefa teste" --status "Status Inexistente"
 # Erro: "Status 'Status Inexistente' inválido. Opções disponíveis: Entrada, Assim que possível, Concluída"
 ```
 

@@ -1,6 +1,6 @@
 # Design padrão de organização de workspace Notion
 
-> **Origem**: mapeado do workspace real **Central pessoal** (Vitis Souls, `aa12f7941f658218ae568196d51942d0`), montado por agente em 10/07/2026 — 1 raiz, ~21 databases, ~1.100 páginas, seis projetos organizados sem retrabalho.
+> **Origem**: mapeado do workspace real **Central pessoal** (Vitis Souls; o ID foi omitido intencionalmente), montado por agente em 10/07/2026 — 1 raiz, ~21 databases, ~1.100 páginas, seis projetos organizados sem retrabalho.
 >
 > **Regra**: se o usuário **não indicar** um jeito específico de organização, **use este modelo**. Ele é o padrão consolidado do ecossistema (o guia genérico correspondente vive no Felixo System Design: `guias/integracao/GUIA-NOTION-COMO-BASE-DE-DADOS.md`).
 

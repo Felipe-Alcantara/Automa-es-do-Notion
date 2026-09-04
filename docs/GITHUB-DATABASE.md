@@ -5,8 +5,9 @@
 > propriedades ricas e o README numa subpágina. Cobre a carga inicial e a
 > atualização recorrente (repos novos, propriedades mudadas, README alterado).
 
-Este recurso **já existe** no ecossistema, exposto pela CLI `notion-tasks`. Não é
-preciso desenvolver nada para usá-lo. O código vive em `notion-tasks-cli`
+Este recurso **já existe** no ecossistema, exposto pela distribuição pública
+`notion-automacoes` (o alias `notion-tasks` também funciona). Não é preciso
+desenvolver nada para usá-lo. O código vive em `notion-tasks-cli`
 (`services/inventario_github.py` + `integrations/github.py`); veja o roteamento no
 [`AGENTS.md`](../AGENTS.md).
 
@@ -32,31 +33,34 @@ Pré-requisitos no ambiente ou `.env`: `NOTION_TOKEN` e o ID da database GITHUB
 repetir `--contas`.
 
 ```bash
+# Instalação pública (uma vez)
+pipx install notion-automacoes
+
 # Sincronizar (repos novos + propriedades + README mudado)
-notion-tasks atualizar-github --contas minha-conta,outra-conta
+notion-automacoes tasks atualizar-github --contas minha-conta,outra-conta
 
 # Vários perfis de uma vez — aceita login, @handle ou URL do perfil
-notion-tasks atualizar-github --contas https://github.com/conta-um,outra-conta
+notion-automacoes tasks atualizar-github --contas https://github.com/conta-um,outra-conta
 
 # Um repositório específico, sem importar a conta inteira — aceita "owner/repo"
 # ou a URL completa do repositório
-notion-tasks atualizar-github --contas dono/projeto
-notion-tasks atualizar-github --contas https://github.com/dono/projeto
+notion-automacoes tasks atualizar-github --contas dono/projeto
+notion-automacoes tasks atualizar-github --contas https://github.com/dono/projeto
 
 # Usando GITHUB_CONTAS e NOTION_DATABASE_ID do .env
-notion-tasks atualizar-github
+notion-automacoes tasks atualizar-github
 
 # Só as propriedades, sem mexer nas subpáginas README (mais rápido)
-notion-tasks atualizar-github --sem-readme
+notion-automacoes tasks atualizar-github --sem-readme
 
 # Manter só os repositórios ativos (ignora os arquivados no GitHub)
-notion-tasks atualizar-github --sem-arquivados
+notion-automacoes tasks atualizar-github --sem-arquivados
 
 # Incremental: pula os que não mudaram desde o último sync (updated_at)
-notion-tasks atualizar-github --apenas-mudancas
+notion-automacoes tasks atualizar-github --apenas-mudancas
 
 # Apontar a database explicitamente
-notion-tasks atualizar-github --database <database_id>
+notion-automacoes tasks atualizar-github --database <database_id>
 ```
 
 As flags combinam. O resumo reporta **criados / atualizados / pulados / READMEs /
@@ -106,4 +110,4 @@ comando (cron/Agendador de Tarefas) apontando para as suas contas.
 ## Referências
 
 - [`AGENTS.md`](../AGENTS.md) — roteamento (o comando vive em `notion-tasks-cli`).
-- `notion-tasks guia` — guia de todos os comandos, escrito para IAs e humanos.
+- `notion-automacoes tasks guia` — guia de todos os comandos, escrito para IAs e humanos.

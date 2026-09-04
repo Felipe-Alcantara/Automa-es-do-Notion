@@ -1,16 +1,13 @@
 # Distribuição da CLI única
 
-Este documento descreve a distribuição planejada do ecossistema sem exigir clone,
-Git ou Node na máquina de quem usa o produto.
+> **Estado em 2026-09-04:** a versão `0.3.0` está publicada no PyPI. Este é o
+> contrato atual para usar, desenvolver e verificar a distribuição sem exigir
+> clone, Git ou Node na máquina de quem usa o produto.
 
 ## Instalação do usuário
 
-O nome técnico candidato para a distribuição é `notion-automacoes`. A publicação
-no PyPI só deve ser feita depois da confirmação do nome disponível, ownership e
-metadados legais.
-
-Quando essa confirmação estiver registrada, a instalação completa será uma única
-linha:
+O nome público da distribuição é `notion-automacoes`. A instalação completa é
+uma única linha:
 
 ```bash
 pipx install "notion-automacoes[app]"
@@ -46,15 +43,29 @@ notion-tasks listar
 ```
 
 Perfis ficam na pasta de configuração do usuário e não são removidos por
-upgrade/uninstall do pacote. A CLI nunca imprime o token.
+upgrade ou desinstalação do pacote. A CLI nunca imprime o token. Para conferir
+uma instalação sem chamar operações de escrita:
+
+```bash
+notion-automacoes --version
+notion-automacoes --help
+notion-automacoes doctor
+notion-automacoes auth listar
+```
 
 ## Contrato dos pacotes
 
-Os três projetos usam a versão coerente `0.3.0`:
+Os três projetos usam a versão publicada coerente `0.3.0`:
 
 1. `notion-starter` — biblioteca base publicada primeiro;
 2. `notion-workspace-app` — API Django, MCP, launcher e bundle da SPA;
 3. `notion-automacoes` — fachada CLI e alias compatível `notion-tasks`.
+
+| Pacote | Papel | Publicação |
+| --- | --- | --- |
+| `notion-starter` | cliente Notion e serviços compartilhados | [PyPI](https://pypi.org/project/notion-starter/) |
+| `notion-automacoes` | CLI única e perfis | [PyPI](https://pypi.org/project/notion-automacoes/) |
+| `notion-workspace-app` | app local, API, SPA e MCP | [PyPI](https://pypi.org/project/notion-workspace-app/) |
 
 O CLI depende de `notion-starter>=0.3.0,<0.4.0`, sem `Requires-Dist` apontando
 para Git. O app declara runtime em `pyproject.toml`; ferramentas de teste ficam
@@ -79,9 +90,37 @@ O primeiro release não inclui binários nativos: o contrato é Python 3.10+ com
 `pipx`/`uv`. Binários só entram após uma decisão separada que defina plataformas,
 assinatura, tamanho, política de update, rollback e manutenção.
 
-## Estado desta entrega
+## Evidências da publicação
 
-O empacotamento, a fachada, os smoke tests e os workflows foram preparados e
-validados localmente. A publicação efetiva permanece pendente da confirmação
-irreversível de nome/ownership/metadados legais e da configuração de Trusted
-Publishing nos três projetos.
+Os workflows de release foram executados a partir da tag `v0.3.0` e passaram nos
+três repositórios:
+
+- [`notion-starter` — release 0.3.0](https://github.com/Felipe-Alcantara/notion-starter/actions/runs/33908422673)
+- [`notion-workspace-app` — release 0.3.0](https://github.com/Felipe-Alcantara/notion-workspace-app/actions/runs/33908594676)
+- [`notion-tasks-cli` — release 0.3.0](https://github.com/Felipe-Alcantara/notion-tasks-cli/actions/runs/33908824167)
+
+Cada workflow constrói wheel e sdist, executa `twine check`, faz smoke em
+Ubuntu, Windows e macOS com Python 3.10 e 3.13 e publica via Trusted Publishing.
+No app, a SPA é compilada antes do empacotamento e o wheel a serve sem
+Node/npm.
+
+## Titularidade e limites
+
+Os metadados dos três pacotes e os respectivos arquivos `LICENSE` identificam
+`Felipe Alcantara` como titular. Colaboradores podem contribuir com código e
+documentação sem alterar essa titularidade. O primeiro release é Python puro;
+binários nativos continuam fora do contrato até uma decisão própria sobre
+assinatura, atualização, rollback e manutenção.
+
+## Desenvolvimento
+
+Para alterar o código, use o hub e seus clones de desenvolvimento:
+
+```bash
+python bootstrap.py
+python check-dev.py
+```
+
+Depois, edite o módulo correspondente, rode o gate local dele e faça commit/push
+no repositório do módulo. O fluxo detalhado está em [`AGENTS.md`](../AGENTS.md) e
+em [`docs/QUALIDADE.md`](QUALIDADE.md).

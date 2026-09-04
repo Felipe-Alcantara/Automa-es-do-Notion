@@ -1,5 +1,11 @@
 # 🏗️ INFRA — Servidor, configuração e deploy
 
+> **Módulo atual:** o servidor está em
+> [`notion-workspace-app`](https://github.com/Felipe-Alcantara/notion-workspace-app).
+> Os caminhos `server/` e `front/` abaixo são relativos a esse repositório, não
+> à raiz do hub. Para uso sem checkout, instale
+> [`notion-automacoes[app]`](DISTRIBUICAO.md).
+
 > **O que é**: como o servidor deste projeto roda **local** e como é **hospedado**.
 > Cobre a estrutura de pastas do servidor, a configuração por ambiente, o estado
 > operacional em SQLite e notas de deploy. É a entrega do **Agente Infra**
@@ -68,6 +74,7 @@ local, ignorado pelo git). Lidas por `core/config.py`:
 Pelo menu (porta de entrada única):
 
 ```bash
+cd modules/notion-workspace-app
 python start_app.py     # → "🚀 Iniciar tudo"
 ```
 
@@ -82,13 +89,14 @@ subir só a API ou escolher outro `host:porta`.
 Manualmente:
 
 ```bash
-pip install -e ".[server]"
+cd modules/notion-workspace-app
+python -m pip install -e ".[dev]"
 cd server
 DJANGO_DEBUG=1 python manage.py migrate
 DJANGO_DEBUG=1 python manage.py runserver 127.0.0.1:8000
 
 cd ../front
-npm install
+npm ci
 npm run dev -- --host 127.0.0.1 --port 5173
 ```
 

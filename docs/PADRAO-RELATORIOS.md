@@ -1,8 +1,8 @@
 # Padrão de relatórios — hora e duração são obrigatórias
 
-Database de referência: [Relatórios](https://app.notion.com/p/Relat-rios-32591f95497e812bb975d9f8c8999dcc?source=copy_link)
-(propriedade **Data**, uma página por dia, corpo idempotente por data — ver
-[`relatorios_diarios.py`](../modules/notion-starter/src/notion_starter/services/relatorios_diarios.py)).
+Database de referência: **Relatórios** (ID omitido intencionalmente por
+segurança; propriedade **Data**, uma página por dia, corpo idempotente por data
+— ver [`relatorios_diarios.py`](https://github.com/Felipe-Alcantara/notion-starter/blob/main/src/notion_starter/services/relatorios_diarios.py)).
 
 ## A regra
 
