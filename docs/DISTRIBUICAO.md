@@ -1,6 +1,6 @@
 # Distribuição da CLI única
 
-> **Estado em 2026-09-04:** a versão `0.3.0` está publicada no PyPI. Este é o
+> **Estado em 2026-09-08:** a versão `0.3.0` está publicada no PyPI. Este é o
 > contrato atual para usar, desenvolver e verificar a distribuição sem exigir
 > clone, Git ou Node na máquina de quem usa o produto.
 
@@ -86,9 +86,51 @@ No app, o job de build roda `npm ci` e `npm run build` antes de `python -m build
 O resultado entra em `server/static/frontend/` no wheel, mas o artefato gerado
 continua ignorado no checkout para não virar fonte paralela.
 
-O primeiro release não inclui binários nativos: o contrato é Python 3.10+ com
-`pipx`/`uv`. Binários só entram após uma decisão separada que defina plataformas,
-assinatura, tamanho, política de update, rollback e manutenção.
+O primeiro release não inclui binários nativos: o contrato publicado continua
+Python 3.10+ com `pipx`/`uv`. A decisão posterior de distribuição já definiu o
+contrato do mecanismo nativo abaixo; os binários só entram quando as tasks de
+empacotamento PyInstaller e assinatura concluírem seus artefatos.
+
+## Contrato de binários nativos, atualização e rollback
+
+O módulo `notion-tasks-cli` implementa o mecanismo em
+`cli/atualizacao_nativa.py`, sem alterar o pacote Python `0.3.0`. A Release
+estável consulta a API de Releases do GitHub e só considera o alvo detectado
+na máquina:
+
+| Alvo | Asset do executável | Asset do checksum |
+| --- | --- | --- |
+| Windows x64 | `notion-automacoes-windows-x64.exe` | `notion-automacoes-windows-x64.exe.sha256` |
+| macOS Intel | `notion-automacoes-macos-x64` | `notion-automacoes-macos-x64.sha256` |
+| macOS Apple Silicon | `notion-automacoes-macos-arm64` | `notion-automacoes-macos-arm64.sha256` |
+| Linux x64 | `notion-automacoes-linux-x64` | `notion-automacoes-linux-x64.sha256` |
+
+O updater rejeita tags inválidas, drafts e pré-releases, exige o par de assets
+do alvo, baixa para o mesmo diretório do executável e confere SHA-256 antes de
+qualquer troca. Em macOS/Linux a troca usa `os.replace` e guarda a versão
+anterior em `<executável>.previous`, restaurando-a se a operação falhar. No
+Windows, onde o executável em uso fica bloqueado, um processo filho espera o
+processo pai terminar, faz a mesma troca e relança os argumentos originais.
+
+Em um binário PyInstaller, comandos normais verificam a Release
+automaticamente (no máximo uma vez por 24 horas, com cache local). A opção
+`NOTION_AUTOMACOES_NO_UPDATE=1` desabilita a verificação automática. O comando
+`notion-automacoes update --dry-run` mostra o plano sem baixar; em uma instalação
+Python, `update` mantém o comportamento compatível de apenas sugerir o comando
+`pipx`, `uv` ou `pip`.
+
+O rollback de produto é deliberadamente manual: cada publicação deve manter no
+GitHub pelo menos as duas Releases estáveis mais recentes com seus quatro pares
+de assets. Para reverter, escolha a Release anterior, baixe o asset do sistema,
+confira a assinatura e o `.sha256`, encerre o programa e substitua o executável
+pela versão escolhida. O updater automático nunca faz downgrade; o backup
+`.previous` é uma recuperação local adicional, não substitui a Release
+anterior.
+
+Os binários nativos ainda não foram publicados nesta versão. A aceitação física
+da matriz Windows/macOS Intel/macOS ARM/Linux — incluindo assinatura, execução
+do helper Windows e rollback de uma Release real — depende das tasks irmãs de
+PyInstaller e assinatura e permanece explicitamente pendente.
 
 ## Evidências da publicação
 
