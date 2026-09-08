@@ -24,7 +24,7 @@
   protegido nas seções datadas abaixo e nos archives.
 -->
 
-Última atualização: [2026-09-04]
+Última atualização: [2026-09-08]
 
 - **Fase**: ecossistema modularizado e estável, com a distribuição única
   `notion-automacoes` publicada em `0.3.0`. O hub concentra
@@ -33,18 +33,20 @@
 - **Gate do hub**: `python3 -m pytest tests` + `python3 check-dev.py` (nenhum
   check exige token real). Gate de código é o de cada módulo (`ruff` + `pytest`).
 - **Qualidade dos módulos**: READMEs no design system e contratos `QUALIDADE.md`;
-  gates verdes nesta entrega (starter 355, CLI 198, app 279; front com
+  gates verdes nesta entrega (starter 355, CLI 245, app 279; front com
   `oxlint` e build Vite aprovados).
 - **Distribuição**: wheel/sdist dos três módulos validados; o app leva a SPA
-  compilada, a CLI mantém `notion-tasks` e não há dependência Git em
-  `Requires-Dist`.
+  compilada, a CLI mantém `notion-tasks`, não há dependência Git em
+  `Requires-Dist` e o mecanismo nativo está documentado, aguardando artefatos
+  PyInstaller assinados.
 - **Histórico**: registros de junho/2026 (era monorepo) arquivados em
   [`docs/ia-archive/IA-ARCHIVE-2026-06.md`](docs/ia-archive/IA-ARCHIVE-2026-06.md).
 - **Estado legal**: os três pacotes e o hub identificam `Felipe Alcantara` como
   titular; colaboradores não alteram essa titularidade. Trusted Publishing foi
   validado pelos workflows de release.
 - **Próximos passos**: melhorias de produto continuam abertas à comunidade;
-  binários nativos não fazem parte do primeiro release e exigem decisão própria.
+  concluir empacotamento/assinatura e validar os binários nativos nos quatro
+  alvos antes de publicar a primeira Release nativa.
 
 [2026-08-21] O setup do hub passou a instalar `notion-starter` antes de
 `notion-tasks-cli`, ambos em modo editável a partir de `modules/`. Isso evita
@@ -864,3 +866,21 @@ O gate oficial do app foi reexecutado após alinhar o fixture REST ao schema do
 `notion-starter==0.3.0`: **279 testes passaram** em Python 3.10, 3.11, 3.12 e
 3.13, e o frontend passou por lint/build. As CIs finais do starter e da CLI
 também passaram; os links das execuções estão em `docs/DISTRIBUICAO.md`.
+
+## [2026-09-08] Contrato de atualização dos binários nativos
+
+A task de distribuição definiu o mecanismo compatível com PyInstaller sem
+alterar o contrato publicado Python `0.3.0`: a entrada nativa consulta a Release
+estável do GitHub, escolhe um asset por sistema/arquitetura, valida SHA-256 e
+faz troca atômica. A versão anterior fica em `<executável>.previous`; no
+Windows, um helper espera o processo pai terminar antes de substituir o arquivo
+bloqueado. O rollback de produto continua manual pela Release anterior, que
+deve manter pelo menos os dois releases estáveis mais recentes.
+
+O mecanismo foi implementado no módulo `notion-tasks-cli`, em
+`cli/atualizacao_nativa.py`, integrado em `cli/unificada.py` e documentado em
+`docs/DISTRIBUICAO.md`. A suíte offline valida os quatro alvos e os caminhos de
+checksum/troca/helper. A aceitação física — executáveis PyInstaller assinados,
+notarização, execução nos quatro sistemas e rollback com asset real — permanece
+dependente das tasks irmãs de empacotamento e assinatura; nenhum binário nativo
+foi publicado nesta etapa.
