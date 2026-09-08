@@ -72,7 +72,7 @@ para Git. O app declara runtime em `pyproject.toml`; ferramentas de teste ficam
 no extra `dev`. O extra `app` do CLI é opcional para permitir a publicação
 sequencial dos pacotes, mas é a instalação recomendada para o produto completo.
 
-## Release e smoke
+## Release Python, binários nativos e smoke
 
 Cada módulo tem um workflow `release.yml` que:
 
@@ -131,6 +131,26 @@ Os binários nativos ainda não foram publicados nesta versão. A aceitação f�
 da matriz Windows/macOS Intel/macOS ARM/Linux — incluindo assinatura, execução
 do helper Windows e rollback de uma Release real — depende das tasks irmãs de
 PyInstaller e assinatura e permanece explicitamente pendente.
+
+## Empacotamento PyInstaller e publicação controlada
+
+O workflow `native-release.yml` do `notion-tasks-cli` constrói os quatro assets
+com os nomes estáveis acima, gera um `.sha256` irmão e roda um smoke diretamente
+no executável. O builder recebe a tag (`v0.4.0` ou posterior), portanto a versão
+embutida no binário não depende do fallback da instalação Python.
+
+O workflow publica os binários primeiro como artefatos da execução. A anexação à
+GitHub Release ocorre apenas por `workflow_dispatch`, com `publicar_release=true`
+e aprovação do ambiente protegido `native-release`. Essa barreira é intencional:
+o processo de assinatura Windows Authenticode e macOS notarization deve concluir
+antes da aprovação. A task de empacotamento não altera a Release `0.3.0`.
+
+Para quem usa, a instalação nativa será: baixar o asset da sua plataforma na
+Release estável, validar a assinatura e o `.sha256`, conceder permissão de
+execução no macOS/Linux quando necessário e colocar o executável no `PATH`. O
+binário roda sem Python instalado; o smoke do workflow executa a própria cópia
+produzida, mas a aceitação final em máquinas limpas/VMs por plataforma continua
+pendente até haver os assets assinados.
 
 ## Evidências da publicação
 
