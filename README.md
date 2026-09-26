@@ -102,7 +102,7 @@ Automações do Notion/
 ### Instalação distribuída (sem clone)
 
 O caminho de usuário é a distribuição pública `notion-automacoes`, com o alias
-legado `notion-tasks` preservado. A versão atual é `0.3.0` e os três pacotes já
+legado `notion-tasks` preservado. A versão atual é `0.5.0` e os três pacotes já
 estão publicados no PyPI. O produto completo pode ser instalado com uma linha:
 
 ```bash
@@ -121,9 +121,9 @@ Pacotes publicados:
 
 | Pacote | Papel | Link |
 | --- | --- | --- |
-| `notion-automacoes==0.3.0` | CLI única, perfis e fachada para app/MCP | [PyPI](https://pypi.org/project/notion-automacoes/) |
-| `notion-starter==0.3.0` | Biblioteca base e serviços compartilhados | [PyPI](https://pypi.org/project/notion-starter/) |
-| `notion-workspace-app==0.3.0` | API Django, SPA, launcher e servidor MCP | [PyPI](https://pypi.org/project/notion-workspace-app/) |
+| `notion-automacoes==0.5.0` | CLI única, perfis e fachada para app/MCP | [PyPI](https://pypi.org/project/notion-automacoes/) |
+| `notion-starter==0.4.0` | Biblioteca base e serviços compartilhados | [PyPI](https://pypi.org/project/notion-starter/) |
+| `notion-workspace-app==0.3.1` | API Django, SPA, launcher e servidor MCP | [PyPI](https://pypi.org/project/notion-workspace-app/) |
 | `notion-automacoes[app]` | Instalação recomendada do produto completo | [guia de distribuição](docs/DISTRIBUICAO.md) |
 
 Para usar somente a CLI, sem a interface local, instale `pipx install
@@ -218,8 +218,11 @@ notion-tasks editar-linha <id> --append "Resumo=..."     # acrescenta sem perder
 notion-tasks relacionar <a> <b> --coluna "Relacionadas"  # liga nos dois sentidos
 
 # Conteúdo de páginas
-notion-tasks escrever <id>       # anexa Markdown (recusa página que contém database)
-notion-tasks editar-bloco <id>   # substitui texto
+notion-tasks escrever <id>                 # anexa Markdown (recusa página que contém database)
+notion-tasks escrever <id> --apos <bloco>  # insere no meio da página
+notion-tasks blocos <id> --metadados       # blocos com ID, criado/editado em
+notion-tasks editar-bloco <id> --trocar "de" --por "para"  # troca um trecho sem perder formatação
+notion-tasks restaurar-bloco <id>          # desfaz uma exclusão
 
 # Relatórios diários (saída programática: acabamento fino pode pedir ajuste manual no Word)
 notion-tasks exportar-docx --database <id> --de 2026-07-01 --ate 2026-07-06 --saida ./exports

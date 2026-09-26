@@ -884,3 +884,23 @@ checksum/troca/helper. A aceitação física — executáveis PyInstaller assina
 notarização, execução nos quatro sistemas e rollback com asset real — permanece
 dependente das tasks irmãs de empacotamento e assinatura; nenhum binário nativo
 foi publicado nesta etapa.
+
+## [2026-09-26] Manipulação de blocos sem perda de dados (starter 0.4.0, CLI 0.5.0, app 0.3.1) e limpeza de backups pessoais
+
+Uma auditoria da manipulação de blocos, com 3 verificadores por achado, confirmou falhas de **perda de dados**.
+Entre elas: `reordenar-bloco` apagava antes de copiar, perdia filhos e mandava `--inicio` para o fim;
+`escrever --substituir` apagava antes de validar; `relacionar` perdia relações acima de 25; `editar-bloco`
+perdia menções e formatação; `importar-planilha` usava a posição da linha como chave. As correções saíram no
+notion-starter 0.4.0 e na CLI notion-automacoes 0.5.0 (PyPI e binários nativos). A CLI ganhou
+`escrever --apos/--inicio`, `blocos --metadados/--completo/--recursivo/--contendo`, `ler-bloco`,
+`editar-bloco --trocar/--por` e `--arquivo`, `restaurar-bloco`, IDs sem hífen e links, e envelope de erro com
+`codigo`. O notion-workspace-app 0.3.1 só amplia a faixa do starter (`<0.5.0`), para o extra `[app]` resolver
+a CLI nova. O `AGENTS.md` e o `README.md` foram atualizados com os comandos novos.
+
+**Backups pessoais no repositório público:** o backup do `reordenar-bloco` caía no diretório atual, e 2 JSON
+com texto do workspace entraram aqui no commit automático de 28/07/2026. A CLI 0.5.0 grava os backups em
+`~/.local/state/notion-automacoes/backups`. A pedido do mantenedor, os 2 arquivos foram removidos também do
+histórico da `main` (`git filter-repo`, com force-push). Um backup espelho completo do repositório anterior
+foi guardado antes. Os PRs #2 e #3 ainda referenciam o commit antigo; as refs de PR são somente leitura, e
+a remoção delas (e do cache de commits por SHA) depende do Suporte do GitHub. Clones antigos precisam de
+`git fetch && git reset --hard origin/main`.
