@@ -904,3 +904,57 @@ histórico da `main` (`git filter-repo`, com force-push). Um backup espelho comp
 foi guardado antes. Os PRs #2 e #3 ainda referenciam o commit antigo; as refs de PR são somente leitura, e
 a remoção delas (e do cache de commits por SHA) depende do Suporte do GitHub. Clones antigos precisam de
 `git fetch && git reset --hard origin/main`.
+
+## [2026-09-27] Ferramentas para organizar o workspace viram features (starter + CLI)
+
+**Pedido do mantenedor.** Todo script, feature ou decisão nova usada para editar
+os workspaces precisa virar feature dos repositórios, não código de tarefa. A
+organização de artigos de 2026-09-27 tinha sido feita com um pacote de tarefa
+(fora dos repositórios); o que ele fazia foi portado com testes, sem rede.
+
+**Fatos medidos no workspace real em 2026-09-27 (base dos testes e da doc).**
+
+- `PATCH /pages/{id}` com `parent` responde 200 e o Notion **ignora** o campo.
+  O que move é `POST /pages/{id}/move` (versão `2025-09-03`); a releitura
+  mostra `{"type": "database_id", ...}` quando o destino é data source.
+- Mover uma linha para outro database **cria no destino** as colunas da origem
+  que faltam lá e **descarta** valores com opção inexistente e relações.
+- `GET /data_sources/{id}/templates` lista os modelos (`"New page"` quando sem
+  título); a API não cria modelo nem define o padrão, mas escrever num modelo
+  existente funciona.
+- Copiar blocos: a leitura traz `null` que a escrita recusa, e o lote de 100 é
+  atômico.
+- `/search` sem termo: 3.841 itens em 62 s; corpos de ~1.800 páginas: ~30 min.
+
+**O que entrou.**
+
+- notion-starter: `mover_pagina` verificado (`3130d5e`); `copia_corpo`
+  (`445f3cc`); `listar_modelos`, `valor_de_texto` e `modelos` (`9cfe49e`);
+  `inventario_workspace`, `corpos` e `busca_conteudo` (`576d323`); leitores de
+  `created_time`/`created_by`/`unique_id` e `remover_coluna` (`42da753`).
+- notion-tasks-cli: `mover-pagina` com previsão e `--aceitar-perdas`
+  (`3b3d875`); `copiar-corpo` (`db6b8c7`); `modelos listar|preencher`
+  (`38fe516`); `criar --database` (`0511757`); `inventario`, `baixar-corpos` e
+  `buscar-conteudo` (`cd9df88`); `remover-coluna` (`2deae46`).
+
+**Decisão de contrato.** As APIs novas entraram no `main` do starter **sem**
+mudar a versão (`0.4.1`), por instrução do mantenedor (nada de release, tag ou
+versão nesta entrega). Como a CI da CLI resolve o starter do PyPI, a CLI
+importa esses serviços **dentro do comando** (`_servico_do_starter`): com o
+starter publicado, só os comandos novos recusam (`configuracao`) e os testes
+deles pulam. Para publicar: release do starter com as APIs novas, faixa da CLI
+subindo junto, e então a importação pode voltar ao topo.
+
+**Validação.** starter 677 testes, CLI 363 (342 + 23 pulados com o starter do
+PyPI, como na CI), app 279 com o starter novo; `ruff` limpo nos três; CI verde
+em cada push. Nada foi escrito no Notion real.
+
+**Incidente registrado.** O disco E: encheu durante o trabalho (28 KB livres) e
+um `git pull` dos módulos parou no meio, deixando arquivos com 0 byte
+(inclusive `cli/notion_tasks.py`, o que derrubou a CLI editável por alguns
+minutos). O reparo foi concluir o fast-forward depois de apagar só caches
+regeneráveis; o desenvolvimento seguiu em clones no C:, e os checkouts de E:
+ficaram para ser sincronizados quando houver espaço. Outro achado: o
+`notion-tasks` do PATH importava a CLI de um scratchpad de outra sessão
+(0.4.1), não do checkout — por isso o `editar-bloco` parecia não conferir o
+tipo do bloco, coisa que o `main` 0.5.0 já faz.
