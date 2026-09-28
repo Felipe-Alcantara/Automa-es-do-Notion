@@ -958,3 +958,75 @@ ficaram para ser sincronizados quando houver espaço. Outro achado: o
 `notion-tasks` do PATH importava a CLI de um scratchpad de outra sessão
 (0.4.1), não do checkout — por isso o `editar-bloco` parecia não conferir o
 tipo do bloco, coisa que o `main` 0.5.0 já faz.
+
+## [2026-09-28] Sessão "Organizar artigos": ideias de conteúdo num database só e tasks de artigos fechadas
+
+Registro da sessão de uso (27/09 22:26 → 28/09 ~01:10) feita com a CLI e os
+serviços deste ecossistema. O registro técnico das features que nasceram dela
+está na entrada anterior; aqui ficam o estado, as decisões e os becos sem saída.
+
+**Estado:** concluído. O database "Artigos" (`1fc91f95-497e-80d3-8dbd-ebbdcca5fec7`)
+virou **Ideias criativas**, mudou de Estudo para a HOME e reúne 17 ideias (8 artigos,
+9 vídeos), cada uma com **Criado em** igual à data da primeira anotação, e 16 modelos
+nativos. Das tasks de artigo, 5 foram fechadas e 4 continuam abertas. Relatório com
+linha do tempo e 11 figuras: subpágina do "Relatório — 27/09/2026".
+
+**Decidido:**
+
+- Renomear para Ideias criativas e colocar vídeos e outros formatos no mesmo database,
+  com a coluna **Formato** — pedido do Felipe, para achar tudo num lugar. Ficou aberta
+  a decisão sobre o pipeline de produção de vídeo descrito na página *youtube*.
+- **Criado em** é coluna de data editável, com a data da fonte original (tarefa, página,
+  vídeo, repositório). A coluna automática `created_time` marcaria 27/09 nas linhas
+  criadas na organização e perderia a cronologia, que era o objetivo.
+- Mover os 9 vídeos com `POST /pages/{id}/move`, e não copiar e arquivar: preserva ID,
+  links e corpo. A coluna `Tema/Pilar`, criada no destino como efeito do movimento, foi
+  removida depois de conferir que os 9 valores estavam preservados em Temas e Observações.
+- Não mexer no GitHub (`felixo-blog` é público) — decisão do Felipe.
+- Fechar task só quando o trabalho principal é escrita. Foram 7 lentes de busca sobre
+  503 tarefas abertas, 3 verificadores independentes por candidata e decisão por maioria.
+  Antes de fechar, as seções que faltavam ("O que fazer", "Critérios de aceite") foram
+  copiadas para a linha da pauta. Tasks de ferramenta, infraestrutura ou decisão abertas
+  na mesma noite continuam abertas.
+
+**Descoberto (além da entrada anterior):**
+
+- `PATCH /data_sources/{id}` com `default_template_id` responde 200 e **ignora** o
+  pedido. O modelo padrão só se define pela interface.
+- Nenhuma ideia estava escondida nos corpos. As 306 páginas com sinais de artigo, lidas
+  por inteiro, deram 0 ideias novas e 1 texto começado: um relato de 02/07/2026 em
+  Arquivos / Lixeira, levado para a pauta do júnior.
+- "Vault" (1.020 páginas) e "Blog" (12) são exemplos de um template duplicado três vezes
+  (23/05/2025, 25/05/2025, 16/03/2026), não escrita do Felipe.
+- O conector Notion do claude.ai desta máquina aponta para **outro workspace** (404 no
+  database de artigos). Para o workspace do Felipe, só a CLI serve.
+- Linhas de teste criadas pela interface (uma em branco, uma a partir do modelo) entram
+  nas consultas. Por isso "ideia" passou a ser "linha com Criado em" nos scripts da tarefa.
+
+**Becos sem saída (não repita):**
+
+- Filtrar tarefas por "Áreas da vida = Artigos": não existe essa área. O ID que parecia
+  ser dela é da área Projetos.
+- `editar-bloco` pela CLI do PATH em lista ou citação: falha enquanto a CLI instalada for
+  o clone 0.4.1 de outra sessão. Reinstale a partir do checkout, ou edite pelo cliente
+  preservando o tipo.
+- Definir o modelo padrão pela API: o pedido é aceito e ignorado.
+- Idempotência de acréscimo por "marca única por linha": deixava passar texto repetido
+  quando um segundo acréscimo diferente ia para a mesma coluna. Compare o próprio trecho.
+
+**Em aberto:**
+
+- Falta fazer (tarefas abertas no To Do List da HOME): liberar espaço no E: (1,9 MB
+  livres), sincronizar os checkouts (`git pull --ff-only` nos três repositórios) e
+  reinstalar a CLI editável (CLI primeiro, starter por último).
+- Falta decidir (Felipe): release do notion-starter com os serviços novos; onde vive o
+  pipeline de produção de vídeo.
+- Três cliques na interface: modelo padrão, ordenação da view por Criado em e as duas
+  linhas de teste.
+- Não verificado: páginas renderizadas no Notion (só relidas pela API); o Felixo Editor
+  com o database misturando formatos.
+
+**Próximo passo:** liberar espaço no E: e rodar
+`git -C "E:/Programação/Github/<repo>" pull --ff-only` nos três repositórios, depois
+`python -m pip install -e "E:\Programação\Github\notion-tasks-cli"` e
+`python -m pip install -e "E:\Programação\Github\notion-starter"`.
