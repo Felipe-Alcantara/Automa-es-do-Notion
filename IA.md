@@ -1030,3 +1030,16 @@ linha do tempo e 11 figuras: subpágina do "Relatório — 27/09/2026".
 `git -C "E:/Programação/Github/<repo>" pull --ff-only` nos três repositórios, depois
 `python -m pip install -e "E:\Programação\Github\notion-tasks-cli"` e
 `python -m pip install -e "E:\Programação\Github\notion-starter"`.
+
+## [2026-10-02] Validação Linux do auto-update nativo e relançamento pós-troca em macOS/Linux
+
+A validação física no Linux x64 (asset `v0.4.1` publicado, cópia isolada) confirmou update real para a
+`v0.5.0`, checksum, permissão e rollback pelas duas vias (`.previous` e Release anterior), mas revelou que o
+**auto-update disparado por comando comum** quebrava o próprio comando com `Error -3 while decompressing
+data`: o onefile do PyInstaller lê módulos do próprio arquivo sob demanda, e a troca acontecia com o processo
+antigo vivo. A correção ficou no `notion-tasks-cli` (`cli/atualizacao_nativa.py` `relancar_atualizado`,
+`cli/unificada.py`): depois da troca, o comando continua no executável novo, com os mesmos argumentos e
+`PYINSTALLER_RESET_ENVIRONMENT=1`. O contrato em `docs/DISTRIBUICAO.md` foi atualizado com o comportamento e
+com o estado da aceitação física (Windows e Linux validados; macOS, assinatura e VM limpa pendentes). A
+correção só vale para binários publicados a partir da próxima Release; a `v0.5.0` ainda falha uma vez ao se
+atualizar.

@@ -112,6 +112,16 @@ anterior em `<executável>.previous`, restaurando-a se a operação falhar. No
 Windows, onde o executável em uso fica bloqueado, um processo filho espera o
 processo pai terminar, faz a mesma troca e relança os argumentos originais.
 
+Quando a troca automática acontece em macOS/Linux, o comando que a disparou
+**não continua no processo antigo**: o executável onefile do PyInstaller lê
+módulos do próprio arquivo sob demanda e, depois do `os.replace`, um import
+tardio leria o arquivo novo com os offsets do antigo (`Error -3 while
+decompressing data`). Por isso o processo antigo relança o executável novo com
+os mesmos argumentos e `PYINSTALLER_RESET_ENVIRONMENT=1`, e só repassa o código
+de saída. Medido em 02/10/2026 no Linux x64: a 0.4.1 publicada falha assim no
+primeiro comando após o auto-update; o binário corrigido conclui o comando já
+na 0.5.0.
+
 Em um binário PyInstaller, comandos normais verificam a Release
 automaticamente (no máximo uma vez por 24 horas, com cache local). A opção
 `NOTION_AUTOMACOES_NO_UPDATE=1` desabilita a verificação automática. O comando
@@ -127,10 +137,13 @@ pela versão escolhida. O updater automático nunca faz downgrade; o backup
 `.previous` é uma recuperação local adicional, não substitui a Release
 anterior.
 
-Os binários nativos ainda não foram publicados nesta versão. A aceitação física
-da matriz Windows/macOS Intel/macOS ARM/Linux — incluindo assinatura, execução
-do helper Windows e rollback de uma Release real — depende das tasks irmãs de
-PyInstaller e assinatura e permanece explicitamente pendente.
+Estado da aceitação física (02/10/2026): as Releases nativas `v0.4.0`, `v0.4.1`
+e `v0.5.0` estão publicadas com os quatro pares de assets, **sem assinatura**.
+Windows x64 foi validado de ponta a ponta em 21/09/2026 (helper, relançamento e
+rollback por `.previous`) e Linux x64 em 02/10/2026 (update real 0.4.1 → 0.5.0,
+checksum, permissão preservada, rollback por `.previous` e pela Release
+anterior). Continuam pendentes macOS Intel, macOS Apple Silicon, a assinatura
+Authenticode/notarização e o teste em VM limpa.
 
 ## Empacotamento PyInstaller e publicação controlada
 
