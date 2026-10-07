@@ -9,12 +9,36 @@ para que ``config/settings.py`` e ``integrations/`` consumam um objeto estável.
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-#: Raiz do checkout. Em ``src/felixo_notion_mcp/core/config.py``, ``parents[0]`` é ``core``,
-#: ``[1]`` é ``felixo_notion_mcp``, ``[2]`` é ``src`` e ``[3]`` é a raiz do repositório.
-REPO_RAIZ = Path(__file__).resolve().parents[3]
+
+def _raiz_do_repositorio() -> Path:
+    """Raiz de onde o ``.env`` é lido e gravado.
+
+    Num checkout ou numa instalação, é a raiz do repositório: em
+    ``src/felixo_notion_mcp/core/config.py``, ``parents[0]`` é ``core``, ``[1]`` é
+    ``felixo_notion_mcp``, ``[2]`` é ``src`` e ``[3]`` é a raiz.
+
+    No binário nativo (PyInstaller) o arquivo mora em ``<_MEIPASS>/felixo_notion_mcp/core``,
+    e ``parents[3]`` sairia da pasta privada de extração para a pasta que a contém (no Linux,
+    a temporária do sistema, gravável por qualquer usuário local): um ``.env`` plantado ali
+    seria carregado a cada execução. Por isso, congelado, a raiz é a própria ``_MEIPASS``,
+    como era antes da reorganização. Sem ``_MEIPASS``, o mais longe que se sobe é a pasta que
+    contém o pacote de topo (``parents[2]``), o mesmo ponto onde a raiz antiga ficava.
+    """
+
+    if getattr(sys, "frozen", False):
+        pasta_privada = getattr(sys, "_MEIPASS", None)
+        if pasta_privada:
+            return Path(pasta_privada)
+        return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
+
+
+#: Raiz do checkout (no binário nativo, a pasta privada de extração).
+REPO_RAIZ = _raiz_do_repositorio()
 
 #: ``.env`` local opcional, no mesmo padrão usado por ``start_app.py``.
 ENV_FILE = REPO_RAIZ / ".env"
