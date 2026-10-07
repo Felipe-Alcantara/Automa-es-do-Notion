@@ -1165,6 +1165,10 @@ teste além dos 5 acima, que saíram de propósito.
     apagar a branch). A renomeação do repositório ainda recebe um clique de confirmação imediatamente antes,
     porque afeta remotes de outros agentes e o canvas. O mantenedor também decidiu parar ao fim da etapa 1
     para avaliar antes de começar as etapas 2 a 4.
+14. **A marca "Automações do Notion" fica na interface até a etapa 4.** O banner do menu
+    (`api/launcher.py`), o `templates/tarefas.html` e a descrição do `pyproject.toml` seguem com o nome
+    antigo, porque é a etapa 4 que troca a identidade pública publicada (nome da distribuição no PyPI,
+    binários e Releases). O custo, se isso estiver errado, é ter telas locais com o nome antigo por uma etapa.
 
 **Bugs achados e corrigidos na etapa.**
 
@@ -1246,6 +1250,10 @@ teste além dos 5 acima, que saíram de propósito.
   teste de arquitetura da spec 3.1 é da etapa 2.
 - Pendência aberta: `mcp start` no binário nativo usa `sys.executable -m`, padrão herdado do código antigo que
   não funciona em PyInstaller onefile; não foi verificado em build.
+- Guias antigos de `docs/` que não estavam no escopo desta tarefa (`CONTRATOS.md`, `PLANO.md`, `AGENTES.md`,
+  `INTEGRACOES.md` e parecidos) ainda citam `server/`, `cli/` e `notion_starter` do tempo dos módulos; o
+  caminho de hoje está na tabela origem → destino de `docs/ARQUITETURA.md`. Atualizá-los fica para uma
+  tarefa própria. Já foram corrigidos `INFRA.md` e `MCP.md`, que mandavam entrar em `modules/`.
 
 **Como validar:** `uv sync --locked --all-extras`, `uv run ruff check .`, `uv run python -m pytest`, e
 `uv run felixo-notion-mcp doctor` para ver de onde o pacote está sendo importado.
