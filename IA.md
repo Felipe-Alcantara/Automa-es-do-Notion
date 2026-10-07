@@ -1194,6 +1194,16 @@ teste além dos 5 acima, que saíram de propósito.
   `_comando_pip_projeto` montava `pip install felixo-notion-mcp[app]` e o Iniciar tudo o rodava sem perguntar;
   quem registrasse o nome no PyPI ganharia execução de código em quem instalou do código-fonte. Agora fora do
   checkout nada roda `pip`, o Iniciar tudo pergunta antes, e as mensagens apontam o checkout (`e457c02`).
+- **O `update` ainda imprimia a receita por nome.** Achado pela revisão do item anterior:
+  `_gerenciador_atualizacao` montava `pip install --upgrade`, `pipx upgrade` e `uv tool upgrade` a partir de
+  `DISTRIBUICAO` em qualquer ambiente (o `.venv` do checkout inclusive), e `felixo-notion-mcp update` os
+  imprimia. Nada era executado, mas era a mesma receita, e a varredura de mensagens não via o nome que vinha da
+  constante. Fora do binário nativo, `update` descreve o ambiente e imprime a receita do checkout (`git pull` e
+  `uv sync --all-extras`) ou, fora dele, que a distribuição ainda não está publicada e como instalar do
+  código-fonte; no JSON `comando` é `null` e a receita vem em `instrucao`, com `executado` sempre `false`. A
+  varredura passou a ler o AST e pega o comando montado a partir de `DISTRIBUICAO`. A asserção
+  `pipx upgrade felixo-notion-mcp` de `test_cli_unificada.py` (citada em "Mudanças de propósito" abaixo) saiu
+  por isso; os comandos por gerenciador voltam na etapa 4, quando o nome estiver publicado (`2c6e1a0`).
 - **A instalação comum lia e gravava o `.env` e o banco uma pasta acima.** Numa instalação (wheel, pipx), a
   raiz de `core/config.py` caía em `<venv>/lib/pythonX.Y` em vez de `site-packages`, onde a CLI e o app antigos
   os guardavam; um `pipx upgrade` reaproveita o venv, e um token salvo pelo menu instalado sumia em silêncio.
