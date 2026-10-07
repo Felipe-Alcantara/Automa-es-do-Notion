@@ -69,6 +69,26 @@ def test_retrato_registra_o_tipo_de_cada_argumento():
     assert tipos["sim"] is None
 
 
+def test_retrato_obrigatorio_do_posicional_nao_depende_da_versao_do_argparse():
+    # Até a 3.12 o argparse marca `nargs=REMAINDER` como required; desde a 3.13, não.
+    # Nas duas versões o comando aceita zero argumentos, então o retrato deve ser igual.
+    p = argparse.ArgumentParser(prog="x")
+    p.add_argument("simples")
+    p.add_argument("talvez", nargs="?")
+    p.add_argument("varios", nargs="*")
+    p.add_argument("restante", nargs=argparse.REMAINDER)
+    p.add_argument("--exige", required=True)
+    p.add_argument("--livre")
+    r = retratar_parser(p)
+    obrigatorio = {a["destino"]: a["obrigatorio"] for a in r["argumentos"]}
+    assert obrigatorio["simples"] is True
+    assert obrigatorio["talvez"] is False
+    assert obrigatorio["varios"] is False
+    assert obrigatorio["restante"] is False
+    assert obrigatorio["exige"] is True
+    assert obrigatorio["livre"] is False
+
+
 def test_retrato_registra_grupos_mutuamente_exclusivos_em_ordem_estavel():
     p = argparse.ArgumentParser(prog="x")
     g_b = p.add_mutually_exclusive_group(required=True)

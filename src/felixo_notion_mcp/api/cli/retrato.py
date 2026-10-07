@@ -22,6 +22,23 @@ def _nome_do_tipo(tipo: Callable[[str], Any] | None) -> str | None:
     return getattr(tipo, "__name__", type(tipo).__name__)
 
 
+#: `nargs` de posicionais que aceitam zero argumentos.
+_NARGS_SEM_OBRIGATORIEDADE = (argparse.OPTIONAL, argparse.ZERO_OR_MORE, argparse.REMAINDER)
+
+
+def _obrigatorio(acao: argparse.Action) -> bool:
+    """Diz se o argumento é obrigatório na linha de comando, igual em qualquer versão.
+
+    Numa opção vale o `required` declarado. Num posicional o `required` é derivado pelo
+    próprio argparse e muda entre versões (`REMAINDER`, e `*` sem padrão, são `required`
+    até a 3.12 e não na 3.13) sem mudar o que a linha de comando aceita. Por isso o
+    posicional é obrigatório se, e somente se, o `nargs` não admite zero argumentos.
+    """
+    if acao.option_strings:
+        return bool(acao.required)
+    return acao.nargs not in (*_NARGS_SEM_OBRIGATORIEDADE, argparse.SUPPRESS)
+
+
 def _retratar_acao(acao: argparse.Action) -> dict[str, Any]:
     """Descreve uma ação (argumento posicional ou opção) do parser."""
     escolhas = None if acao.choices is None else sorted(str(c) for c in acao.choices)
@@ -31,7 +48,7 @@ def _retratar_acao(acao: argparse.Action) -> dict[str, Any]:
         "destino": acao.dest,
         "acao": type(acao).__name__,
         "nargs": str(acao.nargs),
-        "obrigatorio": bool(acao.required),
+        "obrigatorio": _obrigatorio(acao),
         "escolhas": escolhas,
         "padrao": padrao,
         "tipo": _nome_do_tipo(acao.type),

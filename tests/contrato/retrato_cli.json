@@ -3904,7 +3904,7 @@
             "destino": "argumentos",
             "escolhas": null,
             "nargs": "...",
-            "obrigatorio": true,
+            "obrigatorio": false,
             "opcoes": [],
             "padrao": "None",
             "tipo": null
@@ -4013,7 +4013,7 @@
             "destino": "argumentos",
             "escolhas": null,
             "nargs": "...",
-            "obrigatorio": true,
+            "obrigatorio": false,
             "opcoes": [],
             "padrao": "None",
             "tipo": null
@@ -4043,7 +4043,7 @@
             "destino": "argumentos",
             "escolhas": null,
             "nargs": "...",
-            "obrigatorio": true,
+            "obrigatorio": false,
             "opcoes": [],
             "padrao": "None",
             "tipo": null
@@ -4073,7 +4073,7 @@
             "destino": "argumentos",
             "escolhas": null,
             "nargs": "...",
-            "obrigatorio": true,
+            "obrigatorio": false,
             "opcoes": [],
             "padrao": "None",
             "tipo": null
