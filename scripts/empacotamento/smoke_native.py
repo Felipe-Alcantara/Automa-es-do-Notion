@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -12,15 +13,48 @@ from pathlib import Path
 CHECK_DO_PACOTE = "felixo-notion-mcp"
 
 
-def executar(executavel: Path, *argumentos: str) -> str:
-    """Executa o binário e transforma uma falha em erro legível."""
+def ambiente_isolado(base: Path) -> dict[str, str]:
+    """Variáveis que isolam o binário da conta de quem roda o smoke.
 
-    resultado = subprocess.run(
-        [str(executavel), *argumentos],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    O smoke roda em máquina de dev e na CI de release, com o executável de verdade. Sem
+    isto, um comando que não seja ``--help``/``doctor`` dispararia o auto-update nativo
+    (consulta ao GitHub, escrita no cache do usuário e, havendo Release mais nova, troca
+    do binário em teste). As pastas do usuário apontam para dentro de ``base`` nos três
+    sistemas: ``HOME``/``USERPROFILE``, ``XDG_*`` (Linux e macOS) e ``APPDATA``/
+    ``LOCALAPPDATA`` (Windows); perfis e cache vão para lá e nunca para os reais.
+    """
+
+    pastas = {
+        "HOME": base,
+        "USERPROFILE": base,
+        "XDG_CONFIG_HOME": base / "config",
+        "XDG_CACHE_HOME": base / "cache",
+        "APPDATA": base / "AppData" / "Roaming",
+        "LOCALAPPDATA": base / "AppData" / "Local",
+    }
+    for pasta in pastas.values():
+        pasta.mkdir(parents=True, exist_ok=True)
+    return {
+        "NOTION_AUTOMACOES_NO_UPDATE": "1",
+        **{nome: str(pasta) for nome, pasta in pastas.items()},
+    }
+
+
+def executar(executavel: Path, *argumentos: str) -> str:
+    """Executa o binário isolado (sem auto-update, pasta do usuário descartável).
+
+    Mantém o resto do ambiente de quem chama (``PATH`` e afins). A pasta temporária some
+    ao fim de cada comando, com o cache e os perfis que o binário tenha gravado nela.
+    """
+
+    with tempfile.TemporaryDirectory(prefix="smoke-nativo-", ignore_cleanup_errors=True) as pasta:
+        resultado = subprocess.run(
+            [str(executavel), *argumentos],
+            capture_output=True,
+            text=True,
+            check=False,
+            env={**os.environ, **ambiente_isolado(Path(pasta))},
+        )
     if resultado.returncode:
         raise RuntimeError(
             f"Smoke falhou em {' '.join(argumentos)} (código {resultado.returncode}): "
