@@ -1190,6 +1190,20 @@ teste além dos 5 acima, que saíram de propósito.
   (até 3.12, `REMAINDER` e `*` saem obrigatórios; na 3.13, não), o que quebraria o teste de contrato na CI; o
   posicional é obrigatório se, e só se, o `nargs` não admite zero argumentos, e o JSON ficou idêntico em
   3.10, 3.11, 3.12 e 3.13 (`4d35afe`).
+- **O launcher instalaria por nome uma distribuição que ninguém registrou.** Fora do checkout,
+  `_comando_pip_projeto` montava `pip install felixo-notion-mcp[app]` e o Iniciar tudo o rodava sem perguntar;
+  quem registrasse o nome no PyPI ganharia execução de código em quem instalou do código-fonte. Agora fora do
+  checkout nada roda `pip`, o Iniciar tudo pergunta antes, e as mensagens apontam o checkout (`e457c02`).
+- **A instalação comum lia e gravava o `.env` e o banco uma pasta acima.** Numa instalação (wheel, pipx), a
+  raiz de `core/config.py` caía em `<venv>/lib/pythonX.Y` em vez de `site-packages`, onde a CLI e o app antigos
+  os guardavam; um `pipx upgrade` reaproveita o venv, e um token salvo pelo menu instalado sumia em silêncio.
+  A raiz agora é a do checkout só se há `pyproject.toml` ali, e `site-packages` numa instalação (`8de2a28`).
+- **A suíte podia mover um store de perfis real e carregava o `.env` real do checkout.** `_migrar_legado` usa
+  `shutil.move`, e a fixture de isolamento não zerava `ARQUIVOS_LEGADOS`: um store antigo com tokens iria para
+  uma pasta temporária do pytest, apagada no fim (reproduzido com um arquivo falso). Além disso, `notion_tasks`
+  e o servidor MCP carregam o `.env` ao serem importados, na coleta, e o checkout principal tem um de verdade.
+  O `conftest.py` zera os endereços legados e troca `carregar_env_file` antes da coleta por uma versão que
+  pula o `.env` padrão (`e3e9b53`).
 - **Também corrigidos:** teste de import preguiçoso com `parents[1]` que apontava para um `src` inexistente e
   era mascarado pela instalação editável (`a0c9cc9`); raiz do build nativo (`parents[1]` virou `parents[2]`
   ao sair para `scripts/empacotamento/`); wheel que passaria servindo página em branco por faltar o bundle da
