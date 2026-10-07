@@ -9,10 +9,11 @@ decorar comando nenhum.
 O menu segue o contrato de menu de entrada do Felixo System Design, com no mínimo:
 
 - Iniciar/Rodar: app local (API e SPA), servidor MCP e a CLI ``notion-tasks``;
-- Instalar/Setup: cria o ``.venv`` e instala o pacote em modo editável;
+- Instalar/Setup: instala o pacote em modo editável no Python que roda o menu;
 - Configurar: perfis de workspace e o token do Notion, guardados em ``.env``
   (ignorado pelo git) e nunca no script;
-- Status/Sair: o estado do ambiente (o mesmo diagnóstico do ``doctor``) e a saída.
+- Status/Sair: o estado do ambiente, incluindo de onde o pacote é importado (a mesma
+  informação do ``doctor``), e a saída.
 
 Este arquivo é só a porta: ele acha ``src/`` no checkout e chama o launcher que vive no
 pacote (``felixo_notion_mcp.api.launcher``). Por isso usa apenas a biblioteca padrão e
