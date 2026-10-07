@@ -1,0 +1,11 @@
+# Dependências de runtime (o pyproject.toml é a fonte canônica do pacote).
+notion-starter>=0.3.0,<0.5.0
+Django>=5.0
+requests>=2.25
+
+# Launcher TUI (start_app.py)
+questionary>=2.0
+rich>=13.0
+
+# Servidor MCP
+mcp>=1.28,<2
