@@ -18,7 +18,10 @@ import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-RAIZ = Path(__file__).resolve().parents[1]
+from felixo_notion_mcp.api.cli.versao import NOME_ARQUIVO_VERSAO_NATIVA
+
+#: O script mora em ``scripts/empacotamento/``: a raiz do repositório está dois níveis acima.
+RAIZ = Path(__file__).resolve().parents[2]
 ENTRADA = Path(__file__).with_name("native_entrypoint.py")
 VERSAO_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
 
@@ -83,7 +86,7 @@ def construir_comando(
 ) -> list[str]:
     """Monta o comando PyInstaller sem depender do shell do runner."""
 
-    arquivo_versao = diretorio_trabalho / "notion-automacoes-version.txt"
+    arquivo_versao = diretorio_trabalho / NOME_ARQUIVO_VERSAO_NATIVA
     diretorio_spec = diretorio_trabalho / "spec"
     return [
         sys.executable,
@@ -101,9 +104,10 @@ def construir_comando(
         "--specpath",
         str(diretorio_spec),
         "--add-data",
-        f"{arquivo_versao}{os.pathsep}cli",
+        # Destino dentro do bundle: ao lado de ``versao.py``, que é quem o lê em execução.
+        f"{arquivo_versao}{os.pathsep}felixo_notion_mcp/api/cli",
         "--copy-metadata",
-        "notion-automacoes",
+        "felixo-notion-mcp",
         "--collect-submodules",
         "felixo_notion_mcp",
         str(ENTRADA),
@@ -120,7 +124,7 @@ def construir(identificador: str, versao: str, diretorio_saida: Path) -> dict[st
     trabalho.mkdir(parents=True, exist_ok=True)
     saida.mkdir(parents=True, exist_ok=True)
     (trabalho / "spec").mkdir(parents=True, exist_ok=True)
-    (trabalho / "notion-automacoes-version.txt").write_text(
+    (trabalho / NOME_ARQUIVO_VERSAO_NATIVA).write_text(
         versao_normalizada + "\n", encoding="utf-8"
     )
 

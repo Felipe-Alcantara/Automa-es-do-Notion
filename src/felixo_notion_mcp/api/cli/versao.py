@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 VERSAO_FONTE = "0.6.0.dev0"
-NOME_ARQUIVO_VERSAO_NATIVA = "notion-automacoes-version.txt"
+NOME_ARQUIVO_VERSAO_NATIVA = "felixo-notion-mcp-version.txt"
 
 
 def ler_versao_embutida() -> str | None:
@@ -18,7 +18,13 @@ def ler_versao_embutida() -> str | None:
     candidatos = [Path(__file__).with_name(NOME_ARQUIVO_VERSAO_NATIVA)]
     pasta_temporaria = getattr(sys, "_MEIPASS", None)
     if pasta_temporaria:
-        candidatos.append(Path(pasta_temporaria) / "cli" / NOME_ARQUIVO_VERSAO_NATIVA)
+        candidatos.append(
+            Path(pasta_temporaria)
+            / "felixo_notion_mcp"
+            / "api"
+            / "cli"
+            / NOME_ARQUIVO_VERSAO_NATIVA
+        )
 
     for caminho in candidatos:
         try:
