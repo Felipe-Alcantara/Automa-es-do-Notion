@@ -50,6 +50,11 @@ dev = [
     "pip-audit>=2.7",
 ]
 
+[project.scripts]
+felixo-notion-mcp = "felixo_notion_mcp.api.cli.unificada:main"
+notion-tasks = "felixo_notion_mcp.api.cli.notion_tasks:main"
+notion-automacoes = "felixo_notion_mcp.api.cli.unificada:main"
+
 [project.urls]
 Homepage = "https://github.com/Felipe-Alcantara/Felixo-Notion-MCP"
 Repository = "https://github.com/Felipe-Alcantara/Felixo-Notion-MCP"

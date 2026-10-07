@@ -49,5 +49,8 @@ Padrão de qualidade - Felixo System Design/
 # Backups locais de bloco (notion-tasks reordenar-bloco/apagar-bloco)
 .notion-backups/
 
+# Store legado de perfis (tokens): morava ao lado do pacote; hoje fica na pasta de configuração
+.notion-workspaces.json
+
 # Arquivos pessoais/de outros projetos guardados localmente por engano (PR #2)
 Arquivos/
