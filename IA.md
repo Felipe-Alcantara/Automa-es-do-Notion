@@ -42,7 +42,7 @@
   MCP, modo hospedado, migração dos consumidores e distribuição) seguem a spec de
   `docs/superpowers/specs/2026-10-07-monolito-felixo-notion-mcp-design.md`.
 - **Gate**: `uv sync --locked --all-extras`, `uv run ruff check .` e
-  `uv run python -m pytest` (1676 passed, 1 skipped por desenho); no `front/`,
+  `uv run python -m pytest` (1677 passed, 1 skipped por desenho); no `front/`,
   `npm run lint` e `npm run build`. A CI roda em Ubuntu, Windows e macOS com Python
   3.10 a 3.13, mais `pip-audit` e `npm audit`. Nenhum check exige token real.
 - **Ferramentas aposentadas**: `bootstrap.py`, `check-dev.py`, `sync.py` e `SYNC.md`
@@ -1116,12 +1116,13 @@ outras branches, cada uma com plano e gate próprios.
 | `notion-tasks-cli` | 370 passed | movida inteira, menos 2 testes de faixa do starter, trocados pelo contrato novo do `pyproject` |
 | `notion-workspace-app` | 256 passed, 2 skipped | movida inteira |
 | hub | 3 passed (`test_check_dev.py`) | saíram junto com o `check-dev.py` |
-| **Pacote único** | **1307 passed (soma) + 2 skipped** | **1676 passed, 1 skipped** |
+| **Pacote único** | **1307 passed (soma) + 2 skipped** | **1677 passed, 1 skipped** |
 
 O skip que sobra é por desenho: `tests/scripts/test_migracao.py` pula quando `_importado/` já não tem arquivos
 rastreados (a migração terminou). A diferença para cima vem de testes novos: retrato da CLI, scripts de
-migração, `doctor` e origem do pacote, `start_app.py` da raiz, conferência do wheel e smoke do binário. Nenhuma
-suíte migrada perdeu teste além dos 5 acima, que saíram de propósito.
+migração, `doctor` e origem do pacote, `start_app.py` da raiz, conferência do wheel e smoke do binário (1676 no
+fim da tarefa 9; a tarefa 10 acrescentou 1, o da mensagem do extra de planilha). Nenhuma suíte migrada perdeu
+teste além dos 5 acima, que saíram de propósito.
 
 **Decisões do controlador durante a etapa (Rulings).**
 
@@ -1205,7 +1206,14 @@ suíte migrada perdeu teste além dos 5 acima, que saíram de propósito.
   para quem configurava o logger por nome. Nenhum código ou teste do repositório dependia do nome antigo.
 - **Mensagens de execução** que ainda citavam `notion-starter` (instalação do extra de planilha, relatório
   DOCX, serviço ausente da CLI) passaram a citar `felixo-notion-mcp`, porque os textos antigos tratavam de
-  uma distribuição que deixou de ser dependência.
+  uma distribuição que deixou de ser dependência. O serviço ausente agora diz "instalação quebrada" e
+  aponta para o `doctor`. Nenhum teste dependia do texto antigo; quatro ganharam asserções que o prendem
+  (`test_cli_copiar_corpo`, `test_cli_remover_coluna`, `test_relatorios_docx_import_preguicoso` e o novo
+  caso do extra de planilha em `test_fonte_planilha`). As docstrings que citavam `notion_starter.*` como
+  módulo atual passaram a citar o módulo real, pelo mapa da migração; as menções históricas deliberadas
+  ("herdada do `notion_starter`", "tempo em que a CLI e o `notion-starter` tinham versões separadas")
+  ficaram. Os apelidos locais `starter_properties` e `starter_schema` em `notion_tasks.py` e `server.py`
+  seguem como estão (nome de variável, não texto).
 
 **Refinamentos sobre a spec.**
 
