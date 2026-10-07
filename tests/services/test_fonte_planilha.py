@@ -114,10 +114,15 @@ def test_xlsx_sem_openpyxl_manda_instalar_o_extra_do_pacote(tmp_path, monkeypatc
     caminho = tmp_path / "dados.xlsx"
     caminho.write_text("x", encoding="utf-8")
 
-    with pytest.raises(ValueError, match=r"felixo-notion-mcp\[planilha\]") as erro:
+    with pytest.raises(ValueError, match=r"extra planilha") as erro:
         list(FontePlanilha(caminho).coletar())
 
-    assert "notion-starter" not in str(erro.value)
+    mensagem = str(erro.value)
+    # Aponta o extra e o checkout; a distribuição ainda não está no PyPI e não é nomeada.
+    assert ".[planilha]" in mensagem
+    assert "uv sync --all-extras" in mensagem
+    assert "felixo-notion-mcp" not in mensagem
+    assert "notion-starter" not in mensagem
 
 
 # -- Integração com o caso de uso idempotente -------------------------------

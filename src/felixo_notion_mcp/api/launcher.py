@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from felixo_notion_mcp.core.config import ENV_FILE, REPO_RAIZ
+from felixo_notion_mcp.core.instalacao import instrucao_de_instalacao
 from felixo_notion_mcp.core.origem import origem_do_pacote
 
 
@@ -323,15 +324,19 @@ def _instalar_deps_tui() -> bool:
 # --------------------------------------------------------------------------- #
 # Estado real do ambiente                                                     #
 # --------------------------------------------------------------------------- #
-def _comando_pip_projeto(extras: str) -> list[str]:
-    """Comando ``pip install`` do próprio projeto com os extras pedidos.
+def _comando_pip_projeto(extras: str) -> list[str] | None:
+    """Comando ``pip install`` do próprio projeto com os extras pedidos, ou ``None``.
 
-    No checkout é a instalação editável da raiz (``-e ".[app,dev]"``). Fora dele não há
-    raiz para instalar, então instala a distribuição publicada.
+    Só existe no checkout, onde é a instalação editável da raiz (``-e ".[app,dev]"``). Fora
+    dele não há raiz para instalar e o comando é ``None``: nada aqui instala a distribuição
+    por nome, porque ``felixo-notion-mcp`` ainda não é do projeto no PyPI (a publicação é de
+    uma etapa posterior) e quem registrasse o nome ganharia execução de código em quem
+    seguisse a instalação automática.
     """
 
-    alvo = ["-e", f".[{extras}]"] if MODO_CHECKOUT else [f"felixo-notion-mcp[{extras}]"]
-    return [sys.executable, "-m", "pip", "install", *alvo]
+    if not MODO_CHECKOUT:
+        return None
+    return [sys.executable, "-m", "pip", "install", "-e", f".[{extras}]"]
 
 
 def _texto_comando(comando: list[str]) -> str:
@@ -340,6 +345,39 @@ def _texto_comando(comando: list[str]) -> str:
     from rich.markup import escape
 
     return escape(shlex.join(comando))
+
+
+def _como_instalar(extras: str) -> str:
+    """Como instalar os extras, pronto para o rich: o comando no checkout, a orientação fora."""
+
+    from rich.markup import escape
+
+    comando = _comando_pip_projeto(extras)
+    if comando is None:
+        return escape(instrucao_de_instalacao(extras))
+    return _texto_comando(comando)
+
+
+def _comando_de_instalacao_confirmado(
+    console, pergunta: str, extras: str = "app"
+) -> list[str] | None:
+    """Pergunta antes de instalar os extras; devolve o comando a rodar só se a pessoa disser sim.
+
+    Nada é instalado sem esta pergunta. Fora do checkout não há comando nem o que perguntar
+    (ver ``_comando_pip_projeto``): mostra como instalar e devolve ``None``. Recusando, mostra
+    o comando para rodar quando quiser e também devolve ``None``.
+    """
+
+    import questionary
+
+    comando = _comando_pip_projeto(extras)
+    if comando is None:
+        console.print(f"[yellow]•[/yellow] Nada será instalado por aqui. {_como_instalar(extras)}")
+        return None
+    if questionary.confirm(pergunta).ask():
+        return comando
+    console.print(f"[dim]Instale quando quiser:\n  {_como_instalar(extras)}[/dim]")
+    return None
 
 
 #: Dependências de runtime do ``pyproject.toml`` (distribuição -> módulo que se importa). O
@@ -605,6 +643,12 @@ def acao_instalar(console) -> None:
         )
         return
     comando_pip = _comando_pip_projeto("app,dev")
+    if comando_pip is None:
+        console.print(
+            "[yellow]•[/yellow] O Instalar/Setup só instala dentro de um checkout do código-fonte. "
+            f"{_como_instalar('app,dev')}"
+        )
+        return
     console.print(
         f"Instalando o pacote com os extras de app e dev ({_texto_comando(comando_pip)})..."
     )
@@ -1068,15 +1112,20 @@ def acao_rodar(console) -> None:
 def _instalar_extra_servidor(console) -> bool:
     """Instala o extra Django e confirma que ele ficou importável."""
 
+    comando = _comando_pip_projeto("app")
+    if comando is None:
+        console.print(f"[yellow]•[/yellow] Nada será instalado por aqui. {_como_instalar('app')}")
+        return False
+
     console.print("Instalando os componentes do servidor web...")
-    codigo = subprocess.call(_comando_pip_projeto("app"), cwd=RAIZ)
+    codigo = subprocess.call(comando, cwd=RAIZ)
     if codigo == 0 and _django_disponivel():
         console.print("[green]✓[/green] Componentes do servidor instalados.")
         return True
 
     console.print(
         "[red]✗[/red] Não consegui instalar o Django. Instale manualmente:\n"
-        f"  {_texto_comando(_comando_pip_projeto('app'))}"
+        f"  {_texto_comando(comando)}"
     )
     return False
 
@@ -1228,8 +1277,12 @@ def acao_iniciar_tudo(console) -> None:
 
     console.rule("[bold]Iniciar tudo")
 
-    if not _django_disponivel() and not _instalar_extra_servidor(console):
-        return
+    if not _django_disponivel():
+        console.print("[yellow]•[/yellow] O Django (extra app) não está instalado.")
+        if _comando_de_instalacao_confirmado(
+            console, "Instalar o extra app agora?"
+        ) is None or not _instalar_extra_servidor(console):
+            return
 
     configurado, origem = _token_configurado()
     if not configurado:
@@ -1319,14 +1372,10 @@ def acao_servidor(console) -> None:
 
     if not _django_disponivel():
         console.print("[yellow]•[/yellow] O Django (extra app) não está instalado.")
-        if questionary.confirm("Instalar o extra app agora?").ask():
-            if not _instalar_extra_servidor(console):
-                return
-        else:
-            console.print(
-                "[dim]Sem o Django a API não sobe. Instale quando quiser:\n"
-                f"  {_texto_comando(_comando_pip_projeto('app'))}[/dim]"
-            )
+        if _comando_de_instalacao_confirmado(
+            console, "Instalar o extra app agora?"
+        ) is None or not _instalar_extra_servidor(console):
+            console.print("[dim]Sem o Django a API não sobe.[/dim]")
             return
 
     configurado, origem = _token_configurado()
@@ -1370,19 +1419,15 @@ def acao_mcp(console) -> None:
     if not _mcp_disponivel():
         console.print("[yellow]•[/yellow] O SDK MCP não está instalado.")
         # O SDK MCP é dependência do pacote; reinstalar o projeto o traz de volta.
-        comando_pip = _comando_pip_projeto("app")
-        if questionary.confirm("Instalar o SDK MCP agora?").ask():
-            codigo = subprocess.call(comando_pip, cwd=RAIZ)
-            if codigo != 0 or not _mcp_disponivel():
-                console.print(
-                    "[red]✗[/red] Não consegui instalar o MCP. Instale manualmente:\n"
-                    f"  {_texto_comando(comando_pip)}"
-                )
-                return
-        else:
+        comando_pip = _comando_de_instalacao_confirmado(console, "Instalar o SDK MCP agora?")
+        if comando_pip is None:
+            console.print("[dim]Sem o SDK MCP o servidor não sobe.[/dim]")
+            return
+        codigo = subprocess.call(comando_pip, cwd=RAIZ)
+        if codigo != 0 or not _mcp_disponivel():
             console.print(
-                "[dim]Sem o SDK MCP o servidor não sobe. Instale quando quiser:\n"
-                f"  {_texto_comando(comando_pip)}[/dim]"
+                "[red]✗[/red] Não consegui instalar o MCP. Instale manualmente:\n"
+                f"  {_texto_comando(comando_pip)}"
             )
             return
 

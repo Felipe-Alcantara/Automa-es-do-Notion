@@ -18,8 +18,8 @@ O menu segue o contrato de menu de entrada do Felixo System Design, com no míni
 Este arquivo é só a porta: ele acha ``src/`` no checkout e chama o launcher que vive no
 pacote (``felixo_notion_mcp.api.launcher``). Por isso usa apenas a biblioteca padrão e
 roda num Python onde ainda não há nada instalado, em Windows, Linux e macOS. Quem
-instalou o pacote (``pipx install "felixo-notion-mcp[app]"``) abre o mesmo menu com
-``notion-automacoes-app``.
+instalou o pacote a partir do checkout (``pip install -e ".[app]"``) abre o mesmo menu com
+``notion-automacoes-app``. O nome ``felixo-notion-mcp`` ainda não está publicado no PyPI.
 """
 
 from __future__ import annotations
@@ -62,8 +62,10 @@ def main(argv: list[str] | None = None) -> None:
             raise
         raise SystemExit(
             f"Não achei o pacote {PACOTE} (esperado em {RAIZ / 'src'}).\n"
-            "Rode este arquivo de dentro do checkout do projeto, ou instale com:\n"
-            '  pipx install "felixo-notion-mcp[app]"'
+            "Rode este arquivo de dentro do checkout do código-fonte (a pasta com src/ e\n"
+            "pyproject.toml). A distribuição ainda não está publicada no PyPI (a publicação\n"
+            "é de uma etapa posterior); instale a partir do checkout com:\n"
+            '  uv sync --all-extras   ou   pip install -e ".[app]"'
         ) from None
     launcher.main(sys.argv[1:] if argv is None else argv)
 

@@ -747,8 +747,9 @@ def test_fora_do_checkout_nao_reusa_venv_nem_pip_editavel(monkeypatch, tmp_path)
     monkeypatch.setattr(start_app, "MODO_CHECKOUT", False)
 
     assert start_app._executavel_projeto() == start_app.sys.executable
-    assert start_app._comando_pip_projeto("app")[-1] == "felixo-notion-mcp[app]"
-    assert "-e" not in start_app._comando_pip_projeto("app")
+    # Fora do checkout não há o que instalar por aqui: nenhum comando, nunca a distribuição
+    # por nome (o nome ainda não é do projeto no PyPI).
+    assert start_app._comando_pip_projeto("app") is None
 
 
 def test_no_checkout_reusa_o_venv_do_projeto_e_instala_editavel(monkeypatch, tmp_path):
@@ -760,6 +761,166 @@ def test_no_checkout_reusa_o_venv_do_projeto_e_instala_editavel(monkeypatch, tmp
 
     assert start_app._executavel_projeto() == str(venv / "python")
     assert start_app._comando_pip_projeto("app,dev")[-2:] == ["-e", ".[app,dev]"]
+
+
+def test_no_checkout_o_comando_de_pip_e_a_instalacao_editavel_da_raiz(monkeypatch):
+    monkeypatch.setattr(start_app, "MODO_CHECKOUT", True)
+
+    assert start_app._comando_pip_projeto("app") == [
+        start_app.sys.executable,
+        "-m",
+        "pip",
+        "install",
+        "-e",
+        ".[app]",
+    ]
+
+
+# --------------------------------------------------------------------------- #
+# Cadeia de suprimentos: nada instala `felixo-notion-mcp` do PyPI por nome     #
+# --------------------------------------------------------------------------- #
+class _Resposta:
+    """Dublê do que ``questionary.confirm(...)`` devolve: só o ``ask``."""
+
+    def __init__(self, valor):
+        self.valor = valor
+
+    def ask(self):
+        return self.valor
+
+
+def _espiar_subprocessos(monkeypatch) -> list[list[str]]:
+    """Registra todo comando que o launcher tentaria rodar, sem rodar nenhum."""
+
+    comandos: list[list[str]] = []
+
+    def registrar(comando, *args, **kwargs):
+        comandos.append([comando] if isinstance(comando, str) else [str(p) for p in comando])
+        return 0
+
+    monkeypatch.setattr(start_app.subprocess, "call", registrar)
+    monkeypatch.setattr(start_app.subprocess, "run", registrar)
+    monkeypatch.setattr(start_app.subprocess, "Popen", registrar)
+    return comandos
+
+
+def _console_largo() -> tuple[Console, io.StringIO]:
+    saida = io.StringIO()
+    return Console(file=saida, force_terminal=False, width=400), saida
+
+
+@pytest.mark.parametrize("acao", ["instalar", "iniciar_tudo", "servidor", "mcp"])
+def test_fora_do_checkout_nenhuma_acao_instala_o_pacote_por_nome(monkeypatch, tmp_path, acao):
+    """O nome ``felixo-notion-mcp`` não pertence ao projeto no PyPI até a etapa 4.
+
+    Quem o registrasse ganharia execução de código em quem instalou a partir do código-fonte.
+    Mesmo respondendo "sim" a toda pergunta, nada pode rodar ``pip install felixo-notion-mcp``;
+    a pessoa recebe o caminho do checkout.
+    """
+
+    import questionary
+
+    comandos = _espiar_subprocessos(monkeypatch)
+    monkeypatch.setattr(start_app, "MODO_CHECKOUT", False)
+    monkeypatch.setattr(start_app, "ENV_FILE", tmp_path / ".env")
+    monkeypatch.setattr(start_app, "_front_empacotado", lambda: False)
+    monkeypatch.setattr(start_app, "_resolver_runtime_front", lambda: None)
+    monkeypatch.setattr(start_app, "_django_disponivel", lambda: False)
+    monkeypatch.setattr(start_app, "_mcp_disponivel", lambda: False)
+    monkeypatch.setattr(questionary, "confirm", lambda *a, **k: _Resposta(True))
+    monkeypatch.setattr(questionary, "text", lambda *a, **k: _Resposta(None))
+    console, saida = _console_largo()
+
+    getattr(start_app, f"acao_{acao}")(console)
+
+    por_nome = [c for c in comandos if any("felixo-notion-mcp" in parte for parte in c)]
+    assert por_nome == []
+    assert not [c for c in comandos if "pip" in c and "install" in c]
+    texto = saida.getvalue()
+    assert "uv sync --all-extras" in texto
+    assert 'pip install -e ".[' in texto
+    assert "PyPI" in texto
+
+
+def test_instalar_extra_servidor_fora_do_checkout_so_orienta(monkeypatch):
+    comandos = _espiar_subprocessos(monkeypatch)
+    monkeypatch.setattr(start_app, "MODO_CHECKOUT", False)
+    monkeypatch.setattr(start_app, "_django_disponivel", lambda: False)
+    console, saida = _console_largo()
+
+    assert start_app._instalar_extra_servidor(console) is False
+
+    assert comandos == []
+    assert "uv sync --all-extras" in saida.getvalue()
+
+
+def test_iniciar_tudo_pergunta_antes_de_instalar_o_extra_app(monkeypatch):
+    """Antes, ``acao_iniciar_tudo`` rodava o pip sem perguntar nada."""
+
+    import questionary
+
+    comandos = _espiar_subprocessos(monkeypatch)
+    perguntas: list[str] = []
+    monkeypatch.setattr(start_app, "MODO_CHECKOUT", True)
+    monkeypatch.setattr(start_app, "_django_disponivel", lambda: False)
+    monkeypatch.setattr(
+        questionary,
+        "confirm",
+        lambda mensagem, *a, **k: perguntas.append(mensagem) or _Resposta(False),
+    )
+    console, _ = _console_largo()
+
+    start_app.acao_iniciar_tudo(console)
+
+    assert len(perguntas) == 1
+    assert comandos == []
+
+
+def test_iniciar_tudo_instala_o_extra_editavel_so_depois_do_sim(monkeypatch):
+    import questionary
+
+    eventos: list[str] = []
+    instalado = {"django": False}
+
+    def registrar(comando, *args, **kwargs):
+        eventos.append("pip:" + " ".join(str(p) for p in comando[-3:]))
+        instalado["django"] = True
+        return 0
+
+    monkeypatch.setattr(start_app.subprocess, "call", registrar)
+    monkeypatch.setattr(start_app, "MODO_CHECKOUT", True)
+    monkeypatch.setattr(start_app, "_django_disponivel", lambda: instalado["django"])
+    monkeypatch.setattr(start_app, "_token_configurado", lambda: (True, ".env local"))
+    monkeypatch.setattr(start_app, "_garantir_database_tarefas", lambda console: False)
+    monkeypatch.setattr(
+        questionary,
+        "confirm",
+        lambda mensagem, *a, **k: eventos.append("pergunta") or _Resposta(True),
+    )
+    console, _ = _console_largo()
+
+    start_app.acao_iniciar_tudo(console)
+
+    assert eventos == ["pergunta", "pip:install -e .[app]"]
+
+
+def test_nenhuma_mensagem_manda_instalar_a_distribuicao_pelo_nome():
+    """Varre o código: ``pip/pipx install felixo-notion-mcp`` não pode aparecer em lugar nenhum.
+
+    Vale para o pacote (``src``) e para a porta de entrada (``start_app.py``): a mensagem
+    certa aponta o extra e o checkout, nunca um nome ainda não publicado.
+    """
+
+    import re
+
+    padrao = re.compile(r"""install\s+['"\\]*felixo-notion-mcp|felixo-notion-mcp\[""")
+    achados = []
+    arquivos = [*(RAIZ_DO_CHECKOUT / "src").rglob("*.py"), RAIZ_DO_CHECKOUT / "start_app.py"]
+    for arquivo in arquivos:
+        for numero, linha in enumerate(arquivo.read_text(encoding="utf-8").splitlines(), 1):
+            if padrao.search(linha):
+                achados.append(f"{arquivo.relative_to(RAIZ_DO_CHECKOUT)}:{numero}: {linha.strip()}")
+    assert achados == []
 
 
 def test_exporta_o_src_para_os_filhos_uma_vez_so(monkeypatch, tmp_path):

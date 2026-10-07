@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 from felixo_notion_mcp.core.exceptions import NotionSyncError
+from felixo_notion_mcp.core.instalacao import instrucao_de_instalacao
 from felixo_notion_mcp.domain import properties
 from felixo_notion_mcp.integrations.notion_client import NotionClient
 
@@ -377,8 +378,9 @@ class FontePlanilha:
             import openpyxl
         except ImportError as exc:  # pragma: no cover - depende do ambiente
             raise ValueError(
-                "Ler .xlsx requer o pacote openpyxl. Instale com: "
-                "pip install 'felixo-notion-mcp[planilha]'"
+                "Ler .xlsx requer o pacote openpyxl (extra planilha). "
+                f"{instrucao_de_instalacao('planilha')} "
+                "Ou instale só a dependência com: pip install openpyxl"
             ) from exc
 
         pasta = openpyxl.load_workbook(self._caminho, data_only=True, read_only=True)

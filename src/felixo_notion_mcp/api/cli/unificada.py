@@ -23,6 +23,7 @@ from typing import Any
 
 from felixo_notion_mcp.api.cli import atualizacao_nativa
 from felixo_notion_mcp.api.cli.versao import VERSAO_FONTE, ler_versao_embutida
+from felixo_notion_mcp.core.instalacao import instrucao_de_instalacao
 from felixo_notion_mcp.core.origem import origem_do_pacote
 
 DISTRIBUICAO = "felixo-notion-mcp"
@@ -283,7 +284,7 @@ def diagnosticar() -> dict[str, Any]:
             "ok" if app_ok else "aviso",
             "launcher e servidor MCP importáveis"
             if app_ok
-            else "extra app ausente; instale felixo-notion-mcp[app]",
+            else "extra app ausente; no checkout: uv sync --all-extras",
             opcional=True,
         )
     )
@@ -415,7 +416,7 @@ def _iniciar_app(args: argparse.Namespace) -> int:
         modulo = importlib.import_module("felixo_notion_mcp.api.launcher")
     except ModuleNotFoundError as exc:
         raise RuntimeError(
-            "O app local não está instalado. Use: pipx install 'felixo-notion-mcp[app]'"
+            f"O app local não está instalado (extra app). {instrucao_de_instalacao('app')}"
         ) from exc
     resultado = modulo.main(["--action", "tudo"])
     return int(resultado) if isinstance(resultado, int) else 0
@@ -427,11 +428,11 @@ def _iniciar_mcp(args: argparse.Namespace) -> int:
     _aplicar_perfil(args.perfil)
     if not _importavel("felixo_notion_mcp.api.mcp.server"):
         raise RuntimeError(
-            "O servidor MCP não está instalado. Use: pipx install 'felixo-notion-mcp[app]'"
+            f"O servidor MCP não está instalado (extra app). {instrucao_de_instalacao('app')}"
         )
-    # O app tem pacotes legados chamados ``core`` e ``services``. Um processo
-    # separado evita que o ``core`` da CLI já importado para aplicar o perfil
-    # seja confundido com o ``core`` do servidor MCP.
+    # Processo separado, como sempre foi: o servidor MCP é dono do stdin/stdout (transporte
+    # stdio) e herda o ambiente com o perfil já aplicado. Isolar dois pacotes ``core``
+    # homônimos (CLI e app) era outro motivo, que o pacote único tornou obsoleto.
     return int(
         subprocess.call(
             [

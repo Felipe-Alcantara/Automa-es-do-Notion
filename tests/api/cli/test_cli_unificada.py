@@ -221,7 +221,14 @@ def test_app_sem_extra_dá_instrução_de_instalação(monkeypatch, capsys):
     codigo = unificada.main(["app", "start"])
 
     assert codigo == 2
-    assert "felixo-notion-mcp[app]" in capsys.readouterr().out
+    saida = capsys.readouterr().out
+    # O nome felixo-notion-mcp ainda não está publicado no PyPI: a mensagem aponta o extra e o
+    # checkout, nunca um `pipx/pip install` da distribuição.
+    assert "uv sync --all-extras" in saida
+    assert "pip install -e" in saida
+    assert ".[app]" in saida
+    assert "pipx install" not in saida
+    assert "felixo-notion-mcp[" not in saida
 
 
 def test_mcp_isola_o_servidor_em_processo_separado(monkeypatch):
