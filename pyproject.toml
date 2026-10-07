@@ -67,6 +67,24 @@ packages = ["src/felixo_notion_mcp"]
 artifacts = ["src/felixo_notion_mcp/api/http/static/frontend/**"]
 
 [tool.hatch.build.targets.sdist]
+# Lista explícita: sem ela o sdist leva tudo que o controle de versão não ignora, inclusive os
+# arquivos de trabalho de agentes (`.superpowers/`, `.claude/`, `.agents/`, `.codex/`). O que
+# não está aqui não entra. `front/node_modules` já fica de fora pelo `.gitignore`.
+include = [
+    "/src",
+    "/tests",
+    "/front",
+    "/scripts",
+    "/examples",
+    "/docs",
+    "/README.md",
+    "/LICENSE",
+    "/CONTRIBUTING.md",
+    "/.env.example",
+    "/pyproject.toml",
+    "/uv.lock",
+    "/start_app.py",
+]
 artifacts = ["src/felixo_notion_mcp/api/http/static/frontend/**"]
 
 [tool.pytest.ini_options]

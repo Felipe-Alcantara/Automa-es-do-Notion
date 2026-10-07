@@ -9,6 +9,7 @@ permissions:
   contents: read
 jobs:
   python:
+    timeout-minutes: 30
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -27,6 +28,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run python -m pytest -q
   front:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -45,6 +47,7 @@ jobs:
       - run: npm run build
       - run: npm audit --audit-level=high
   pacote:
+    timeout-minutes: 20
     needs: front
     runs-on: ubuntu-latest
     steps:

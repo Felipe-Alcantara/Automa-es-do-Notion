@@ -38,6 +38,9 @@ src/felixo_notion_mcp/api/http/static/frontend/
 # Cache de modelos do OpenRouter, escrito ao lado do módulo que o usa
 src/felixo_notion_mcp/integrations/.openrouter_models_cache.json
 
+# Listas de requisitos que a auditoria de dependências do CI escreve na raiz
+requisitos-*.txt
+
 # Editors / OS
 .idea/
 .vscode/
