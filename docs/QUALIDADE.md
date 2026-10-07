@@ -30,7 +30,8 @@ npm run build
 ```
 
 - `python start_app.py` é o menu interativo de entrada: instala o pacote em modo editável,
-  configura o `.env` e os perfis, sobe o app e o servidor MCP e mostra o Status — sem decorar
+  configura o token e o database de tarefas no `.env` (os perfis de workspace são da CLI:
+  `felixo-notion-mcp auth`), sobe o app e o servidor MCP e mostra o Status — sem decorar
   comando. O Status mostra também de onde o pacote é importado (a mesma informação do `doctor`).
 - `uv run felixo-notion-mcp doctor` confere Python, dependências, perfis, rede, portas e **de
   onde o pacote está sendo importado** (a linha termina em `checkout editável` quando você está

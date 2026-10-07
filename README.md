@@ -50,7 +50,7 @@
 - **🪶 Abre sem nada instalado**: o `start_app.py` usa só a biblioteca padrão do Python, então funciona num clone recém-baixado, em Windows, macOS e Linux.
 - **🩺 Status honesto**: a opção Status mostra o estado real do ambiente e também de onde o pacote é importado (a mesma informação do `felixo-notion-mcp doctor`).
 
-Menu: **Iniciar** (app web local, servidor MCP, CLI) • **Instalar/Setup** • **Configurar** (perfis e token) • **Status** • **Sair**.
+Menu: **Usar o app** (app web local) • **Para IA e integrações** (CLI, GitHub, servidor MCP, mapa) • **Configurar e instalar** (token e database de tarefas, dependências, API, qualidade) • **Status** • **Sair**. O **Configurar** define só o token do Notion e o database de tarefas, guardados no `.env`; os perfis de workspace se gerenciam à parte, com `felixo-notion-mcp auth` (ou `notion-tasks perfis`).
 
 Tecnologias da interface: terminal colorido com `rich` e `questionary`.
 

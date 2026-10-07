@@ -28,7 +28,7 @@
 | `notion-tasks-cli` | CLI para IAs, 59 subcomandos; binários nativos e auto-update | ~9,2 mil linhas | `notion-automacoes` 0.5.0 |
 | `notion-workspace-app` | API Django, SPA React, launcher, servidor MCP | ~5,8 mil linhas | `notion-workspace-app` 0.3.1 |
 
-- O servidor MCP atual (`server/mcp_server.py`, FastMCP via stdio) expõe **19**
+- O servidor MCP atual (`server/mcp_server.py`, FastMCP via stdio) expõe **18**
   ferramentas `notion.*`; a CLI tem **59** subcomandos. A diferença é a falta de
   paridade que motiva parte deste trabalho.
 - O ecossistema **já foi um monorepo** até 02/07/2026 e foi separado de propósito
@@ -246,7 +246,7 @@ dos serviços continuam em dataclass.
 - **MCP:** cada operação vira uma chamada `FastMCP.add_tool(fn, name, title,
   description, annotations, structured_output)` (assinatura conferida no SDK
   `mcp` 1.28.0). Nomes **sem ponto**, porque a API do Claude só aceita
-  `[a-zA-Z0-9_-]` em nome de ferramenta. As 19 ferramentas `notion.*` atuais saem,
+  `[a-zA-Z0-9_-]` em nome de ferramenta. As 18 ferramentas `notion.*` atuais saem,
   com tabela de equivalência no changelog.
 - **CLI:** subcomandos argparse gerados. Perfis, `doctor`, `update`, `app start`,
   `mcp start` e `guia` continuam escritos à mão porque pertencem só à borda local.

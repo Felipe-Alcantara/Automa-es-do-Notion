@@ -13,7 +13,7 @@
 |---|---|
 | [🏛️ ARQUITETURA.md](ARQUITETURA.md) | As camadas do pacote único, a direção das dependências e a tabela origem → destino dos módulos antigos. |
 | [📦 DISTRIBUICAO.md](DISTRIBUICAO.md) | Instalação pública, pacotes publicados, binários nativos, smoke, Trusted Publishing e a transição para o pacote único. |
-| [✅ QUALIDADE.md](QUALIDADE.md) | Gate executável do hub e dos módulos, checklist de documentação e critério de pronto. |
+| [✅ QUALIDADE.md](QUALIDADE.md) | Gate executável do repositório, checklist de documentação e critério de pronto. |
 | [🧱 CONTRATOS.md](CONTRATOS.md) | Contrato dos objetos, rotas REST, erros e fronteiras entre módulos. |
 | [🤖 AGENTES.md](AGENTES.md) | Playbook histórico/operacional de orquestração multi-agente. |
 | [🗺️ PLANO.md](PLANO.md) | Visão final, estado entregue e roadmap de contribuição. |

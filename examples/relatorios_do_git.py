@@ -13,7 +13,7 @@ Execução:
 O corpo gerado é factual (a lista de commits do dia): serve como base para
 quem depois complementa o relatório com a narrativa — por que algo foi feito,
 o que ficou pendente. Para publicar um texto escrito à mão, use
-``notion_starter.services.relatorios_diarios`` diretamente, montando cada
+``felixo_notion_mcp.services.relatorios_diarios`` diretamente, montando cada
 ``RelatorioDiario`` com o corpo desejado.
 """
 

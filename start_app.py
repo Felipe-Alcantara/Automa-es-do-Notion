@@ -10,8 +10,9 @@ O menu segue o contrato de menu de entrada do Felixo System Design, com no míni
 
 - Iniciar/Rodar: app local (API e SPA), servidor MCP e a CLI ``notion-tasks``;
 - Instalar/Setup: instala o pacote em modo editável no Python que roda o menu;
-- Configurar: perfis de workspace e o token do Notion, guardados em ``.env``
-  (ignorado pelo git) e nunca no script;
+- Configurar: o token do Notion e o database de tarefas, guardados em ``.env``
+  (ignorado pelo git) e nunca no script; os perfis de workspace se gerenciam à parte, com
+  ``felixo-notion-mcp auth`` (ou ``notion-tasks perfis``);
 - Status/Sair: o estado do ambiente, incluindo de onde o pacote é importado (a mesma
   informação do ``doctor``), e a saída.
 
