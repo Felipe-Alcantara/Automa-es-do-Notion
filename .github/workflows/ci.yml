@@ -3,6 +3,10 @@ on:
   push:
     branches: [main]
   pull_request:
+# Só leitura: nenhum job escreve no repositório, e os scripts de instalação
+# (npm ci, uv sync) rodam código de terceiros.
+permissions:
+  contents: read
 jobs:
   python:
     runs-on: ${{ matrix.os }}
@@ -13,6 +17,8 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -27,6 +33,8 @@ jobs:
         working-directory: front
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -41,6 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
@@ -52,4 +62,20 @@ jobs:
       - run: uv build
       - run: python -m scripts.empacotamento.conferir_wheel dist/*.whl
       - run: uv export --frozen --all-extras --no-emit-project --no-hashes -o requisitos-auditoria.txt
-      - run: uvx pip-audit -r requisitos-auditoria.txt
+      # O pip-audit avalia os marcadores do lock com o Python que o executa. Três passos, para
+      # cobrir o lock inteiro: 3.13/Linux, 3.10/Linux e os pins que só existem em Windows/macOS.
+      - name: pip-audit (Python 3.13, Linux)
+        run: uvx pip-audit -r requisitos-auditoria.txt
+      # --disable-pip --no-deps: o lock já é a resolução, e o venv de resolução do pip-audit
+      # falhou (ensurepip) com o Python 3.10 gerenciado pelo uv nos testes locais. Aqui entram
+      # django 5.2.18, rpds-py 0.30.0 e exceptiongroup, que o 3.13 não instala.
+      - name: pip-audit (Python 3.10, Linux)
+        run: uvx --python 3.10 pip-audit --disable-pip --no-deps -r requisitos-auditoria.txt
+      # `uv export` não tem opção de plataforma. Os pins com marcador sys_platform (pywin32,
+      # pywin32-ctypes, pefile, colorama, tzdata, macholib...) saem do mesmo arquivo, sem o
+      # marcador, e são auditados por nome e versão.
+      - name: pip-audit (pins por plataforma)
+        run: |
+          sed -n -E 's/^([A-Za-z0-9_.-]+==[^ ;]+) ;.*sys_platform.*$/\1/p' requisitos-auditoria.txt > requisitos-plataformas.txt
+          test -s requisitos-plataformas.txt
+          uvx pip-audit --disable-pip --no-deps -r requisitos-plataformas.txt
