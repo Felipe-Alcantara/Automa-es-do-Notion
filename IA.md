@@ -1235,6 +1235,15 @@ teste além dos 5 acima, que saíram de propósito.
 - **Extra `[server]` virou `[app]`**; o modo hospedado (`[servidor]`) é da etapa 3. `core/origem.py` é novo e
   atende o `doctor` e o Status do menu.
 - **A baseline do starter é 678, não 677:** o `IA.md` de 27/09 registrava 677 e a medição de 07/10 deu 678.
+- **Itens do menu antigo do hub que saíram.** O `start_app.py` do hub tinha o "Usar" (guia, listar, opções e
+  comando livre da CLI) e um editor de variáveis de ambiente (`GITHUB_CONTAS` e parecidas). Não foram
+  portados: quem os usava passa a rodar a própria CLI (`felixo-notion-mcp` ou `notion-tasks`, com `guia`,
+  `listar`, `opcoes` e `--help`) e a editar o `.env`, que tem o modelo em `.env.example`.
+- **Estreitamento da spec 2.3.2 aceito na etapa 1.** A spec pedia "Configurar (perfis/chaves)" e "Status (o
+  doctor)". O Configurar do menu define só o token do Notion e o database de tarefas (os perfis são da CLI:
+  `felixo-notion-mcp auth` ou `notion-tasks perfis`), e o Status mostra o estado do ambiente e de onde o pacote
+  é importado, sem rodar o `doctor` inteiro, que fica na CLI. A documentação (`README.md`, `start_app.py`,
+  `docs/QUALIDADE.md`, `AGENTS.md`) descreve o menu assim.
 
 **Limites e o que não mudou.**
 
@@ -1250,6 +1259,12 @@ teste além dos 5 acima, que saíram de propósito.
   teste de arquitetura da spec 3.1 é da etapa 2.
 - Pendência aberta: `mcp start` no binário nativo usa `sys.executable -m`, padrão herdado do código antigo que
   não funciona em PyInstaller onefile; não foi verificado em build.
+- **O nome `felixo-notion-mcp` no PyPI precisa ser reivindicado cedo.** Um *pending publisher* do Trusted
+  Publishing **não reserva** o nome: quem registrar `felixo-notion-mcp` antes da etapa 4 passa a ser o dono dele
+  (em 07/10/2026 a consulta ao PyPI ainda dava 404). Enquanto isso, nada no código instala a distribuição por
+  nome: o launcher só instala em modo editável dentro de um checkout, e as mensagens apontam o extra e o
+  checkout (`uv sync --all-extras` ou `pip install -e ".[app]"`). A publicação da `0.6.0` da etapa 4 depende de
+  o nome ser do projeto.
 - Guias antigos de `docs/` que não estavam no escopo desta tarefa (`CONTRATOS.md`, `PLANO.md`, `AGENTES.md`,
   `INTEGRACOES.md` e parecidos) ainda citam `server/`, `cli/` e `notion_starter` do tempo dos módulos; o
   caminho de hoje está na tabela origem → destino de `docs/ARQUITETURA.md`. Atualizá-los fica para uma
