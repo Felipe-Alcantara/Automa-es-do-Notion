@@ -2964,18 +2964,18 @@ def cmd_modelos(args: argparse.Namespace, *, client_factory: ClientFactory) -> A
                 "database_id": database_id,
                 "total": len(modelos),
                 "inventario": [
-        "python -m cli --json inventario --saida inventario.json",
-        "python -m cli --json inventario --saida databases.json --filtro database",
+        "notion-tasks --json inventario --saida inventario.json",
+        "notion-tasks --json inventario --saida databases.json --filtro database",
     ],
     "baixar-corpos": [
-        "python -m cli --json baixar-corpos inventario.json --destino corpos/ "
+        "notion-tasks --json baixar-corpos inventario.json --destino corpos/ "
         '--ignorar-caminho "Arquivo" --priorizar "artigo|post|pauta"',
-        "python -m cli --json baixar-corpos inventario.json --destino corpos/ "
+        "notion-tasks --json baixar-corpos inventario.json --destino corpos/ "
         "--somente-database <database_id> --limite 200",
     ],
     "buscar-conteudo": [
-        'python -m cli --json buscar-conteudo corpos/ "publica[cç][aã]o|artigo"',
-        'python -m cli --json buscar-conteudo corpos/ "\\bTODO\\b" --diferenciar-caixa '
+        'notion-tasks --json buscar-conteudo corpos/ "publica[cç][aã]o|artigo"',
+        'notion-tasks --json buscar-conteudo corpos/ "\\bTODO\\b" --diferenciar-caixa '
         "--limite 20",
     ],
     "modelos": [m.para_dict() for m in modelos],
@@ -3420,211 +3420,211 @@ def cmd_perfis(args: argparse.Namespace) -> Any:
 
 #: Exemplos de uso por comando, mostrados pelo ``guia``. Texto curto e copiável.
 EXEMPLOS_GUIA: dict[str, list[str]] = {
-    "listar": ['python -m cli --json listar --status "Entrada"'],
-    "ler": ["python -m cli --json ler <task_id>"],
+    "listar": ['notion-tasks --json listar --status "Entrada"'],
+    "ler": ["notion-tasks --json ler <task_id>"],
     "criar": [
-        'python -m cli --json criar "Nova tarefa" --status "Entrada" --duracao "Dias"',
-        'python -m cli --json criar "Nova tarefa" --status "Entrada" '
+        'notion-tasks --json criar "Nova tarefa" --status "Entrada" --duracao "Dias"',
+        'notion-tasks --json criar "Nova tarefa" --status "Entrada" '
         '--set "Prioridade=Alta" --conteudo $\'## Contexto\\n\\nDetalhes...\'',
-        'python -m cli --json criar "Projeto/contexto — descrição" '
+        'notion-tasks --json criar "Projeto/contexto — descrição" '
         '--set "URL de referência=https://github.com/owner/repo/tree/main" --strict',
-        'python -m cli --json criar --arquivo novas-linhas.json --strict --dry-run',
-        "python -m cli --json criar --arquivo novas-linhas.json --progresso-a-cada 25",
-        'python -m cli --json criar "Ideia de artigo" --database <database_id> '
+        'notion-tasks --json criar --arquivo novas-linhas.json --strict --dry-run',
+        "notion-tasks --json criar --arquivo novas-linhas.json --progresso-a-cada 25",
+        'notion-tasks --json criar "Ideia de artigo" --database <database_id> '
         '--set "Etapa=Ideia" --conteudo "## Rascunho"',
     ],
-    "editar": ['python -m cli --json editar <task_id> --status "Concluída"'],
-    "mover": ['python -m cli --json mover <task_id> "Concluída"'],
-    "concluir": ['python -m cli --json concluir <task_id> "Concluída"'],
-    "opcoes": ["python -m cli --json opcoes"],
-    "databases": ["python -m cli --json databases"],
-    "database-atual": ["python -m cli --json database-atual"],
-    "escolher-database": ["python -m cli --json escolher-database <database_id>"],
-    "normalizar-nomes": ["python -m cli --json normalizar-nomes --dry-run"],
-    "mapear": ["python -m cli --json mapear"],
-    "buscar": ['python -m cli --json buscar "nota de reunião"'],
-    "conteudo": ["python -m cli --json conteudo <page_id>"],
-    "exemplo": ["python -m cli --json exemplo --n 3"],
+    "editar": ['notion-tasks --json editar <task_id> --status "Concluída"'],
+    "mover": ['notion-tasks --json mover <task_id> "Concluída"'],
+    "concluir": ['notion-tasks --json concluir <task_id> "Concluída"'],
+    "opcoes": ["notion-tasks --json opcoes"],
+    "databases": ["notion-tasks --json databases"],
+    "database-atual": ["notion-tasks --json database-atual"],
+    "escolher-database": ["notion-tasks --json escolher-database <database_id>"],
+    "normalizar-nomes": ["notion-tasks --json normalizar-nomes --dry-run"],
+    "mapear": ["notion-tasks --json mapear"],
+    "buscar": ['notion-tasks --json buscar "nota de reunião"'],
+    "conteudo": ["notion-tasks --json conteudo <page_id>"],
+    "exemplo": ["notion-tasks --json exemplo --n 3"],
     "linhas": [
-        "python -m cli --json linhas <database_id>",
-        "python -m cli --json linhas <database_id> --completo",
+        "notion-tasks --json linhas <database_id>",
+        "notion-tasks --json linhas <database_id> --completo",
     ],
     "editar-linha": [
-        'python -m cli --json editar-linha <page_id> --set "Status=Feito"',
-        'python -m cli --json editar-linha <page_id> --set "Prazo=2026-07-10" '
+        'notion-tasks --json editar-linha <page_id> --set "Status=Feito"',
+        'notion-tasks --json editar-linha <page_id> --set "Prazo=2026-07-10" '
         '--set "Tags=urgente,casa"',
-        'python -m cli --json editar-linha <page_id> --append '
+        'notion-tasks --json editar-linha <page_id> --append '
         '"Resumo=\\n\\nNova observação ao final"',
-        'python -m cli --json editar-linha <page_id> '
+        'notion-tasks --json editar-linha <page_id> '
         '--set "URL de referência=https://github.com/owner/repo" --strict',
-        "python -m cli --json editar-linha --arquivo atualizacoes.json --strict --dry-run",
-        "python -m cli --json editar-linha --arquivo atualizacoes.json "
+        "notion-tasks --json editar-linha --arquivo atualizacoes.json --strict --dry-run",
+        "notion-tasks --json editar-linha --arquivo atualizacoes.json "
         "--progresso-a-cada 25",
     ],
     "blocos": [
-        "python -m cli --json blocos <page_id>",
-        "python -m cli --json blocos <page_id> --metadados --completo",
-        'python -m cli --json blocos <page_id> --recursivo --contendo "trecho lido"',
+        "notion-tasks --json blocos <page_id>",
+        "notion-tasks --json blocos <page_id> --metadados --completo",
+        'notion-tasks --json blocos <page_id> --recursivo --contendo "trecho lido"',
     ],
-    "ler-bloco": ["python -m cli --json ler-bloco <block_id>"],
+    "ler-bloco": ["notion-tasks --json ler-bloco <block_id>"],
     "escrever": [
-        "python -m cli --json escrever <page_id> $'# Título\\n\\nTexto'",
-        "python -m cli --json escrever <page_id> $'- item inserido' --apos <block_id>",
-        "python -m cli --json escrever <page_id> $'> Aviso no topo' --inicio",
-        "python -m cli --json escrever <page_id> - < nota.md  # Markdown pelo stdin",
-        "python -m cli --json escrever <page_id> --arquivo-md nota.md --substituir",
-        "python -m cli --json escrever <page_id> $'# Só isto' --substituir",
-        "python -m cli --json escrever <page_id> $'# Zera mesmo' --substituir --apagar-tudo",
+        "notion-tasks --json escrever <page_id> $'# Título\\n\\nTexto'",
+        "notion-tasks --json escrever <page_id> $'- item inserido' --apos <block_id>",
+        "notion-tasks --json escrever <page_id> $'> Aviso no topo' --inicio",
+        "notion-tasks --json escrever <page_id> - < nota.md  # Markdown pelo stdin",
+        "notion-tasks --json escrever <page_id> --arquivo-md nota.md --substituir",
+        "notion-tasks --json escrever <page_id> $'# Só isto' --substituir",
+        "notion-tasks --json escrever <page_id> $'# Zera mesmo' --substituir --apagar-tudo",
         "# página que contém database: trabalhe nas LINHAS, não escreva solto nela",
-        "python -m cli --json linhas <database_id>",
+        "notion-tasks --json linhas <database_id>",
     ],
     "editar-bloco": [
-        'python -m cli --json editar-bloco <block_id> "Texto novo do parágrafo"',
-        'python -m cli --json editar-bloco <block_id> --trocar "20:12" --por "20:15"',
-        'python -m cli --json editar-bloco <block_id> --trocar "v1" --por "v2" --todas',
-        "python -m cli --json editar-bloco --arquivo edicoes.json --progresso-a-cada 25",
+        'notion-tasks --json editar-bloco <block_id> "Texto novo do parágrafo"',
+        'notion-tasks --json editar-bloco <block_id> --trocar "20:12" --por "20:15"',
+        'notion-tasks --json editar-bloco <block_id> --trocar "v1" --por "v2" --todas',
+        "notion-tasks --json editar-bloco --arquivo edicoes.json --progresso-a-cada 25",
     ],
     "apagar-bloco": [
-        "python -m cli --json apagar-bloco <block_id> --sim",
-        "python -m cli --json apagar-bloco <id1> <id2> <id3> --sim",
-        "python -m cli --json apagar-bloco <child_page_id> --sim --forcar-tipos-arriscados",
+        "notion-tasks --json apagar-bloco <block_id> --sim",
+        "notion-tasks --json apagar-bloco <id1> <id2> <id3> --sim",
+        "notion-tasks --json apagar-bloco <child_page_id> --sim --forcar-tipos-arriscados",
     ],
     "limpar": [
-        "python -m cli --json limpar <page_id> --sim",
-        "python -m cli --json limpar <page_id> --sim --apagar-tudo",
+        "notion-tasks --json limpar <page_id> --sim",
+        "notion-tasks --json limpar <page_id> --sim --apagar-tudo",
     ],
     "restaurar-bloco": [
-        "python -m cli --json restaurar-bloco <block_id>",
-        "python -m cli --json restaurar-bloco <id1> <id2> <id3>  # o 'desfazer' do limpar",
+        "notion-tasks --json restaurar-bloco <block_id>",
+        "notion-tasks --json restaurar-bloco <id1> <id2> <id3>  # o 'desfazer' do limpar",
     ],
     "relatorios-do-git": [
-        'python -m cli --json relatorios-do-git --database <id> --dry-run '
+        'notion-tasks --json relatorios-do-git --database <id> --dry-run '
         '--descobrir ~/Programacao/Github/Repositorios',
-        'python -m cli --json relatorios-do-git --database <id> --dry-run '
+        'notion-tasks --json relatorios-do-git --database <id> --dry-run '
         '--repo "Felixo AI Core=/caminho/Felixo-AI-Core"',
-        'python -m cli --json relatorios-do-git --database <id> --desde 2026-08-01 '
+        'notion-tasks --json relatorios-do-git --database <id> --desde 2026-08-01 '
         '--repo "App=/caminho/app" --repo "Lib=/caminho/lib" --area Trabalho',
     ],
     "relatorio-do-dia": [
-        'python -m cli --json relatorio-do-dia --database <id> '
+        'notion-tasks --json relatorio-do-dia --database <id> '
         '--resumo "Corrigi o bug X e entreguei a feature Y" '
         "--arquivo-md relato-do-dia.md",
-        'python -m cli --json relatorio-do-dia --database <id> --data 2026-09-08 '
+        'notion-tasks --json relatorio-do-dia --database <id> --data 2026-09-08 '
         '--resumo "..." --o-que-fiz "..." --bloqueios "..." --proximos-passos "..." '
         "--status Concluído --corpo - < relato.md",
     ],
     "schema": [
-        "python -m cli --json schema <database_id>",
-        "python -m cli --json schema <database_id> --editaveis",
+        "notion-tasks --json schema <database_id>",
+        "notion-tasks --json schema <database_id> --editaveis",
     ],
     "relacionar": [
-        'python -m cli --json relacionar <page_a> <page_b> --coluna "Subtarefas relacionadas"',
-        'python -m cli --json relacionar <page_a> <page_b> --coluna "Depende de" --desfazer',
-        'python -m cli --json relacionar --coluna "Subtarefas relacionadas" '
+        'notion-tasks --json relacionar <page_a> <page_b> --coluna "Subtarefas relacionadas"',
+        'notion-tasks --json relacionar <page_a> <page_b> --coluna "Depende de" --desfazer',
+        'notion-tasks --json relacionar --coluna "Subtarefas relacionadas" '
         '--par a1:b1 --par a2:b2',
-        'python -m cli --json relacionar --coluna "Subtarefas relacionadas" '
+        'notion-tasks --json relacionar --coluna "Subtarefas relacionadas" '
         '--arquivo pares.json',
     ],
     "clonar-database": [
-        "python -m cli --json clonar-database <database_id>",
-        'python -m cli --json clonar-database <database_id> --titulo "Cópia" --com-linhas',
+        "notion-tasks --json clonar-database <database_id>",
+        'notion-tasks --json clonar-database <database_id> --titulo "Cópia" --com-linhas',
     ],
     "criar-subpagina": [
-        'python -m cli --json criar-subpagina <pagina_pai_id> "Estado atual"',
-        'python -m cli --json criar-subpagina <pagina_pai_id> "README" --conteudo "# Título"',
+        'notion-tasks --json criar-subpagina <pagina_pai_id> "Estado atual"',
+        'notion-tasks --json criar-subpagina <pagina_pai_id> "README" --conteudo "# Título"',
     ],
     "inspecionar-estrutura": [
-        "python -m cli --json inspecionar-estrutura <pagina_id>",
-        "python -m cli --json inspecionar-estrutura <pagina_id> --profundidade 1",
+        "notion-tasks --json inspecionar-estrutura <pagina_id>",
+        "notion-tasks --json inspecionar-estrutura <pagina_id> --profundidade 1",
     ],
     "modelos": [
-        "python -m cli --json modelos listar <database_id>",
-        "python -m cli --json modelos preencher <database_id> --manifesto modelos.json "
+        "notion-tasks --json modelos listar <database_id>",
+        "notion-tasks --json modelos preencher <database_id> --manifesto modelos.json "
         "--dry-run",
-        "python -m cli --json modelos preencher <database_id> --manifesto modelos.json "
+        "notion-tasks --json modelos preencher <database_id> --manifesto modelos.json "
         "--fonte <data_source_id>",
     ],
     "copiar-corpo": [
-        "python -m cli --json copiar-corpo <pagina_origem_id> <pagina_destino_id> --dry-run",
-        "python -m cli --json copiar-corpo <pagina_origem_id> <pagina_destino_id> "
+        "notion-tasks --json copiar-corpo <pagina_origem_id> <pagina_destino_id> --dry-run",
+        "notion-tasks --json copiar-corpo <pagina_origem_id> <pagina_destino_id> "
         "--so-se-vazio --conferir",
     ],
     "clonar-estrutura": [
-        "python -m cli --json clonar-estrutura <pagina_referencia_id> <pagina_destino_id>",
+        "notion-tasks --json clonar-estrutura <pagina_referencia_id> <pagina_destino_id>",
     ],
     "montar-estrutura-projeto": [
-        "python -m cli --json montar-estrutura-projeto <pagina_id>",
+        "notion-tasks --json montar-estrutura-projeto <pagina_id>",
     ],
     "reordenar-bloco": [
-        "python -m cli --json reordenar-bloco <pagina_id> <bloco_id> --apos <outro_bloco_id>",
-        "python -m cli --json reordenar-bloco <pagina_id> <bloco_id> --inicio",
-        "python -m cli --json reordenar-bloco <pagina_id> <bloco_id> --inicio "
+        "notion-tasks --json reordenar-bloco <pagina_id> <bloco_id> --apos <outro_bloco_id>",
+        "notion-tasks --json reordenar-bloco <pagina_id> <bloco_id> --inicio",
+        "notion-tasks --json reordenar-bloco <pagina_id> <bloco_id> --inicio "
         "--dir-backup ~/notion-backups",
     ],
     "garantir-coluna": [
-        "python -m cli --json garantir-coluna <database_id> Idioma select",
-        "python -m cli --json garantir-coluna <database_id> Observações texto",
-        "python -m cli --json garantir-coluna <database_id> Projeto relacao "
+        "notion-tasks --json garantir-coluna <database_id> Idioma select",
+        "notion-tasks --json garantir-coluna <database_id> Observações texto",
+        "notion-tasks --json garantir-coluna <database_id> Projeto relacao "
         "--relacionar-com <database_alvo_id>",
     ],
     "remover-coluna": [
-        'python -m cli --json remover-coluna <database_id> "Tema/Pilar" --sim',
+        'notion-tasks --json remover-coluna <database_id> "Tema/Pilar" --sim',
     ],
     "renomear-coluna": [
-        'python -m cli --json renomear-coluna <database_id> "Related to X (Y)" "Bloqueia"',
+        'notion-tasks --json renomear-coluna <database_id> "Related to X (Y)" "Bloqueia"',
     ],
     "atualizar-github": [
-        "python -m cli --json atualizar-github --contas conta-um,conta-dois",
-        "python -m cli --json atualizar-github --database <database_id> --sem-readme",
-        "python -m cli --json atualizar-github --contas conta-um --sem-arquivados",
-        "python -m cli --json atualizar-github --contas https://github.com/conta-um "
+        "notion-tasks --json atualizar-github --contas conta-um,conta-dois",
+        "notion-tasks --json atualizar-github --database <database_id> --sem-readme",
+        "notion-tasks --json atualizar-github --contas conta-um --sem-arquivados",
+        "notion-tasks --json atualizar-github --contas https://github.com/conta-um "
         "--apenas-mudancas",
     ],
     "exportar-docx": [
-        "python -m cli --json exportar-docx --de 2026-07-01 --ate 2026-07-06 --saida ./exports",
-        "python -m cli --json exportar-docx --database <database_id> --campo-data Data "
+        "notion-tasks --json exportar-docx --de 2026-07-01 --ate 2026-07-06 --saida ./exports",
+        "notion-tasks --json exportar-docx --database <database_id> --campo-data Data "
         "--de 2026-07-01 --ate 2026-07-06 --saida ./exports",
     ],
     "criar-database": [
-        'python -m cli --json criar-database <pagina_id> "Cadastro" '
+        'notion-tasks --json criar-database <pagina_id> "Cadastro" '
         '--prop "Seguidores=numero" --prop "Plataforma=select" '
         '--prefixo-id DVIP --icone 📇 --descricao "Contas do projeto"',
     ],
     "importar-planilha": [
-        "python -m cli --json importar-planilha <database_id> contas.xlsx "
+        "notion-tasks --json importar-planilha <database_id> contas.xlsx "
         '--aba Contas --tipo "Seguidores=numero" --tipo "Criada em=data"',
-        "python -m cli --json importar-planilha <database_id> contas.csv "
+        "notion-tasks --json importar-planilha <database_id> contas.csv "
         '--renomear "Email=E-mail de acesso"',
-        "python -m cli --json importar-planilha <database_id> contas.csv --chave Email "
+        "notion-tasks --json importar-planilha <database_id> contas.csv --chave Email "
         "--dry-run",
     ],
     "anexar-arquivo": [
-        "python -m cli --json anexar-arquivo <page_id> relatorio.docx",
-        'python -m cli --json anexar-arquivo <page_id> foto.png --propriedade "Anexos" '
+        "notion-tasks --json anexar-arquivo <page_id> relatorio.docx",
+        'notion-tasks --json anexar-arquivo <page_id> foto.png --propriedade "Anexos" '
         "--substituir",
     ],
     "mover-pagina": [
-        "python -m cli --json mover-pagina <page_id> <nova_pagina_pai_id>",
-        "python -m cli --json mover-pagina <page_id> <database_id> --tipo-pai database_id "
+        "notion-tasks --json mover-pagina <page_id> <nova_pagina_pai_id>",
+        "notion-tasks --json mover-pagina <page_id> <database_id> --tipo-pai database_id "
         "--dry-run",
-        "python -m cli --json mover-pagina <page_id> <database_id> --tipo-pai database_id "
+        "notion-tasks --json mover-pagina <page_id> <database_id> --tipo-pai database_id "
         "--aceitar-perdas",
-        "python -m cli --json mover-pagina <page_id> <data_source_id> "
+        "notion-tasks --json mover-pagina <page_id> <data_source_id> "
         "--tipo-pai data_source_id",
     ],
     "renomear-database": [
-        'python -m cli --json renomear-database <database_id> "Novo título"',
+        'notion-tasks --json renomear-database <database_id> "Novo título"',
     ],
     "mover-database": [
-        "python -m cli --json mover-database <database_id> <nova_pagina_pai_id>",
+        "notion-tasks --json mover-database <database_id> <nova_pagina_pai_id>",
     ],
     "perfis": [
-        "python -m cli --json perfis adicionar trabalho --token ntn_... "
+        "notion-tasks --json perfis adicionar trabalho --token ntn_... "
         "--database <db_id> --ativar",
-        "python -m cli --json perfis listar",
-        "python -m cli --perfil trabalho --json listar",
+        "notion-tasks --json perfis listar",
+        "notion-tasks --perfil trabalho --json listar",
     ],
-    "guia": ["python -m cli --json guia"],
+    "guia": ["notion-tasks --json guia"],
 }
 
 
@@ -3648,7 +3648,7 @@ def cmd_guia(args: argparse.Namespace) -> Any:
             {
                 "comando": nome,
                 "descricao": ajudas.get(nome, ""),
-                "exemplos": EXEMPLOS_GUIA.get(nome, [f"python -m cli {nome} --help"]),
+                "exemplos": EXEMPLOS_GUIA.get(nome, [f"notion-tasks {nome} --help"]),
             }
         )
     return {
@@ -3737,7 +3737,7 @@ class _ParserCLI(argparse.ArgumentParser):
 
 def construir_parser() -> argparse.ArgumentParser:
     parser = _ParserCLI(
-        prog="python -m cli",
+        prog="notion-tasks",
         description="CLI para IA operar tarefas do Notion via services.",
     )
     parser.add_argument("--json", action="store_true", help="emite envelope JSON estável")
