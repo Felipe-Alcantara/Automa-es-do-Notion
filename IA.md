@@ -1043,3 +1043,21 @@ antigo vivo. A correção ficou no `notion-tasks-cli` (`cli/atualizacao_nativa.p
 com o estado da aceitação física (Windows e Linux validados; macOS, assinatura e VM limpa pendentes). A
 correção só vale para binários publicados a partir da próxima Release; a `v0.5.0` ainda falha uma vez ao se
 atualizar.
+
+## [2026-10-07] Empacotamento nativo aponta para o pacote único (build Linux validado)
+
+O build PyInstaller (`scripts/empacotamento/build_native.py`) passou a apontar para `felixo_notion_mcp`:
+metadata de `felixo-notion-mcp`, `--collect-submodules felixo_notion_mcp` e o arquivo de versão
+`felixo-notion-mcp-version.txt` em `felixo_notion_mcp/api/cli/` dentro do bundle (onde `versao.py` o lê). O nome
+do arquivo tem uma fonte só, em `versao.py`. A raiz do repositório que o build usa como diretório de trabalho
+subiu de `parents[1]` para `parents[2]`, porque o script saiu de `scripts/` para `scripts/empacotamento/`. Nomes
+de asset (`notion-automacoes-<alvo>`) e `REPOSITORIO_GITHUB` não mudaram.
+
+Medido num build real em Linux x64 (Python 3.13, PyInstaller 6): `--version` responde `0.6.0` (vem do arquivo
+embutido, não da metadata, que diz `0.6.0.dev0`), `auth listar` e `--json doctor` rodam sem traceback, e o
+`doctor` descreve o pacote como `binário nativo`, nunca como checkout. Sem `--collect-submodules`, o serviço
+carregado por `importlib.import_module` (`buscar-conteudo`) some do binário (27 MB contra 48 MB) e o `doctor`
+continua verde; por isso o smoke agora também roda `buscar-conteudo` e confere a origem do pacote.
+
+**Limite:** só o Linux x64 foi construído e testado nesta etapa. Windows e macOS (x64 e arm64) ficam com a CI de
+release da etapa 4, que é quem vai rodar este mesmo build e este mesmo smoke nos três sistemas.
