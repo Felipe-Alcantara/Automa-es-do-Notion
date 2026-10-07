@@ -27,6 +27,7 @@ def test_comando_acao_reabre_start_app_com_acao():
 def test_reexecuta_no_python_do_projeto_quando_venv_difere(monkeypatch):
     chamadas = []
     monkeypatch.setattr(start_app, "_executavel_projeto", lambda: "/tmp/projeto/.venv/bin/python")
+    monkeypatch.setattr(start_app, "_interpretador_importa_o_pacote", lambda executavel: True)
     monkeypatch.setattr(start_app.sys, "executable", "/usr/bin/python3")
     monkeypatch.setattr(
         start_app.os,
@@ -847,3 +848,180 @@ def test_manage_py_roda_pelo_caminho_que_o_menu_usa(tmp_path):
     )
 
     assert resultado.returncode == 0, resultado.stderr
+
+
+# --------------------------------------------------------------------------- #
+# O launcher abre sem nenhuma dependência instalada (Instalar/Setup precisa dele) #
+# --------------------------------------------------------------------------- #
+TERCEIROS = ("requests", "docx", "django", "mcp", "rich", "questionary", "openpyxl")
+
+
+def test_launcher_e_config_abrem_sem_nenhuma_dependencia_de_terceiros():
+    """Num venv recém-criado só existe a stdlib: o menu tem de abrir para oferecer o Setup."""
+    codigo = (
+        "import sys\n"
+        f"for nome in {TERCEIROS!r}:\n"
+        "    sys.modules[nome] = None\n"
+        "import felixo_notion_mcp.core.config\n"
+        "import felixo_notion_mcp.api.launcher as launcher\n"
+        "launcher.main(['--help'])\n"
+        "assert not launcher._pacote_instalado()\n"
+        "print('faltando:', ','.join(launcher._dependencias_faltando()))\n"
+    )
+    resultado = subprocess.run(
+        [sys.executable, "-c", codigo],
+        capture_output=True,
+        text=True,
+        env=_ambiente_com_src(),
+        cwd=RAIZ_DO_CHECKOUT,
+        timeout=60,
+        check=False,
+    )
+
+    assert resultado.returncode == 0, resultado.stderr
+    assert "notion-automacoes-app" in resultado.stdout
+    assert "faltando: python-docx,requests,mcp" in resultado.stdout
+
+
+def test_pacote_instalado_e_falso_quando_falta_uma_dependencia(monkeypatch):
+    monkeypatch.setitem(sys.modules, "requests", None)
+
+    assert start_app._pacote_instalado() is False
+    assert "requests" in start_app._dependencias_faltando()
+
+
+def test_pacote_instalado_e_verdadeiro_com_todas_as_dependencias(monkeypatch):
+    monkeypatch.setattr(start_app.importlib.util, "find_spec", lambda nome: object())
+
+    assert start_app._pacote_instalado() is True
+    assert start_app._dependencias_faltando() == []
+
+
+def test_dependencias_do_launcher_sao_as_do_pyproject():
+    """Se o pyproject ganhar ou perder uma dependência de runtime, o launcher acompanha."""
+    from packaging.requirements import Requirement
+    from packaging.utils import canonicalize_name
+
+    if sys.version_info >= (3, 11):
+        import tomllib
+    else:  # Python 3.10: o pytest já instala o tomli nessa versão.
+        import tomli as tomllib
+
+    pyproject = tomllib.loads((RAIZ_DO_CHECKOUT / "pyproject.toml").read_text(encoding="utf-8"))
+    do_pyproject = {
+        canonicalize_name(Requirement(texto).name) for texto in pyproject["project"]["dependencies"]
+    } - {"typing-extensions"}
+
+    assert {canonicalize_name(nome) for nome in start_app._DEPENDENCIAS_DE_RUNTIME} == do_pyproject
+
+
+def test_mapear_orienta_instalar_setup_quando_faltam_dependencias(monkeypatch):
+    monkeypatch.setattr(start_app, "_dependencias_faltando", lambda: ["requests"])
+    monkeypatch.setattr(
+        start_app.subprocess,
+        "call",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("não deve rodar nada")),
+    )
+    saida = io.StringIO()
+
+    start_app.acao_mapear(Console(file=saida, force_terminal=False, width=200))
+
+    assert "Instalar / Setup" in saida.getvalue()
+    assert "requests" in saida.getvalue()
+
+
+def test_rodar_avisa_quando_faltam_dependencias(monkeypatch):
+    import questionary
+
+    monkeypatch.setattr(start_app, "_dependencias_faltando", lambda: ["requests"])
+    monkeypatch.setattr(start_app, "_token_configurado", lambda: (True, ".env local"))
+    monkeypatch.setattr(
+        questionary, "select", lambda *args, **kwargs: type("P", (), {"ask": lambda self: None})()
+    )
+    saida = io.StringIO()
+
+    start_app.acao_rodar(Console(file=saida, force_terminal=False, width=200))
+
+    assert "Instalar / Setup" in saida.getvalue()
+    assert "requests" in saida.getvalue()
+
+
+def test_status_mostra_o_pacote_sem_dependencias_como_nao_instalado(monkeypatch):
+    monkeypatch.setattr(start_app, "_dependencias_faltando", lambda: ["requests"])
+    monkeypatch.setattr(start_app, "_resolver_runtime_front", lambda: None)
+    saida = io.StringIO()
+
+    start_app.acao_status(Console(file=saida, force_terminal=False, width=200))
+
+    assert "não instalado" in saida.getvalue()
+    assert "Instalar/Setup" in saida.getvalue()
+
+
+def test_status_mostra_a_versao_quando_o_pacote_esta_pronto(monkeypatch):
+    import felixo_notion_mcp
+
+    monkeypatch.setattr(start_app, "_dependencias_faltando", lambda: [])
+    monkeypatch.setattr(start_app, "_resolver_runtime_front", lambda: None)
+    saida = io.StringIO()
+
+    start_app.acao_status(Console(file=saida, force_terminal=False, width=200))
+
+    assert f"v{felixo_notion_mcp.__version__}" in saida.getvalue()
+
+
+# --------------------------------------------------------------------------- #
+# Só reexecuta no .venv do projeto se ele consegue importar o pacote           #
+# --------------------------------------------------------------------------- #
+def test_nao_reexecuta_em_venv_que_nao_importa_o_pacote(monkeypatch):
+    sondados = []
+    chamadas = []
+    monkeypatch.setattr(start_app, "_VENVS_RECUSADOS", set())
+    monkeypatch.setattr(start_app, "_executavel_projeto", lambda: "/tmp/projeto/.venv/bin/python")
+    monkeypatch.setattr(start_app.sys, "executable", "/usr/bin/python3")
+    monkeypatch.setattr(
+        start_app,
+        "_interpretador_importa_o_pacote",
+        lambda executavel: sondados.append(executavel) or False,
+    )
+    monkeypatch.setattr(start_app.os, "execv", lambda *args: chamadas.append(args))
+
+    start_app._reexecutar_no_python_do_projeto(["--action", "tudo"])
+
+    assert sondados == [str(start_app.Path("/tmp/projeto/.venv/bin/python").absolute())]
+    assert chamadas == []
+
+
+def test_sonda_aceita_o_python_que_importa_o_pacote(monkeypatch):
+    monkeypatch.setenv("PYTHONPATH", str(RAIZ_DO_CHECKOUT / "src"))
+
+    assert start_app._interpretador_importa_o_pacote(sys.executable) is True
+
+
+def test_sonda_recusa_python_que_nao_existe(tmp_path):
+    assert start_app._interpretador_importa_o_pacote(str(tmp_path / "nao-existe")) is False
+
+
+def test_sonda_recusa_python_que_nao_acha_o_modulo(monkeypatch):
+    monkeypatch.setenv("PYTHONPATH", str(RAIZ_DO_CHECKOUT / "src"))
+    monkeypatch.setattr(start_app, "MODULO_LAUNCHER", "felixo_notion_mcp.api.nao_existe")
+
+    assert start_app._interpretador_importa_o_pacote(sys.executable) is False
+
+
+def test_venv_recusado_pela_sonda_deixa_de_ser_o_python_do_projeto(monkeypatch, tmp_path):
+    """Terminais dedicados e pip usam `_executavel_projeto`: não podem voltar ao .venv recusado."""
+    venv = tmp_path / ".venv" / "bin"
+    venv.mkdir(parents=True)
+    (venv / "python").write_text("", encoding="utf-8")
+    monkeypatch.setattr(start_app, "RAIZ", tmp_path)
+    monkeypatch.setattr(start_app, "MODO_CHECKOUT", True)
+    monkeypatch.setattr(start_app, "_VENVS_RECUSADOS", set())
+    monkeypatch.setattr(start_app, "_interpretador_importa_o_pacote", lambda executavel: False)
+    monkeypatch.setattr(start_app.sys, "executable", "/usr/bin/python3")
+    monkeypatch.setattr(start_app.os, "execv", lambda *args: pytest.fail("não deve reexecutar"))
+    assert start_app._executavel_projeto() == str(venv / "python")
+
+    start_app._reexecutar_no_python_do_projeto([])
+
+    assert start_app._executavel_projeto() == "/usr/bin/python3"
+    assert start_app._comando_acao("status")[0] == "/usr/bin/python3"

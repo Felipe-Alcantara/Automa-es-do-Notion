@@ -17,6 +17,7 @@ biblioteca padrão e o SDK ``mcp``.
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import re
@@ -96,6 +97,11 @@ class FrontRuntime(NamedTuple):
     versao: str
 
 
+#: Pythons de ``.venv`` que a sonda recusou (não importam o pacote); ``_executavel_projeto``
+#: os pula.
+_VENVS_RECUSADOS: set[str] = set()
+
+
 def _executavel_projeto() -> str:
     """Retorna o Python do ambiente local do projeto quando ele existir.
 
@@ -115,7 +121,7 @@ def _executavel_projeto() -> str:
         RAIZ / "venv" / "Scripts" / "python.exe",
     )
     for candidato in candidatos:
-        if candidato.exists():
+        if candidato.exists() and str(candidato) not in _VENVS_RECUSADOS:
             return str(candidato)
     return sys.executable
 
@@ -137,12 +143,44 @@ def _exportar_pacote_para_filhos() -> None:
         os.environ["PYTHONPATH"] = os.pathsep.join([pasta, *atuais])
 
 
+def _interpretador_importa_o_pacote(executavel: str) -> bool:
+    """Confere, com o ambiente que o ``execv`` vai herdar, se ``executavel`` abre o launcher.
+
+    É a sonda barata (``python -c "import ..."``, sem dependência de terceiros) que impede o
+    menu de trocar para um ``.venv`` recém-criado, sem o pacote nem ``src/`` no ``PYTHONPATH``:
+    o ``python -m`` falharia com ``No module named felixo_notion_mcp`` antes de qualquer menu.
+    """
+
+    try:
+        resultado = subprocess.run(
+            [executavel, "-c", f"import {MODULO_LAUNCHER}"],
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return resultado.returncode == 0
+
+
 def _reexecutar_no_python_do_projeto(argumentos: list[str]) -> None:
-    """Relança o launcher (``python -m``) no Python do projeto quando ele difere do atual."""
+    """Relança o launcher (``python -m``) no Python do projeto quando ele difere do atual.
+
+    Só troca de interpretador se o do projeto consegue importar o pacote; senão fica neste, que
+    já está rodando o launcher, e o menu oferece Instalar/Setup.
+    """
 
     destino = Path(_executavel_projeto()).absolute()
     atual = Path(sys.executable).absolute()
     if destino == atual:
+        return
+    if not _interpretador_importa_o_pacote(str(destino)):
+        _VENVS_RECUSADOS.add(str(destino))
+        print(
+            f"Aviso: {destino} não importa {MODULO_LAUNCHER} (falta instalar o pacote ali); "
+            f"seguindo com {atual}.",
+            file=sys.stderr,
+        )
         return
     os.execv(str(destino), [str(destino), "-m", MODULO_LAUNCHER, *argumentos])
 
@@ -303,14 +341,37 @@ def _texto_comando(comando: list[str]) -> str:
     return escape(shlex.join(comando))
 
 
-def _pacote_instalado() -> bool:
-    """Indica se o pacote ``felixo_notion_mcp`` está importável."""
+#: Dependências de runtime do ``pyproject.toml`` (distribuição -> módulo que se importa). O
+#: ``typing_extensions`` (só no Python 3.10) entra em ``_dependencias_faltando``.
+_DEPENDENCIAS_DE_RUNTIME = {
+    "python-docx": "docx",
+    "requests": "requests",
+    "mcp": "mcp",
+}
 
-    try:
-        import felixo_notion_mcp  # noqa: F401
-    except ImportError:
-        return False
-    return True
+
+def _dependencias_faltando() -> list[str]:
+    """Distribuições de runtime do projeto que o Python atual não consegue importar."""
+
+    dependencias = dict(_DEPENDENCIAS_DE_RUNTIME)
+    if sys.version_info < (3, 11):
+        dependencias["typing_extensions"] = "typing_extensions"
+    return [
+        distribuicao
+        for distribuicao, modulo in dependencias.items()
+        if importlib.util.find_spec(modulo) is None
+    ]
+
+
+def _pacote_instalado() -> bool:
+    """Indica se o ``felixo_notion_mcp`` está pronto para uso: suas dependências importam.
+
+    O pacote em si sempre importa (é este launcher que está rodando, e ``import
+    felixo_notion_mcp`` só usa a stdlib); o que falta num ambiente novo são o ``requests``
+    e as demais dependências de runtime, que os exemplos, o mapa e o servidor precisam.
+    """
+
+    return not _dependencias_faltando()
 
 
 def _django_disponivel() -> bool:
@@ -932,9 +993,10 @@ def acao_rodar(console) -> None:
 
     if not _pacote_instalado():
         console.print(
-            "[yellow]•[/yellow] O pacote felixo_notion_mcp ainda não está importável. "
+            "[yellow]•[/yellow] Faltam dependências do felixo_notion_mcp "
+            f"({', '.join(_dependencias_faltando())}). "
             "Use [bold]Instalar / Setup[/bold] primeiro "
-            "(o menu não obriga, mas os exemplos vão falhar sem ele)."
+            "(o menu não obriga, mas os exemplos vão falhar sem elas)."
         )
     configurado, origem = _token_configurado()
     if not configurado:
@@ -1456,7 +1518,8 @@ def acao_mapear(console) -> None:
 
     if not _pacote_instalado():
         console.print(
-            "[yellow]•[/yellow] O pacote felixo_notion_mcp não está importável. "
+            "[yellow]•[/yellow] Faltam dependências do felixo_notion_mcp "
+            f"({', '.join(_dependencias_faltando())}). "
             "Use [bold]Instalar / Setup[/bold] primeiro."
         )
         return
@@ -1528,7 +1591,9 @@ def acao_status(console) -> None:
         )
     else:
         tabela.add_row(
-            "Pacote felixo_notion_mcp", "[yellow]não instalado[/yellow] (use Instalar/Setup)"
+            "Pacote felixo_notion_mcp",
+            f"[yellow]não instalado[/yellow] (faltam {', '.join(_dependencias_faltando())}; "
+            "use Instalar/Setup)",
         )
 
     tabela.add_row(
