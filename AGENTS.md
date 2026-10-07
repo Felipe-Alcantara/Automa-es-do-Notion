@@ -81,9 +81,10 @@ uv run ruff check .             # lint
 python start_app.py             # menu: Instalar/Setup, Configurar, Iniciar, Status
 ```
 
-Sem `uv`, o menu faz o equivalente: `python start_app.py` → **Instalar/Setup** cria o `.venv` e
-instala o pacote em modo editável. O `start_app.py` abre mesmo num Python onde ainda não há nada
-instalado (só usa a biblioteca padrão).
+Sem `uv`, o menu faz o equivalente: `python start_app.py` → **Instalar/Setup** instala o pacote em
+modo editável no Python que roda o menu (ative um ambiente virtual antes, se não quiser instalar
+no Python do sistema). O `start_app.py` abre mesmo num Python onde ainda não há nada instalado
+(só usa a biblioteca padrão).
 
 **Fluxo:**
 1. Use a tabela de roteamento abaixo para achar a camada e o arquivo.

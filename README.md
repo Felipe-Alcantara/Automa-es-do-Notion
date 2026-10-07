@@ -48,7 +48,7 @@
 - **🎯 Tudo num lugar**: instalar, configurar o token, subir o app web, subir o servidor MCP e ver o estado do ambiente.
 - **🧭 Descritivo**: cada opção do menu explica o que vai fazer antes de fazer.
 - **🪶 Abre sem nada instalado**: o `start_app.py` usa só a biblioteca padrão do Python, então funciona num clone recém-baixado, em Windows, macOS e Linux.
-- **🩺 Status honesto**: a opção Status roda o mesmo diagnóstico do `felixo-notion-mcp doctor`, inclusive de onde o pacote está sendo importado.
+- **🩺 Status honesto**: a opção Status mostra o estado real do ambiente e também de onde o pacote é importado (a mesma informação do `felixo-notion-mcp doctor`).
 
 Menu: **Iniciar** (app web local, servidor MCP, CLI) • **Instalar/Setup** • **Configurar** (perfis e token) • **Status** • **Sair**.
 
