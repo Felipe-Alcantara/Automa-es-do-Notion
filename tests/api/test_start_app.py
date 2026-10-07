@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import ast
 import io
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -973,22 +975,104 @@ def test_iniciar_tudo_instala_o_extra_editavel_so_depois_do_sim(monkeypatch):
     assert eventos == ["pergunta", "pip:install -e .[app]"]
 
 
-def test_nenhuma_mensagem_manda_instalar_a_distribuicao_pelo_nome():
-    """Varre o código: ``pip/pipx install felixo-notion-mcp`` não pode aparecer em lugar nenhum.
+NOME_DA_DISTRIBUICAO = "felixo-notion-mcp"
+#: O que, numa lista de argumentos, manda um gerenciador instalar ou atualizar.
+VERBOS_DE_INSTALACAO = {"install", "upgrade", "--upgrade", "-U"}
+#: O nome da distribuição como argumento (com extras ou versão: ``nome[app]``, ``nome==1``).
+ARGUMENTO_COM_O_NOME = re.compile(r"felixo-notion-mcp(\[[^\]]*\])?([<>=!~@].*)?$")
+#: Um texto que manda instalar ou atualizar o nome (``pip install nome``, ``pipx upgrade nome``).
+TEXTO_QUE_INSTALA_O_NOME = re.compile(r"\b(?:install|upgrade)\b[^\n]*felixo-notion-mcp")
 
-    Vale para o pacote (``src``) e para a porta de entrada (``start_app.py``): a mensagem
-    certa aponta o extra e o checkout, nunca um nome ainda não publicado.
+
+def _texto_estatico(no: ast.AST) -> str | None:
+    """Texto de uma string ou f-string; a constante ``DISTRIBUICAO`` vale pelo nome."""
+
+    if isinstance(no, ast.Constant) and isinstance(no.value, str):
+        return no.value
+    if isinstance(no, ast.Name) and no.id == "DISTRIBUICAO":
+        return NOME_DA_DISTRIBUICAO
+    if isinstance(no, ast.JoinedStr):
+        partes = []
+        for valor in no.values:
+            alvo = valor.value if isinstance(valor, ast.FormattedValue) else valor
+            partes.append(_texto_estatico(alvo) or "{}")
+        return "".join(partes)
+    return None
+
+
+def _achados_de_instalacao_por_nome(codigo: str) -> list[tuple[int, str]]:
+    """Linhas do código que mandam instalar ou atualizar ``felixo-notion-mcp`` por nome.
+
+    Pega o que o nome literal esconde: o comando montado a partir da constante
+    ``DISTRIBUICAO`` (``[sys.executable, "-m", "pip", "install", DISTRIBUICAO]``,
+    ``["pipx", "upgrade", DISTRIBUICAO]``, ``["uv", "tool", "upgrade", DISTRIBUICAO]``) e a
+    mensagem escrita por extenso, em string, f-string ou lista de argumentos.
     """
 
-    import re
+    achados: list[tuple[int, str]] = []
+    for no in ast.walk(ast.parse(codigo)):
+        if isinstance(no, (ast.List, ast.Tuple)):
+            argumentos = [_texto_estatico(item) for item in no.elts]
+            if VERBOS_DE_INSTALACAO.intersection(argumentos) and any(
+                item and ARGUMENTO_COM_O_NOME.match(item) for item in argumentos
+            ):
+                achados.append((no.lineno, "lista de argumentos que instala o nome"))
+        elif isinstance(no, (ast.Constant, ast.JoinedStr)):
+            texto = _texto_estatico(no)
+            if texto and TEXTO_QUE_INSTALA_O_NOME.search(texto):
+                achados.append((no.lineno, texto.strip().splitlines()[0]))
+    return achados
 
-    padrao = re.compile(r"""install\s+['"\\]*felixo-notion-mcp|felixo-notion-mcp\[""")
+
+def test_a_varredura_pega_o_comando_montado_pela_constante_e_o_texto_escrito_por_extenso():
+    """Prova a própria guarda: o que ela deve achar e o que não deve."""
+
+    ruins = [
+        'DISTRIBUICAO = "felixo-notion-mcp"\nx = ["pipx", "upgrade", DISTRIBUICAO]',
+        'x = ["uv", "tool", "upgrade", "felixo-notion-mcp"]',
+        'x = [sys.executable, "-m", "pip", "install", "--upgrade", DISTRIBUICAO]',
+        'x = (sys.executable, "-m", "pip", "install", "felixo-notion-mcp[app]")',
+        'x = ["pip", "install", "felixo-notion-mcp==0.6.0"]',
+        'x = "pipx upgrade felixo-notion-mcp"',
+        'x = f"python -m pip install --upgrade {DISTRIBUICAO}"',
+        'x = f"pip install {DISTRIBUICAO}[app]"',
+    ]
+    for codigo in ruins:
+        assert _achados_de_instalacao_por_nome(codigo), codigo
+
+    bons = [
+        'x = ["git", "pull"]',
+        'x = [sys.executable, "-m", "pip", "install", "-e", ".[app]"]',
+        'x = importlib.metadata.version(DISTRIBUICAO)',
+        'x = ["uv", "sync", "--all-extras"]',
+        'x = f"pip install -e .[{extras}]"',
+        'x = "A distribuição ainda não está publicada no PyPI."',
+    ]
+    for codigo in bons:
+        assert _achados_de_instalacao_por_nome(codigo) == [], codigo
+
+
+def test_nenhuma_mensagem_manda_instalar_a_distribuicao_pelo_nome():
+    """Varre o código: nada instala nem atualiza ``felixo-notion-mcp`` pelo nome.
+
+    Vale para o pacote (``src``) e para a porta de entrada (``start_app.py``), e olha
+    três formas: o texto por extenso, o comando montado a partir de ``DISTRIBUICAO`` e o
+    extra (``felixo-notion-mcp[app]``). A mensagem certa aponta o extra e o checkout, nunca
+    um nome ainda não publicado: quem o registrasse no PyPI ganharia execução de código em
+    quem seguisse a receita (``pip install``, ``pipx upgrade``, ``uv tool upgrade``).
+    """
+
+    por_linha = re.compile(r"""install\s+['"\\]*felixo-notion-mcp|felixo-notion-mcp\[""")
     achados = []
     arquivos = [*(RAIZ_DO_CHECKOUT / "src").rglob("*.py"), RAIZ_DO_CHECKOUT / "start_app.py"]
     for arquivo in arquivos:
-        for numero, linha in enumerate(arquivo.read_text(encoding="utf-8").splitlines(), 1):
-            if padrao.search(linha):
-                achados.append(f"{arquivo.relative_to(RAIZ_DO_CHECKOUT)}:{numero}: {linha.strip()}")
+        codigo = arquivo.read_text(encoding="utf-8")
+        relativo = arquivo.relative_to(RAIZ_DO_CHECKOUT)
+        for numero, linha in enumerate(codigo.splitlines(), 1):
+            if por_linha.search(linha):
+                achados.append(f"{relativo}:{numero}: {linha.strip()}")
+        for numero, motivo in _achados_de_instalacao_por_nome(codigo):
+            achados.append(f"{relativo}:{numero}: {motivo}")
     assert achados == []
 
 

@@ -196,8 +196,12 @@ Em um binário PyInstaller, comandos normais verificam a Release
 automaticamente (no máximo uma vez por 24 horas, com cache local). A opção
 `NOTION_AUTOMACOES_NO_UPDATE=1` desabilita a verificação automática. O comando
 `notion-automacoes update --dry-run` mostra o plano sem baixar; em uma instalação
-Python, `update` mantém o comportamento compatível de apenas sugerir o comando
-`pipx`, `uv` ou `pip`.
+Python, `update` só imprime a receita e não executa nada. Enquanto o nome
+`felixo-notion-mcp` não estiver publicado no PyPI (etapa 4), não há comando
+`pipx`, `uv` ou `pip` que atualize a distribuição por nome: no checkout a receita é
+`git pull` e `uv sync --all-extras`, e fora dele a mensagem diz que a distribuição
+ainda não está publicada e como instalar a partir do código-fonte. No JSON, `comando`
+é `null` e a receita vem em `instrucao`.
 
 O rollback de produto é deliberadamente manual: cada publicação deve manter no
 GitHub pelo menos as duas Releases estáveis mais recentes com seus quatro pares

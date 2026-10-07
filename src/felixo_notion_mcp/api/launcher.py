@@ -34,14 +34,12 @@ from pathlib import Path
 from typing import NamedTuple
 
 from felixo_notion_mcp.core.config import ENV_FILE, REPO_RAIZ
-from felixo_notion_mcp.core.instalacao import instrucao_de_instalacao
+from felixo_notion_mcp.core.instalacao import instrucao_de_instalacao, raiz_e_checkout
 from felixo_notion_mcp.core.origem import origem_do_pacote
 
-
-def _raiz_e_checkout(raiz: Path) -> bool:
-    """Só é checkout a raiz que tem o ``pyproject.toml`` do projeto."""
-
-    return (raiz / "pyproject.toml").is_file()
+#: O mesmo predicado do ``update`` da CLI (``core.instalacao``); o nome antigo fica para os
+#: testes e para quem já o chamava.
+_raiz_e_checkout = raiz_e_checkout
 
 
 #: Raiz do checkout. É a mesma de ``core.config`` (que também decide a raiz do binário

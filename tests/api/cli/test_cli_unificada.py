@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import re
 import socket
 
 import pytest
 
 from felixo_notion_mcp.api.cli import unificada
+from felixo_notion_mcp.core import config
 
 
 def test_version_mostra_a_distribuicao_unica(capsys):
@@ -98,20 +100,162 @@ def test_doctor_funciona_sem_token_e_nao_exibe_credencial(monkeypatch, tmp_path,
     assert "NOTION_TOKEN" not in json.dumps(saida)
 
 
-def test_update_apenas_imprime_comando_e_nao_executa(monkeypatch, capsys):
-    """O update não pode alterar o ambiente sem uma confirmação externa."""
+#: ``pip/pipx/uv`` instalando ou atualizando o nome ainda não publicado no PyPI. Quem registrasse o
+#: nome ganharia execução de código em quem seguisse a receita.
+INSTALA_PELO_NOME = re.compile(
+    r"(?:pip3?|pipx|uv)\b[^\n]*\b(?:install|upgrade)\b[^\n]*felixo-notion-mcp"
+)
 
+#: Ambientes que o ``update`` distingue. ``executavel`` e ``prefixo`` simulam o caminho do Python;
+#: ``no_path`` diz que ferramentas o ``shutil.which`` encontra. ``gerenciador`` é o rótulo esperado.
+AMBIENTES = {
+    "venv": {
+        "executavel": "/home/u/projeto/.venv/bin/python3",
+        "prefixo": "/home/u/projeto/.venv",
+        "base_prefixo": "/usr",
+        "virtual_env": "/home/u/projeto/.venv",
+        "no_path": (),
+        "gerenciador": "venv",
+    },
+    "pipx": {
+        "executavel": "/home/u/.local/pipx/venvs/felixo-notion-mcp/bin/python",
+        "prefixo": "/home/u/.local/pipx/venvs/felixo-notion-mcp",
+        "no_path": (),
+        "gerenciador": "pipx",
+    },
+    "uv-tool": {
+        "executavel": "/home/u/.local/share/uv/tools/felixo-notion-mcp/bin/python",
+        "prefixo": "/home/u/.local/share/uv/tools/felixo-notion-mcp",
+        "no_path": (),
+        "gerenciador": "uv",
+    },
+    "pipx-no-path": {
+        "executavel": "/usr/bin/python3",
+        "prefixo": "/usr",
+        "no_path": ("pipx",),
+        "gerenciador": "pipx",
+    },
+    "uv-no-path": {
+        "executavel": "/usr/bin/python3",
+        "prefixo": "/usr",
+        "no_path": ("uv",),
+        "gerenciador": "uv",
+    },
+    "pip-fallback": {
+        "executavel": "/usr/bin/python3",
+        "prefixo": "/usr",
+        "no_path": (),
+        "gerenciador": "pip",
+    },
+}
+
+
+def _simular_ambiente(monkeypatch, *, ambiente, tmp_path, checkout):
+    """Simula o Python (venv, pipx, uv...) e a raiz (checkout ou instalação), sem rede."""
+
+    dados = AMBIENTES[ambiente]
+    monkeypatch.setattr(unificada.sys, "executable", dados["executavel"])
+    monkeypatch.setattr(unificada.sys, "prefix", dados["prefixo"])
+    monkeypatch.setattr(unificada.sys, "base_prefix", dados.get("base_prefixo", dados["prefixo"]))
+    if "virtual_env" in dados:
+        monkeypatch.setenv("VIRTUAL_ENV", dados["virtual_env"])
+    else:
+        monkeypatch.delenv("VIRTUAL_ENV", raising=False)
     monkeypatch.setattr(
-        unificada,
-        "_gerenciador_atualizacao",
-        lambda: ("pipx", ["pipx", "upgrade", "felixo-notion-mcp"], "teste"),
+        unificada.shutil,
+        "which",
+        lambda nome: f"/usr/bin/{nome}" if nome in dados["no_path"] else None,
     )
+    raiz = tmp_path / ("checkout" if checkout else "site-packages")
+    raiz.mkdir()
+    if checkout:
+        (raiz / "pyproject.toml").write_text("[project]\n", encoding="utf-8")
+    monkeypatch.setattr(config, "REPO_RAIZ", raiz)
+    return dados["gerenciador"]
+
+
+def _proibir_execucao(monkeypatch):
+    """O ``update`` só imprime: qualquer processo filho derruba o teste."""
+
+    def executou(*args, **kwargs):
+        raise AssertionError(f"update não pode executar nada: {args}")
+
+    for nome in ("call", "run", "Popen", "check_call", "check_output"):
+        monkeypatch.setattr(unificada.subprocess, nome, executou)
+
+
+@pytest.mark.parametrize("subcomando", ["update", "atualizar"])
+@pytest.mark.parametrize("checkout", [True, False], ids=["checkout", "fora-do-checkout"])
+@pytest.mark.parametrize("ambiente", list(AMBIENTES))
+def test_update_json_nunca_indica_instalar_o_nome_do_pypi(
+    monkeypatch, tmp_path, capsys, ambiente, checkout, subcomando
+):
+    """Em qualquer ambiente, ``update --json`` não monta nem imprime pip/pipx/uv pelo nome."""
+
+    gerenciador = _simular_ambiente(
+        monkeypatch, ambiente=ambiente, tmp_path=tmp_path, checkout=checkout
+    )
+    _proibir_execucao(monkeypatch)
+
+    codigo = unificada.main(["--json", subcomando])
+    bruto = capsys.readouterr().out
+    saida = json.loads(bruto)
+
+    assert codigo == 0
+    assert saida["executado"] is False
+    assert saida["gerenciador"] == gerenciador
+    assert saida["comando"] is None
+    assert saida["distribuicao"] == "felixo-notion-mcp"
+    assert INSTALA_PELO_NOME.search(bruto) is None
+    assert "--upgrade" not in bruto
+    assert isinstance(saida["instrucao"], str)
+
+
+@pytest.mark.parametrize("ambiente", list(AMBIENTES))
+def test_update_json_no_checkout_manda_git_pull_e_uv_sync(
+    monkeypatch, tmp_path, capsys, ambiente
+):
+    _simular_ambiente(monkeypatch, ambiente=ambiente, tmp_path=tmp_path, checkout=True)
+
+    assert unificada.main(["--json", "update"]) == 0
+    instrucao = json.loads(capsys.readouterr().out)["instrucao"]
+
+    assert "git pull" in instrucao
+    assert "uv sync --all-extras" in instrucao
+    assert 'pip install -e ".[app]"' in instrucao
+
+
+@pytest.mark.parametrize("ambiente", list(AMBIENTES))
+def test_update_json_fora_do_checkout_diz_que_a_distribuicao_nao_esta_publicada(
+    monkeypatch, tmp_path, capsys, ambiente
+):
+    _simular_ambiente(monkeypatch, ambiente=ambiente, tmp_path=tmp_path, checkout=False)
+
+    assert unificada.main(["--json", "update"]) == 0
+    instrucao = json.loads(capsys.readouterr().out)["instrucao"]
+
+    assert "ainda não está publicada no PyPI" in instrucao
+    assert "checkout do código-fonte" in instrucao
+    assert "uv sync --all-extras" in instrucao
+    assert "git pull" not in instrucao
+
+
+@pytest.mark.parametrize("checkout", [True, False], ids=["checkout", "fora-do-checkout"])
+def test_update_texto_imprime_a_receita_e_nao_executa(monkeypatch, tmp_path, capsys, checkout):
+    """Sem ``--json`` a saída humana mostra a receita e confirma que nada rodou."""
+
+    _simular_ambiente(monkeypatch, ambiente="pipx", tmp_path=tmp_path, checkout=checkout)
+    _proibir_execucao(monkeypatch)
 
     codigo = unificada.main(["update"])
     saida = capsys.readouterr().out
 
     assert codigo == 0
-    assert "pipx upgrade felixo-notion-mcp" in saida
+    assert "Versão atual:" in saida
+    assert ("git pull" in saida) is checkout
+    assert "uv sync --all-extras" in saida
+    assert INSTALA_PELO_NOME.search(saida) is None
+    assert "pipx upgrade" not in saida
     assert "Nenhum comando foi executado." in saida
 
 

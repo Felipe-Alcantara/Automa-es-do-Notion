@@ -23,7 +23,12 @@ from typing import Any
 
 from felixo_notion_mcp.api.cli import atualizacao_nativa
 from felixo_notion_mcp.api.cli.versao import VERSAO_FONTE, ler_versao_embutida
-from felixo_notion_mcp.core.instalacao import instrucao_de_instalacao
+from felixo_notion_mcp.core import config
+from felixo_notion_mcp.core.instalacao import (
+    instrucao_de_atualizacao,
+    instrucao_de_instalacao,
+    raiz_e_checkout,
+)
 from felixo_notion_mcp.core.origem import origem_do_pacote
 
 DISTRIBUICAO = "felixo-notion-mcp"
@@ -326,41 +331,47 @@ def diagnosticar() -> dict[str, Any]:
     }
 
 
-def _gerenciador_atualizacao() -> tuple[str, list[str], str]:
-    """Resolve o gerenciador provável e apenas monta o comando de atualização."""
+def _gerenciador_atualizacao() -> tuple[str, str]:
+    """Resolve o gerenciador provável do ambiente e o motivo; só descreve, não monta comando.
+
+    O rótulo é informativo. Nenhum ramo monta ``pip``/``pipx``/``uv`` com o nome da
+    distribuição: ``felixo-notion-mcp`` ainda não é do projeto no PyPI, e um comando que o
+    instalasse ou atualizasse por nome daria a quem registrasse o nome a execução de código
+    em quem o seguisse. Quando a distribuição for publicada (etapa 4), é aqui que o comando
+    por gerenciador volta.
+    """
 
     caminho_python = str(Path(sys.executable).resolve()).lower()
     prefixo = str(Path(sys.prefix).resolve()).lower()
     if os.environ.get("VIRTUAL_ENV") or sys.prefix != getattr(sys, "base_prefix", sys.prefix):
-        return (
-            "venv",
-            [sys.executable, "-m", "pip", "install", "--upgrade", DISTRIBUICAO],
-            "ambiente virtual ativo",
-        )
+        return "venv", "ambiente virtual ativo"
     if "pipx" in caminho_python or "pipx" in prefixo:
-        return "pipx", ["pipx", "upgrade", DISTRIBUICAO], "instalação gerenciada pelo pipx"
+        return "pipx", "instalação gerenciada pelo pipx"
     if "uv" in caminho_python or "uv" in prefixo:
-        return "uv", ["uv", "tool", "upgrade", DISTRIBUICAO], "instalação gerenciada pelo uv"
+        return "uv", "instalação gerenciada pelo uv"
     if shutil.which("pipx"):
-        return "pipx", ["pipx", "upgrade", DISTRIBUICAO], "pipx disponível no PATH"
+        return "pipx", "pipx disponível no PATH"
     if shutil.which("uv"):
-        return "uv", ["uv", "tool", "upgrade", DISTRIBUICAO], "uv disponível no PATH"
-    return (
-        "pip",
-        [sys.executable, "-m", "pip", "install", "--upgrade", DISTRIBUICAO],
-        "fallback do Python atual",
-    )
+        return "uv", "uv disponível no PATH"
+    return "pip", "fallback do Python atual"
 
 
 def preparar_atualizacao() -> dict[str, Any]:
-    """Informa como atualizar sem executar instalação ou alterar o ambiente."""
+    """Informa como atualizar sem executar instalação ou alterar o ambiente.
 
-    gerenciador, comando, motivo = _gerenciador_atualizacao()
+    Enquanto a distribuição não está no PyPI, não há comando de atualização por nome: o
+    ``comando`` é ``None`` e a ``instrucao`` traz a receita do checkout (atualizar o
+    repositório e sincronizar o ambiente) ou, fora dele, como instalar a partir do
+    código-fonte. ``executado`` é sempre ``False``.
+    """
+
+    gerenciador, motivo = _gerenciador_atualizacao()
     return {
         "distribuicao": DISTRIBUICAO,
         "versao_atual": versao_distribuicao(),
         "gerenciador": gerenciador,
-        "comando": comando,
+        "comando": None,
+        "instrucao": instrucao_de_atualizacao(em_checkout=raiz_e_checkout(config.REPO_RAIZ)),
         "motivo": motivo,
         "executado": False,
     }
@@ -461,7 +472,7 @@ def _imprimir(dados: Any, *, json_saida: bool) -> None:
     if isinstance(dados, dict) and "comando" in dados:
         print(f"Versão atual: {dados['versao_atual']}")
         print(f"Atualização ({dados['motivo']}):")
-        print(" ".join(dados["comando"]))
+        print(dados["instrucao"])
         print("Nenhum comando foi executado.")
         return
     if dados is not None:
