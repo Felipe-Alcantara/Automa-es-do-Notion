@@ -64,14 +64,21 @@ ENV_DB_PATH = "OPERATIONAL_DB_PATH"
 SECRET_KEY_DEV = "dev-inseguro-troque-em-producao"  # noqa: S105 - placeholder, não é segredo real
 
 
-def carregar_env_file(caminho: Path = ENV_FILE) -> None:
+def carregar_env_file(caminho: Path | None = None) -> None:
     """Carrega pares ``CHAVE=valor`` de um ``.env`` para ``os.environ``.
 
     Não sobrescreve variáveis já definidas no ambiente (o ambiente real vence o
     arquivo) e ignora linhas vazias e comentários. Sem dependência externa, no mesmo
     espírito do leitor de ``.env`` de ``start_app.py``.
+
+    Args:
+        caminho: O ``.env`` a ler. Sem ele vale o ``ENV_FILE`` da raiz, lido na hora da
+            chamada (e não na definição da função), para que a suíte consiga apontá-lo
+            para um checkout temporário em vez do ``.env`` real de quem a executa.
     """
 
+    if caminho is None:
+        caminho = ENV_FILE
     if not caminho.exists():
         return
     for linha in caminho.read_text(encoding="utf-8").splitlines():
