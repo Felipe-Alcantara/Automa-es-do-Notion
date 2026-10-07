@@ -2,7 +2,11 @@
 
 Usa o mapa antigo → novo de `mapa_modulos.montar_mapa`. O que reescreve:
 
-1. `import a.b[ as c]` e `from a.b import ...` (imports relativos não mudam);
+1. `import a.b[ as c]` e `from a.b import ...`. Imports relativos só mudam em arquivo que está
+   na tabela de movimentos (como destino já movido ou como origem ainda no lugar): o nome
+   antigo do arquivo sai da consulta reversa à tabela, o import é resolvido contra o pacote
+   antigo e vira absoluto já com o nome novo. Em arquivo fora da tabela, ou quando o nome
+   resolvido não está no mapa, o import relativo fica como está;
 2. literais de string cujo conteúdo é um nome antigo ou começa com `nome_antigo.` (alvos de
    `monkeypatch.setattr("cli.notion_tasks.main", ...)`, `os.environ[...] = "config.settings"`,
    `import_module("start_app")`), e o código de exemplo dentro de strings e docstrings
@@ -35,7 +39,13 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from scripts.migracao.mapa_modulos import mapa_da_tabela
+from scripts.migracao.mapa_modulos import (
+    RAIZES,
+    TABELA_MOVIMENTOS,
+    Movimento,
+    mapa_da_tabela,
+    modulo_antigo_do_arquivo,
+)
 
 RAIZ = Path(__file__).resolve().parents[2]
 
@@ -153,10 +163,20 @@ def _eh_op(token: tokenize.TokenInfo, texto: str) -> bool:
 class _Reescritor:
     """Percorre os tokens de um texto e acumula as edições que o mapa pede."""
 
-    def __init__(self, texto: str, mapa: Mapping[str, str], *, em_migracao_django: bool) -> None:
+    def __init__(
+        self,
+        texto: str,
+        mapa: Mapping[str, str],
+        *,
+        em_migracao_django: bool,
+        modulo_antigo: str | None = None,
+        eh_pacote_antigo: bool = False,
+    ) -> None:
         self.texto = texto
         self.mapa = mapa
         self.em_migracao_django = em_migracao_django
+        self.modulo_antigo = modulo_antigo
+        self.eh_pacote_antigo = eh_pacote_antigo
         self.resultado = _Analise()
         linhas = io.StringIO(texto).readlines()
         self._inicios = [0]
@@ -239,13 +259,21 @@ class _Reescritor:
             return i
 
     def _from(self, i: int) -> int:
-        """Trata `from P import ...`; `i` aponta para a palavra `from`."""
+        """Trata `from P import ...`, absoluto ou relativo; `i` aponta para a palavra `from`."""
         inicio_instrucao = i
         linha = self.tokens[i].start[0]
-        lido = self._ler_nome_pontuado(i + 1)
-        if lido is None:  # import relativo (`from . import x`): não muda
+        j = _significativo(self.tokens, i + 1)
+        pontos: list[tokenize.TokenInfo] = []
+        while j < len(self.tokens) and self.tokens[j].type == tokenize.OP:
+            if self.tokens[j].string not in (".", "..."):
+                break
+            pontos.append(self.tokens[j])
+            j += 1
+        sem_modulo = bool(pontos) and j < len(self.tokens) and self.tokens[j].string == "import"
+        lido = None if sem_modulo else self._ler_nome_pontuado(j)
+        if lido is None and not pontos:
             return i + 1
-        nome_tokens, i = lido
+        nome_tokens, i = lido if lido is not None else ([], j)
         i = _significativo(self.tokens, i)
         if i >= len(self.tokens) or self.tokens[i].string != "import":
             return i
@@ -280,17 +308,58 @@ class _Reescritor:
                 )
             ].split()
         )
-        self._reescrever_from(nome_tokens, nomes, linha, trecho)
+        modulo = self._nome_dos_tokens(nome_tokens)
+        if not pontos:
+            self._reescrever_from(
+                modulo, nome_tokens[0], nome_tokens[-1], modulo, nomes, linha, trecho
+            )
+            return i
+        nivel = sum(len(ponto.string) for ponto in pontos)
+        ultimo = nome_tokens[-1] if nome_tokens else pontos[-1]
+        absoluto = self._resolver_relativo(nivel, modulo)
+        if absoluto is not None and self._relativo_conhecido(absoluto, nomes):
+            self._reescrever_from(
+                absoluto, pontos[0], ultimo, "." * nivel + modulo, nomes, linha, trecho
+            )
         return i
+
+    def _resolver_relativo(self, nivel: int, modulo: str) -> str | None:
+        """Nome antigo absoluto de `from <nivel pontos><modulo> import ...` neste arquivo."""
+        if self.modulo_antigo is None:
+            return None
+        partes = self.modulo_antigo.split(".")
+        pacote = partes if self.eh_pacote_antigo else partes[:-1]
+        subir = nivel - 1
+        if subir > len(pacote):
+            return None
+        base = pacote[: len(pacote) - subir]
+        if modulo:
+            base = [*base, *modulo.split(".")]
+        return ".".join(base) or None
+
+    def _relativo_conhecido(self, pacote: str, nomes: Sequence[str]) -> bool:
+        """O alvo do import relativo é um nome que o mapa conhece (senão o import não muda)."""
+        if pacote in self.mapa:
+            return True
+        return bool(nomes) and all(
+            nome != "*" and f"{pacote}.{nome}" in self.mapa for nome in nomes
+        )
 
     def _reescrever_from(
         self,
-        nome_tokens: Sequence[tokenize.TokenInfo],
+        pacote: str,
+        primeiro: tokenize.TokenInfo,
+        ultimo: tokenize.TokenInfo,
+        antigo_no_texto: str,
         nomes: Sequence[str],
         linha: int,
         trecho: str,
     ) -> None:
-        pacote = self._nome_dos_tokens(nome_tokens)
+        """Troca `P` em `from P import ...` (o trecho vai de `primeiro` até `ultimo`).
+
+        `pacote` é o nome antigo absoluto de `P`; `antigo_no_texto` é como `P` está escrito (com os
+        pontos, se for relativo).
+        """
         pai_do_pacote = trocar_prefixo(pacote, self.mapa)
         pais: set[str] = set()
         for nome in nomes:
@@ -319,9 +388,9 @@ class _Reescritor:
             return
         novo_pacote = pais.pop() if pais else pai_do_pacote
         self._trocar(
-            self.deslocamento(nome_tokens[0].start),
-            self.deslocamento(nome_tokens[-1].end),
-            pacote,
+            self.deslocamento(primeiro.start),
+            self.deslocamento(ultimo.end),
+            antigo_no_texto,
             novo_pacote,
             linha,
             "from ",
@@ -420,20 +489,48 @@ def _aplicar(texto: str, edicoes: Sequence[_Edicao]) -> str:
 
 
 def analisar_codigo(
-    texto: str, mapa: Mapping[str, str], *, em_migracao_django: bool
+    texto: str,
+    mapa: Mapping[str, str],
+    *,
+    em_migracao_django: bool,
+    modulo_antigo: str | None = None,
+    eh_pacote_antigo: bool = False,
 ) -> ResultadoDaAnalise:
-    """Reescreve o que o mapa pede e devolve texto novo, trocas, pendências e avisos."""
-    analise = _Reescritor(texto, mapa, em_migracao_django=em_migracao_django).analisar()
+    """Reescreve o que o mapa pede e devolve texto novo, trocas, pendências e avisos.
+
+    Com `modulo_antigo` (o nome pontuado que o arquivo tinha antes da migração), os imports
+    relativos viram absolutos: são resolvidos contra o pacote antigo e depois mapeados como
+    qualquer outro. `eh_pacote_antigo` diz se o arquivo era um `__init__.py`. Sem `modulo_antigo`
+    os imports relativos ficam como estão.
+    """
+    analise = _Reescritor(
+        texto,
+        mapa,
+        em_migracao_django=em_migracao_django,
+        modulo_antigo=modulo_antigo,
+        eh_pacote_antigo=eh_pacote_antigo,
+    ).analisar()
     return ResultadoDaAnalise(
         _aplicar(texto, analise.edicoes), analise.trocas, analise.pendencias, analise.avisos
     )
 
 
 def reescrever_codigo(
-    texto: str, mapa: Mapping[str, str], *, em_migracao_django: bool
+    texto: str,
+    mapa: Mapping[str, str],
+    *,
+    em_migracao_django: bool,
+    modulo_antigo: str | None = None,
+    eh_pacote_antigo: bool = False,
 ) -> tuple[str, list[str]]:
     """Texto novo e a lista de trocas feitas; levanta `ImportAmbiguo` na primeira pendência."""
-    resultado = analisar_codigo(texto, mapa, em_migracao_django=em_migracao_django)
+    resultado = analisar_codigo(
+        texto,
+        mapa,
+        em_migracao_django=em_migracao_django,
+        modulo_antigo=modulo_antigo,
+        eh_pacote_antigo=eh_pacote_antigo,
+    )
     if resultado.pendencias:
         raise resultado.pendencias[0]
     return resultado.texto, resultado.trocas
@@ -449,9 +546,9 @@ def eh_migracao_django(caminho: Path) -> bool:
     return "migrations" in caminho.parts
 
 
-def _relativo(caminho: Path) -> str:
+def _relativo(caminho: Path, raiz: Path | None = None) -> str:
     try:
-        return caminho.resolve().relative_to(RAIZ).as_posix()
+        return caminho.resolve().relative_to((raiz or RAIZ).resolve()).as_posix()
     except ValueError:
         return caminho.as_posix()
 
@@ -485,9 +582,18 @@ class ResultadoDoArquivo:
 
 
 def reescrever_arquivo(
-    caminho: Path, mapa: Mapping[str, str], *, aplicar: bool
+    caminho: Path,
+    mapa: Mapping[str, str],
+    *,
+    aplicar: bool,
+    raiz: Path | None = None,
+    movimentos: Sequence[Movimento] = TABELA_MOVIMENTOS,
 ) -> ResultadoDoArquivo:
-    """Reescreve um arquivo. Com pendências, aplica o resto e deixa o ambíguo como está."""
+    """Reescreve um arquivo. Com pendências, aplica o resto e deixa o ambíguo como está.
+
+    Se o arquivo é o destino (ou ainda a origem) de um movimento da tabela, os imports relativos
+    dele também viram absolutos, resolvidos contra o nome que ele tinha antes da migração.
+    """
     bruto = caminho.read_bytes()
     try:
         texto = bruto.decode("utf-8")
@@ -495,11 +601,18 @@ def reescrever_arquivo(
         return ResultadoDoArquivo(caminho, [], [], erro=f"não é UTF-8: {erro}")
     bom = BOM if texto.startswith(BOM) else ""
     texto = texto.removeprefix(BOM)
+    nome = _relativo(caminho, raiz)
+    antigo = modulo_antigo_do_arquivo(nome, movimentos, RAIZES)
     try:
-        analise = analisar_codigo(texto, mapa, em_migracao_django=eh_migracao_django(caminho))
+        analise = analisar_codigo(
+            texto,
+            mapa,
+            em_migracao_django=eh_migracao_django(caminho),
+            modulo_antigo=antigo[0] if antigo else None,
+            eh_pacote_antigo=antigo[1] if antigo else False,
+        )
     except (tokenize.TokenError, SyntaxError, RuntimeError) as erro:
         return ResultadoDoArquivo(caminho, [], [], erro=f"não foi possível analisar: {erro}")
-    nome = _relativo(caminho)
     for pendencia in analise.pendencias:
         pendencia.arquivo = nome
     mudou = analise.texto != texto

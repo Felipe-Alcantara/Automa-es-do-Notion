@@ -116,6 +116,27 @@ def nome_antigo(origem: str, raiz: RaizPython) -> str | None:
     return _nome_pontuado(origem[len(base) :], raiz.prefixo)
 
 
+def modulo_antigo_do_arquivo(
+    caminho: str, movimentos: Sequence[Movimento], raizes: Sequence[RaizPython]
+) -> tuple[str, bool] | None:
+    """Nome pontuado antigo de um arquivo da tabela e se ele era um pacote (`__init__.py`).
+
+    `caminho` é o destino de um movimento real (o arquivo já movido) ou uma origem ainda no lugar.
+    Um destino que shims da CLI e do app também apontam vale pelo módulo real, nunca pelo shim.
+    Devolve `None` se o caminho não está na tabela (arquivo novo) ou não é um módulo Python.
+    """
+    for mov in movimentos:
+        if mov.apenas_mapear or not mov.destino:
+            continue
+        if caminho in (mov.destino, mov.origem):
+            for raiz in raizes:
+                antigo = nome_antigo(mov.origem, raiz)
+                if antigo is not None:
+                    return antigo, mov.origem.endswith("/__init__.py")
+            return None
+    return None
+
+
 def nome_novo(destino: str) -> str | None:
     """Nome pontuado do destino: sob `src/` conta a partir dele, fora conta da raiz do repo."""
     caminho = destino.removeprefix("src/")
