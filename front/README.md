@@ -1,11 +1,13 @@
 # Front React
 
-SPA React do `notion-workspace-app` para operar tarefas do Notion pelo contrato
-REST documentado no hub em [`docs/CONTRATOS.md`](https://github.com/Felipe-Alcantara/Automa-es-do-Notion/blob/main/docs/CONTRATOS.md).
+SPA React do Felixo Notion MCP para operar tarefas do Notion pelo contrato REST
+documentado em [`docs/CONTRATOS.md`](../docs/CONTRATOS.md).
 
-O frontend é parte do app, não um pacote distribuído separado. No uso público,
-ele já vem compilado no wheel de `notion-workspace-app` e é servido pelo Django;
-Node/npm são necessários somente para desenvolvimento e para o workflow de release.
+O frontend é parte do pacote `felixo-notion-mcp`, não um pacote distribuído
+separado. O `npm run build` escreve o bundle em
+`src/felixo_notion_mcp/api/http/static/frontend/` (ignorado pelo git), o wheel o
+leva embutido e o Django o serve. Node/npm são necessários somente para
+desenvolvimento e para construir o wheel.
 
 ## Rodar localmente
 
@@ -32,11 +34,11 @@ npm run lint
 npm run build
 ```
 
-O gate completo do repositório roda a partir da raiz do app:
+O gate completo do repositório roda a partir da raiz:
 
 ```bash
-python -m ruff check .
-python -m pytest
+uv run ruff check .
+uv run python -m pytest
 cd front
 npm run lint
 npm run build
