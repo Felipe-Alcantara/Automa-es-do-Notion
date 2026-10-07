@@ -1,0 +1,938 @@
+"""Exportacao de relatorios diarios do Notion para DOCX.
+
+O caso de uso junta propriedades e corpo da pagina numa unica passada: consulta
+o database por periodo, le os blocos de cada relatorio como Markdown e renderiza
+um arquivo DOCX profissional por dia. A borda CLI/API deve apenas resolver
+parametros; a regra de negocio fica aqui.
+
+Limite conhecido: o renderer reproduz a identidade visual dos DOCXs de exemplo
+(fontes, cores, tabelas com cabecalho e zebra, capa hierarquizada), mas a
+geracao e programatica — o acabamento fino de um documento diagramado a mao
+(callouts coloridos, larguras por conteudo, quebras de pagina) pode exigir
+ajuste manual no Word depois de exportar.
+"""
+
+from __future__ import annotations
+
+import re
+import urllib.request
+from dataclasses import asdict, dataclass
+from datetime import date, datetime
+from io import BytesIO
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+from notion_starter import readers
+from notion_starter.content import blocos_para_markdown
+
+if TYPE_CHECKING:  # pragma: no cover - só para as anotações
+    from docx.shared import RGBColor
+
+# python-docx (e o lxml por baixo dele) é carregado só na primeira renderização,
+# por _carregar_docx(): importar no topo custava ~100 ms (20-29% da abertura,
+# medido) em TODO comando da CLI, que importa este módulo mesmo sem exportar.
+# Os nomes abaixo são preenchidos por _carregar_docx().
+Document: Any = None
+WD_ALIGN_PARAGRAPH: Any = None
+RELATIONSHIP_TYPE: Any = None
+OxmlElement: Any = None
+qn: Any = None
+Cm: Any = None
+Emu: Any = None
+Inches: Any = None
+Pt: Any = None
+
+# Identidade visual extraida dos DOCXs de exemplo anexados na task de origem
+# (relatorios de 2026-04-22 a 2026-05-01): Arial no corpo, azul-marinho nos
+# titulos, azul nos subtitulos, texto em cinza-escuro e tabelas com cabecalho
+# preenchido + linhas zebradas. As cores ficam em RGB puro até o python-docx
+# ser carregado; _carregar_docx() cria os RGBColor.
+_FONTE = "Arial"
+_RGB = {
+    "_COR_MARINHO": (0x1B, 0x3A, 0x5C),
+    "_COR_AZUL": (0x2E, 0x75, 0xB6),
+    "_COR_AZUL_ESCURO": (0x1F, 0x4D, 0x78),
+    "_COR_TEXTO": (0x40, 0x40, 0x40),
+    "_COR_DATA": (0x59, 0x59, 0x59),
+    "_COR_VERDE": (0x1A, 0x5C, 0x2E),
+    "_COR_BRANCO": (0xFF, 0xFF, 0xFF),
+}
+_COR_MARINHO: Any = None
+_COR_AZUL: Any = None
+_COR_AZUL_ESCURO: Any = None
+_COR_TEXTO: Any = None
+_COR_DATA: Any = None
+_COR_VERDE: Any = None
+_COR_BRANCO: Any = None
+
+
+def _carregar_docx() -> None:
+    """Importa o python-docx na primeira renderização (idempotente).
+
+    Raises:
+        RuntimeError: Se o python-docx não estiver instalado — só quem exporta
+            DOCX precisa dele; os demais comandos seguem funcionando.
+    """
+
+    if Document is not None:
+        return
+    try:
+        import docx
+        from docx.enum.text import WD_ALIGN_PARAGRAPH as alinhamento
+        from docx.opc.constants import RELATIONSHIP_TYPE as relacoes
+        from docx.oxml import OxmlElement as elemento
+        from docx.oxml.ns import qn as nome_qualificado
+        from docx.shared import Cm as cm
+        from docx.shared import Emu as emu
+        from docx.shared import Inches as polegadas
+        from docx.shared import Pt as pontos
+        from docx.shared import RGBColor as cor_rgb
+    except ImportError as exc:  # pragma: no cover - depende do ambiente
+        raise RuntimeError(
+            "A exportacao DOCX exige a dependencia 'python-docx'. "
+            "Instale o pacote ou reinstale notion-starter."
+        ) from exc
+    globals().update(
+        {
+            "WD_ALIGN_PARAGRAPH": alinhamento,
+            "RELATIONSHIP_TYPE": relacoes,
+            "OxmlElement": elemento,
+            "qn": nome_qualificado,
+            "Cm": cm,
+            "Emu": emu,
+            "Inches": polegadas,
+            "Pt": pontos,
+            **{nome: cor_rgb(*rgb) for nome, rgb in _RGB.items()},
+            # Por último: é o marcador de "já carregado".
+            "Document": docx.Document,
+        }
+    )
+_FILL_CABECALHO = "1B3A5C"
+_FILL_CHAVE = "D5E8F0"
+_FILL_ZEBRA = "F2F2F2"
+_FILL_CODIGO = "F2F2F2"
+
+# Largura util de uma pagina A4 (21cm) com as margens laterais de 2.2cm.
+_LARGURA_UTIL_CM = 16.6
+# Valores de propriedade maiores que isso (ou com quebras de linha) ficam
+# ilegiveis dentro de uma celula; viram secao propria, como nos exemplos.
+_LIMITE_METADADO = 160
+
+PROPRIEDADES_DESTAQUE_PADRAO = (
+    "Data",
+    "Status",
+    "Area",
+    "Área",
+    "Resumo",
+    "Bloqueios",
+    "Proximos passos",
+    "Próximos passos",
+    "Tasks feitas",
+    "Arquivos complementares",
+)
+
+SECOES_DESTAQUE = (
+    ("Resumo do Dia", ("Resumo",)),
+    ("Bloqueios", ("Bloqueios",)),
+    ("Próximos passos", ("Proximos passos", "Próximos passos")),
+)
+
+
+@dataclass(frozen=True)
+class RelatorioDocxExportado:
+    """Resumo serializavel de um DOCX gerado."""
+
+    id: str
+    titulo: str
+    data: str
+    arquivo: str
+
+
+@dataclass
+class _NumeradorSecoes:
+    """Numera os titulos de nivel 1 na ordem do documento ("1. Resumo do Dia"),
+    como nos DOCXs de exemplo. Titulos que ja chegam numerados nao ganham
+    prefixo duplicado."""
+
+    atual: int = 0
+
+    def proximo(self) -> int:
+        self.atual += 1
+        return self.atual
+
+
+def exportar_relatorios_docx(
+    *,
+    database_id: str,
+    data_inicio: str,
+    data_fim: str,
+    saida: str | Path,
+    cliente: Any,
+    campo_data: str = "Data",
+    propriedades_destaque: tuple[str, ...] = PROPRIEDADES_DESTAQUE_PADRAO,
+) -> dict[str, Any]:
+    """Exporta um arquivo DOCX por relatorio no intervalo informado.
+
+    Args:
+        database_id: ID do database de relatorios.
+        data_inicio: Inicio do periodo em ISO ``YYYY-MM-DD``.
+        data_fim: Fim do periodo em ISO ``YYYY-MM-DD``.
+        saida: Diretorio onde os arquivos serao gravados.
+        cliente: Instancia compativel com ``NotionClient``.
+        campo_data: Nome da propriedade de data usada no filtro.
+        propriedades_destaque: Propriedades que aparecem primeiro no DOCX.
+
+    Returns:
+        Dicionario serializavel para CLI/API, com periodo e arquivos gerados.
+    """
+
+    inicio = _parse_data(data_inicio, "data_inicio")
+    fim = _parse_data(data_fim, "data_fim")
+    if fim < inicio:
+        raise ValueError("data_fim deve ser maior ou igual a data_inicio.")
+
+    destino = Path(saida)
+    destino.mkdir(parents=True, exist_ok=True)
+
+    filtro = {
+        "and": [
+            {"property": campo_data, "date": {"on_or_after": inicio.isoformat()}},
+            {"property": campo_data, "date": {"on_or_before": fim.isoformat()}},
+        ]
+    }
+    paginas = cliente.consultar_database(database_id, buscar_todos=True, filtro=filtro)
+    relatorios = [
+        _montar_relatorio(
+            pagina,
+            cliente=cliente,
+            destino=destino,
+            campo_data=campo_data,
+            propriedades_destaque=propriedades_destaque,
+        )
+        for pagina in paginas
+    ]
+    relatorios.sort(key=lambda item: (item.data, item.titulo.lower()))
+
+    return {
+        "database_id": database_id,
+        "periodo": {"de": inicio.isoformat(), "ate": fim.isoformat()},
+        "campo_data": campo_data,
+        "saida": str(destino),
+        "total": len(relatorios),
+        "arquivos": [asdict(item) for item in relatorios],
+    }
+
+
+def _montar_relatorio(
+    pagina: dict[str, Any],
+    *,
+    cliente: Any,
+    destino: Path,
+    campo_data: str,
+    propriedades_destaque: tuple[str, ...],
+) -> RelatorioDocxExportado:
+    valores = readers.extrair_valores(pagina)
+    titulo = _titulo_pagina(pagina, valores)
+    data_relatorio = _data_pagina(valores, campo_data)
+    blocos = cliente.ler_blocos(pagina["id"], buscar_todos=True, recursivo=True)
+    markdown = blocos_para_markdown(blocos)
+
+    nome_arquivo = f"{data_relatorio} - {_nome_seguro(titulo or 'Relatorio')}.docx"
+    caminho = destino / nome_arquivo
+    renderizar_docx(
+        caminho,
+        titulo=titulo or "Relatorio",
+        data_relatorio=data_relatorio,
+        propriedades=valores,
+        markdown=markdown,
+        propriedades_destaque=propriedades_destaque,
+    )
+    return RelatorioDocxExportado(
+        id=pagina["id"],
+        titulo=titulo,
+        data=data_relatorio,
+        arquivo=str(caminho),
+    )
+
+
+def renderizar_docx(
+    caminho: str | Path,
+    *,
+    titulo: str,
+    data_relatorio: str,
+    propriedades: dict[str, Any],
+    markdown: str,
+    propriedades_destaque: tuple[str, ...] = PROPRIEDADES_DESTAQUE_PADRAO,
+) -> Path:
+    """Renderiza um relatorio ja carregado em um arquivo DOCX."""
+
+    _carregar_docx()
+    documento = Document()
+    numerador = _NumeradorSecoes()
+    curtos, longos = _separar_metadados(propriedades, propriedades_destaque, titulo)
+    _configurar_documento(documento)
+    _adicionar_capa(documento, titulo, data_relatorio, propriedades)
+    _adicionar_tabela_metadados(documento, curtos)
+    _adicionar_secoes_destaque(documento, propriedades, numerador)
+    for nome, texto in longos:
+        _adicionar_h1(documento, nome, numerador)
+        _adicionar_markdown(documento, texto, numerador)
+    _adicionar_markdown(documento, markdown, numerador)
+
+    destino = Path(caminho)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    documento.save(destino)
+    return destino
+
+
+def _configurar_documento(documento: Any) -> None:
+    section = documento.sections[0]
+    section.top_margin = Cm(2.5)
+    section.bottom_margin = Cm(2.5)
+    section.left_margin = Cm(2.2)
+    section.right_margin = Cm(2.2)
+
+    styles = documento.styles
+    normal = styles["Normal"]
+    normal.font.name = _FONTE
+    normal.font.size = Pt(10)
+    normal.font.color.rgb = _COR_TEXTO
+    normal.paragraph_format.space_before = Pt(3)
+    normal.paragraph_format.space_after = Pt(4)
+
+    headings = (
+        ("Heading 1", 16, _COR_MARINHO, 17, 5),
+        ("Heading 2", 13, _COR_AZUL, 14, 4),
+        ("Heading 3", 12, _COR_AZUL_ESCURO, 10, 3),
+    )
+    for style_name, size, cor, antes, depois in headings:
+        estilo = styles[style_name]
+        estilo.font.name = _FONTE
+        estilo.font.size = Pt(size)
+        estilo.font.bold = True
+        estilo.font.color.rgb = cor
+        estilo.paragraph_format.space_before = Pt(antes)
+        estilo.paragraph_format.space_after = Pt(depois)
+
+    for style_name in ("List Bullet", "List Number"):
+        estilo = styles[style_name]
+        estilo.font.name = _FONTE
+        estilo.font.size = Pt(10)
+        estilo.font.color.rgb = _COR_TEXTO
+        estilo.paragraph_format.space_before = Pt(2)
+        estilo.paragraph_format.space_after = Pt(2)
+
+
+def _sombrear_celula(celula: Any, fill: str) -> None:
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:val"), "clear")
+    shd.set(qn("w:fill"), fill)
+    celula._tc.get_or_add_tcPr().append(shd)
+
+
+def _configurar_tabela(tabela: Any, *, layout_fixo: bool = False) -> None:
+    """Aplica o acabamento comum: largura total, bordas finas e respiro interno.
+
+    Os elementos entram no ``tblPr`` na ordem que o schema OOXML exige
+    (``tblW`` → ``tblBorders`` → ``tblLayout`` → ``tblCellMar``).
+    """
+
+    tbl_pr = tabela._tbl.tblPr
+
+    largura = OxmlElement("w:tblW")
+    largura.set(qn("w:w"), "5000")
+    largura.set(qn("w:type"), "pct")
+    tbl_pr.append(largura)
+
+    borders = OxmlElement("w:tblBorders")
+    for lado in ("top", "left", "bottom", "right", "insideH", "insideV"):
+        borda = OxmlElement(f"w:{lado}")
+        borda.set(qn("w:val"), "single")
+        borda.set(qn("w:sz"), "4")
+        borda.set(qn("w:color"), "BFBFBF")
+        borders.append(borda)
+    tbl_pr.append(borders)
+
+    if layout_fixo:
+        layout = OxmlElement("w:tblLayout")
+        layout.set(qn("w:type"), "fixed")
+        tbl_pr.append(layout)
+
+    margens = OxmlElement("w:tblCellMar")
+    for lado, valor in (("top", "40"), ("left", "100"), ("bottom", "40"), ("right", "100")):
+        el = OxmlElement(f"w:{lado}")
+        el.set(qn("w:w"), valor)
+        el.set(qn("w:type"), "dxa")
+        margens.append(el)
+    tbl_pr.append(margens)
+
+
+def _larguras_duas_colunas(tabela: Any, primeira_cm: float) -> None:
+    segunda = Cm(_LARGURA_UTIL_CM - primeira_cm)
+    for row in tabela.rows:
+        row.cells[0].width = Cm(primeira_cm)
+        row.cells[1].width = segunda
+
+
+def _espacador(documento: Any) -> None:
+    """Parágrafo vazio mínimo para separar tabelas do conteúdo seguinte.
+
+    O Word exige um parágrafo entre tabelas adjacentes (senão elas se fundem),
+    mas um parágrafo vazio de altura normal deixava o documento espaçado
+    demais — este tem espaçamento zero e marca de parágrafo de 4pt (a altura
+    de um parágrafo vazio vem da fonte da marca, definida em ``pPr/rPr``).
+    """
+
+    p = documento.add_paragraph()
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after = Pt(0)
+    rpr = OxmlElement("w:rPr")
+    sz = OxmlElement("w:sz")
+    sz.set(qn("w:val"), "8")
+    rpr.append(sz)
+    p._p.get_or_add_pPr().append(rpr)
+
+
+def _texto_celula(
+    celula: Any, texto: str, *, bold: bool = False, cor: RGBColor | None = None
+) -> None:
+    p = celula.paragraphs[0]
+    p.clear()
+    p.paragraph_format.space_before = Pt(2)
+    p.paragraph_format.space_after = Pt(2)
+    run = p.add_run(texto)
+    run.bold = bold
+    if cor is not None:
+        run.font.color.rgb = cor
+
+
+def _celula_inline(celula: Any, texto: str) -> None:
+    """Preenche a célula interpretando a marcação inline (negrito, links…)."""
+
+    p = celula.paragraphs[0]
+    p.clear()
+    p.paragraph_format.space_before = Pt(2)
+    p.paragraph_format.space_after = Pt(2)
+    _adicionar_inline(p, texto)
+
+
+def _adicionar_capa(
+    documento: Any,
+    titulo: str,
+    data_relatorio: str,
+    propriedades: dict[str, Any],
+) -> None:
+    dia = _dia_semana(data_relatorio)
+    projeto = _primeiro_valor(propriedades, ("Projeto", "Projetos", "Area"))
+    status = _valor_para_texto(_primeiro_valor(propriedades, ("Status",)))
+    # (texto, tamanho, cor, negrito) — hierarquia visual dos exemplos: projeto
+    # grande em marinho, subtitulo azul, data em cinza e status em verde quando
+    # concluido.
+    linhas: list[tuple[str, int, RGBColor, bool]] = [
+        (
+            _valor_para_texto(projeto).upper() if projeto else "VITIS SOULS",
+            24,
+            _COR_MARINHO,
+            True,
+        ),
+        ("Relatório de Sessão", 18, _COR_AZUL, False),
+        (f"{_data_extenso(data_relatorio)}  —  {dia}", 13, _COR_DATA, False),
+    ]
+    if titulo:
+        linhas.append((titulo, 12, _COR_TEXTO, True))
+    if status:
+        cor_status = _COR_VERDE if status.lower().startswith("conclu") else _COR_DATA
+        linhas.append((f"Status: {status}", 11, cor_status, True))
+
+    for indice, (texto, tamanho, cor, negrito) in enumerate(linhas):
+        p = documento.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(24 if indice == 0 else 2)
+        p.paragraph_format.space_after = Pt(4)
+        run = p.add_run(texto)
+        run.bold = negrito
+        run.font.size = Pt(tamanho)
+        run.font.color.rgb = cor
+
+    _espacador(documento)
+
+
+def _separar_metadados(
+    propriedades: dict[str, Any],
+    propriedades_destaque: tuple[str, ...],
+    titulo: str,
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    """Divide as propriedades entre tabela de metadados e seções próprias.
+
+    Fora da tabela ficam as propriedades que já viram seção de destaque (nas
+    duas grafias) e o título, que já aparece na capa — os exemplos não os
+    repetem. Valores longos ou com quebras de linha também saem da tabela
+    (uma célula gigante fica ilegível) e viram seção própria no corpo.
+    """
+
+    ocultas = {"Resumo", "Bloqueios", "Proximos passos", "Próximos passos"}
+    curtos: list[tuple[str, str]] = []
+    longos: list[tuple[str, str]] = []
+    for nome, valor in _ordenar_propriedades(propriedades, propriedades_destaque):
+        texto = _valor_para_texto(valor)
+        if nome in ocultas or not texto or texto == titulo:
+            continue
+        if "\n" in texto or len(texto) > _LIMITE_METADADO:
+            longos.append((nome, texto))
+        else:
+            curtos.append((nome, texto))
+    return curtos, longos
+
+
+def _adicionar_tabela_metadados(documento: Any, metadados: list[tuple[str, str]]) -> None:
+    if not metadados:
+        return
+    tabela = documento.add_table(rows=0, cols=2)
+    _configurar_tabela(tabela, layout_fixo=True)
+    for nome, texto in metadados:
+        cells = tabela.add_row().cells
+        _texto_celula(cells[0], nome, bold=True, cor=_COR_MARINHO)
+        _sombrear_celula(cells[0], _FILL_CHAVE)
+        _texto_celula(cells[1], texto)
+    _larguras_duas_colunas(tabela, 4.2)
+    _espacador(documento)
+
+
+def _adicionar_h1(documento: Any, texto: str, numerador: _NumeradorSecoes) -> None:
+    if re.match(r"^\d+[.)]\s", texto):
+        documento.add_heading(texto, level=1)
+        return
+    documento.add_heading(f"{numerador.proximo()}. {texto}", level=1)
+
+
+def _adicionar_secoes_destaque(
+    documento: Any,
+    propriedades: dict[str, Any],
+    numerador: _NumeradorSecoes,
+) -> None:
+    for titulo, nomes in SECOES_DESTAQUE:
+        valor = _primeiro_valor(propriedades, nomes)
+        if valor:
+            _adicionar_h1(documento, titulo, numerador)
+            _adicionar_markdown(documento, _valor_para_texto(valor), numerador)
+
+
+def _adicionar_markdown(
+    documento: Any, markdown: str, numerador: _NumeradorSecoes
+) -> None:
+    linhas = markdown.splitlines()
+    i = 0
+    em_codigo = False
+    codigo: list[str] = []
+    titulo_atual = ""
+    # Numeração das listas ordenadas é literal (o Notion emite "1." para todos
+    # os itens e a numeração automática do Word não reinicia entre listas).
+    # Qualquer linha que não seja item numerado nem linha em branco reinicia.
+    estado = {"numerada": 0}
+    while i < len(linhas):
+        linha = linhas[i]
+        if linha.startswith("```"):
+            estado["numerada"] = 0
+            if em_codigo:
+                _adicionar_codigo(documento, "\n".join(codigo))
+                codigo = []
+                em_codigo = False
+            else:
+                em_codigo = True
+            i += 1
+            continue
+        if em_codigo:
+            codigo.append(linha)
+            i += 1
+            continue
+        if _linha_tabela(linha):
+            estado["numerada"] = 0
+            bloco, i = _coletar_tabela(linhas, i)
+            _adicionar_tabela_markdown(documento, bloco)
+            continue
+        if _linha_timeline(linha) and "linha do tempo" in titulo_atual.lower():
+            estado["numerada"] = 0
+            bloco, i = _coletar_timeline(linhas, i)
+            _adicionar_tabela_timeline(documento, bloco)
+            continue
+        _adicionar_linha_markdown(documento, linha, numerador, estado)
+        titulo = _titulo_markdown(linha)
+        if titulo:
+            titulo_atual = titulo
+        i += 1
+    if codigo:
+        _adicionar_codigo(documento, "\n".join(codigo))
+
+
+def _adicionar_linha_markdown(
+    documento: Any,
+    linha: str,
+    numerador: _NumeradorSecoes,
+    estado: dict[str, int],
+) -> None:
+    texto = linha.strip()
+    if not texto:
+        # Linha em branco não vira parágrafo vazio: o respiro entre blocos vem
+        # do space_before/after dos estilos, como nos exemplos — parágrafos
+        # vazios deixavam o documento espaçado demais. Também não reinicia a
+        # numeração, porque os blocos chegam separados por linha em branco.
+        return
+    numerada = re.match(r"^\d+\.\s+", texto)
+    if not numerada:
+        estado["numerada"] = 0
+    if texto.startswith("# "):
+        _adicionar_h1(documento, texto[2:].strip(), numerador)
+        return
+    if texto.startswith("## "):
+        documento.add_heading(texto[3:].strip(), level=2)
+        return
+    if texto.startswith("### "):
+        documento.add_heading(texto[4:].strip(), level=3)
+        return
+    if _PADRAO_DIVISOR.match(texto):
+        _adicionar_divisor(documento)
+        return
+    imagem = _PADRAO_IMAGEM.match(texto)
+    if imagem:
+        _adicionar_imagem(documento, imagem.group(1), imagem.group(2))
+        return
+    if texto.startswith("- [ ] ") or texto.startswith("- [x] "):
+        marcador = "[x]" if texto.startswith("- [x] ") else "[ ]"
+        p = documento.add_paragraph(style="List Bullet")
+        _adicionar_inline(p, f"{marcador} {texto[6:]}")
+        return
+    if texto.startswith("- "):
+        p = documento.add_paragraph(style="List Bullet")
+        _adicionar_inline(p, texto[2:])
+        return
+    if numerada:
+        estado["numerada"] += 1
+        p = documento.add_paragraph()
+        p.paragraph_format.left_indent = Cm(0.75)
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after = Pt(2)
+        p.add_run(f"{estado['numerada']}. ").bold = True
+        _adicionar_inline(p, texto[numerada.end() :])
+        return
+    if texto.startswith("> "):
+        p = documento.add_paragraph()
+        p.paragraph_format.left_indent = Inches(0.25)
+        _adicionar_inline(p, texto[2:])
+        for run in p.runs:
+            run.italic = True
+        return
+    p = documento.add_paragraph()
+    _adicionar_inline(p, texto)
+
+
+# Ordem importa: ``**`` antes de ``*`` (senão negrito casa como itálico) e o
+# link por último entre os pares. Cobre o que ``_markdown_de_trecho`` do
+# ``content.py`` emite: negrito, itálico, tachado, código e ``[texto](url)``.
+_PADRAO_INLINE = re.compile(
+    r"(\*\*[^*]+\*\*|\*[^*]+\*|~~[^~]+~~|`[^`]+`|\[[^\]]+\]\([^)\s]+\))"
+)
+_PADRAO_LINK = re.compile(r"^\[([^\]]+)\]\(([^)\s]+)\)$")
+
+
+def _adicionar_hyperlink(paragrafo: Any, texto: str, url: str) -> None:
+    try:
+        r_id = paragrafo.part.relate_to(
+            url, RELATIONSHIP_TYPE.HYPERLINK, is_external=True
+        )
+    except ValueError:
+        # URL que o pacote OPC rejeita: mantém o texto sem link, sem quebrar.
+        paragrafo.add_run(texto)
+        return
+    hyperlink = OxmlElement("w:hyperlink")
+    hyperlink.set(qn("r:id"), r_id)
+    run = OxmlElement("w:r")
+    rpr = OxmlElement("w:rPr")
+    cor = OxmlElement("w:color")
+    cor.set(qn("w:val"), "2E75B6")
+    rpr.append(cor)
+    sublinhado = OxmlElement("w:u")
+    sublinhado.set(qn("w:val"), "single")
+    rpr.append(sublinhado)
+    run.append(rpr)
+    t = OxmlElement("w:t")
+    t.set(qn("xml:space"), "preserve")
+    t.text = texto
+    run.append(t)
+    hyperlink.append(run)
+    paragrafo._p.append(hyperlink)
+
+
+def _adicionar_inline(paragrafo: Any, texto: str) -> None:
+    pos = 0
+    for match in _PADRAO_INLINE.finditer(texto):
+        if match.start() > pos:
+            paragrafo.add_run(texto[pos : match.start()])
+        token = match.group(0)
+        pos = match.end()
+        link = _PADRAO_LINK.match(token)
+        if link:
+            _adicionar_hyperlink(
+                paragrafo, _texto_sem_marcacao_inline(link.group(1)), link.group(2)
+            )
+            continue
+        if token.startswith("**"):
+            paragrafo.add_run(token[2:-2]).bold = True
+        elif token.startswith("~~"):
+            paragrafo.add_run(token[2:-2]).font.strike = True
+        elif token.startswith("*"):
+            paragrafo.add_run(token[1:-1]).italic = True
+        else:
+            run = paragrafo.add_run(token[1:-1])
+            run.font.name = "Consolas"
+            run.font.size = Pt(9.5)
+    if pos < len(texto):
+        paragrafo.add_run(texto[pos:])
+
+
+_PADRAO_IMAGEM = re.compile(r"^!\[([^\]]*)\]\(([^)\s]+)\)$")
+_PADRAO_DIVISOR = re.compile(r"^(-{3,}|\*{3,}|_{3,})$")
+
+
+def _adicionar_divisor(documento: Any) -> None:
+    """Linha horizontal fina, o equivalente visual do ``---`` (divider)."""
+
+    p = documento.add_paragraph()
+    p.paragraph_format.space_before = Pt(6)
+    p.paragraph_format.space_after = Pt(6)
+    pbdr = OxmlElement("w:pBdr")
+    borda = OxmlElement("w:bottom")
+    borda.set(qn("w:val"), "single")
+    borda.set(qn("w:sz"), "6")
+    borda.set(qn("w:color"), "BFBFBF")
+    pbdr.append(borda)
+    p._p.get_or_add_pPr().append(pbdr)
+
+
+def _adicionar_imagem(documento: Any, alt: str, url: str) -> None:
+    """Incorpora a imagem no documento, centralizada e limitada à página.
+
+    Se o download falhar (URL do Notion expirada, sem rede), a referência é
+    registrada como texto em vez de o bloco sumir do relatório.
+    """
+
+    try:
+        with urllib.request.urlopen(url, timeout=20) as resposta:
+            dados = resposta.read()
+        imagem = documento.add_picture(BytesIO(dados))
+        maximo = Cm(_LARGURA_UTIL_CM)
+        if imagem.width > maximo:
+            imagem.height = Emu(int(imagem.height * (maximo / imagem.width)))
+            imagem.width = maximo
+        documento.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        if alt:
+            legenda = documento.add_paragraph()
+            legenda.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run = legenda.add_run(alt)
+            run.italic = True
+            run.font.size = Pt(9)
+            run.font.color.rgb = _COR_DATA
+    except Exception:
+        p = documento.add_paragraph()
+        run = p.add_run(f"[imagem{': ' + alt if alt else ''}] {url}")
+        run.italic = True
+        run.font.color.rgb = _COR_DATA
+
+
+def _adicionar_codigo(documento: Any, texto: str) -> None:
+    p = documento.add_paragraph()
+    run = p.add_run(texto)
+    run.font.name = "Consolas"
+    run.font.size = Pt(9)
+    p.paragraph_format.left_indent = Inches(0.25)
+    shd = OxmlElement("w:shd")
+    shd.set(qn("w:val"), "clear")
+    shd.set(qn("w:fill"), _FILL_CODIGO)
+    p._p.get_or_add_pPr().append(shd)
+
+
+def _linha_tabela(linha: str) -> bool:
+    return linha.strip().startswith("|") and linha.strip().endswith("|")
+
+
+def _coletar_tabela(linhas: list[str], inicio: int) -> tuple[list[str], int]:
+    bloco: list[str] = []
+    i = inicio
+    while i < len(linhas) and _linha_tabela(linhas[i]):
+        bloco.append(linhas[i])
+        i += 1
+    return bloco, i
+
+
+def _adicionar_tabela_markdown(documento: Any, linhas: list[str]) -> None:
+    linhas_validas = [
+        [celula.strip() for celula in linha.strip().strip("|").split("|")]
+        for linha in linhas
+        if not re.match(r"^\|\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$", linha.strip())
+    ]
+    if not linhas_validas:
+        return
+    tabela = documento.add_table(rows=0, cols=len(linhas_validas[0]))
+    _configurar_tabela(tabela)
+    for numero, linha in enumerate(linhas_validas):
+        cells = tabela.add_row().cells
+        for idx, valor in enumerate(linha[: len(cells)]):
+            if numero == 0:
+                # Cabecalho como nos exemplos: fundo marinho e texto branco.
+                _texto_celula(
+                    cells[idx],
+                    _texto_sem_marcacao_inline(valor),
+                    bold=True,
+                    cor=_COR_BRANCO,
+                )
+                _sombrear_celula(cells[idx], _FILL_CABECALHO)
+            else:
+                _celula_inline(cells[idx], valor)
+                if numero % 2 == 0:
+                    _sombrear_celula(cells[idx], _FILL_ZEBRA)
+    _espacador(documento)
+
+
+def _titulo_markdown(linha: str) -> str:
+    texto = linha.strip()
+    if texto.startswith("# "):
+        return texto[2:].strip()
+    if texto.startswith("## "):
+        return texto[3:].strip()
+    if texto.startswith("### "):
+        return texto[4:].strip()
+    return ""
+
+
+def _linha_timeline(linha: str) -> bool:
+    texto = linha.strip()
+    return bool(re.match(r"^[-*]\s+\d{1,2}:\d{2}(?:[–-]\d{1,2}:\d{2})?\s+[-–—:]\s+", texto))
+
+
+def _coletar_timeline(linhas: list[str], inicio: int) -> tuple[list[tuple[str, str]], int]:
+    bloco: list[tuple[str, str]] = []
+    i = inicio
+    while i < len(linhas) and _linha_timeline(linhas[i]):
+        texto = re.sub(r"^[-*]\s+", "", linhas[i].strip())
+        match = re.match(r"^(\d{1,2}:\d{2}(?:[–-]\d{1,2}:\d{2})?)\s+[-–—:]\s+(.+)$", texto)
+        if match:
+            bloco.append((match.group(1), match.group(2)))
+        i += 1
+    return bloco, i
+
+
+def _adicionar_tabela_timeline(documento: Any, linhas: list[tuple[str, str]]) -> None:
+    for horario, descricao in linhas:
+        tabela = documento.add_table(rows=1, cols=2)
+        _configurar_tabela(tabela, layout_fixo=True)
+        cells = tabela.rows[0].cells
+        _texto_celula(cells[0], horario, bold=True, cor=_COR_MARINHO)
+        _sombrear_celula(cells[0], _FILL_CHAVE)
+        _texto_celula(cells[1], _texto_sem_marcacao_inline(descricao))
+        _larguras_duas_colunas(tabela, 2.8)
+    _espacador(documento)
+
+
+def _texto_sem_marcacao_inline(texto: str) -> str:
+    texto = re.sub(r"!?\[([^\]]+)\]\([^)\s]+\)", r"\1", texto)
+    texto = re.sub(r"\*\*([^*]+)\*\*", r"\1", texto)
+    texto = re.sub(r"~~([^~]+)~~", r"\1", texto)
+    texto = re.sub(r"\*([^*]+)\*", r"\1", texto)
+    texto = re.sub(r"`([^`]+)`", r"\1", texto)
+    return texto
+
+
+def _parse_data(valor: str, campo: str) -> date:
+    try:
+        return date.fromisoformat(valor)
+    except ValueError as exc:
+        raise ValueError(f"{campo} deve estar no formato YYYY-MM-DD.") from exc
+
+
+def _data_pagina(valores: dict[str, Any], campo_data: str) -> str:
+    valor = valores.get(campo_data)
+    if not valor:
+        raise ValueError(f"Relatorio sem propriedade de data preenchida: {campo_data}.")
+    return str(valor)[:10]
+
+
+def _titulo_pagina(pagina: dict[str, Any], valores: dict[str, Any]) -> str:
+    for prop in pagina.get("properties", {}).values():
+        if prop.get("type") == "title":
+            titulo = readers.ler_title(prop)
+            if titulo:
+                return titulo
+    for valor in valores.values():
+        if isinstance(valor, str) and valor:
+            return valor
+    return pagina.get("id", "")
+
+
+def _primeiro_valor(propriedades: dict[str, Any], nomes: tuple[str, ...]) -> Any:
+    for nome in nomes:
+        valor = propriedades.get(nome)
+        if valor:
+            return valor
+    return None
+
+
+def _ordenar_propriedades(
+    propriedades: dict[str, Any], destaque: tuple[str, ...]
+) -> list[tuple[str, Any]]:
+    vistos: set[str] = set()
+    ordenadas: list[tuple[str, Any]] = []
+    for nome in destaque:
+        if nome in propriedades and nome not in vistos:
+            ordenadas.append((nome, propriedades[nome]))
+            vistos.add(nome)
+    for nome in sorted(propriedades):
+        if nome not in vistos:
+            ordenadas.append((nome, propriedades[nome]))
+    return ordenadas
+
+
+def _valor_para_texto(valor: Any) -> str:
+    if valor is None:
+        return ""
+    if isinstance(valor, list):
+        return ", ".join(_valor_para_texto(item) for item in valor if item)
+    if isinstance(valor, dict):
+        return ", ".join(f"{k}: {_valor_para_texto(v)}" for k, v in valor.items() if v)
+    return str(valor)
+
+
+def _nome_seguro(valor: str) -> str:
+    nome = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "-", valor).strip(" .-")
+    nome = re.sub(r"\s+", " ", nome)
+    return nome[:120] or "Relatorio"
+
+
+def _dia_semana(data_iso: str) -> str:
+    nomes = (
+        "segunda-feira",
+        "terça-feira",
+        "quarta-feira",
+        "quinta-feira",
+        "sexta-feira",
+        "sábado",
+        "domingo",
+    )
+    return nomes[datetime.fromisoformat(data_iso[:10]).weekday()]
+
+
+def _data_extenso(data_iso: str) -> str:
+    meses = (
+        "janeiro",
+        "fevereiro",
+        "março",
+        "abril",
+        "maio",
+        "junho",
+        "julho",
+        "agosto",
+        "setembro",
+        "outubro",
+        "novembro",
+        "dezembro",
+    )
+    data = datetime.fromisoformat(data_iso[:10])
+    return f"{data.day:02d} de {meses[data.month - 1]} de {data.year}"
