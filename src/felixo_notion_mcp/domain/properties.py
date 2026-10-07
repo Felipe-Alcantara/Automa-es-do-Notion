@@ -123,8 +123,9 @@ def arquivo_enviado(upload_id: str, nome: str) -> NotionPropertyValue:
     """Monta um valor de propriedade ``files`` a partir de um upload direto.
 
     Recebe o ``file_upload`` id devolvido por
-    :meth:`notion_starter.NotionClient.enviar_arquivo` e o embrulha no formato
-    que a API espera para anexar o arquivo à propriedade de uma linha.
+    :meth:`felixo_notion_mcp.integrations.notion_client.NotionClient.enviar_arquivo`
+    e o embrulha no formato que a API espera para anexar o arquivo à propriedade de uma
+    linha.
 
     Args:
         upload_id: ``id`` do ``file_upload`` já enviado.
@@ -169,8 +170,9 @@ def schema_propriedade(tipo: str, *, relacionar_com: str | None = None) -> dict[
 
     Diferente das demais funções deste módulo (que montam *valores* de
     propriedade para uma linha), esta monta a *definição* da coluna usada em
-    :meth:`notion_starter.NotionClient.criar_database` — a partir de nomes de
-    tipo em português (``titulo``, ``texto``, ``numero``, ``data``…).
+    :meth:`felixo_notion_mcp.integrations.notion_client.NotionClient.criar_database`
+    — a partir de nomes de tipo em português (``titulo``, ``texto``, ``numero``,
+    ``data``…).
 
     O tipo ``relacao`` é o único que precisa de um alvo: ``relacionar_com``
     recebe o ID do database ao qual a coluna aponta. A relação é criada como

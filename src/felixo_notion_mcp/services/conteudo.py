@@ -6,7 +6,7 @@ página visível à integração. É o que dá a uma IA acesso ao texto das nota
 só às colunas.
 
 Como as demais camadas de serviço, **não conhece HTTP** (isso é da ``api``/CLI/
-MCP) nem o **formato cru de blocos** (isso é do ``notion_starter.content``). O
+MCP) nem o **formato cru de blocos** (isso é do ``felixo_notion_mcp.domain.content``). O
 :class:`NotionClient` é resolvido da configuração do servidor por padrão, mas
 pode ser **injetado** — mantendo estas funções testáveis sem token nem rede.
 
@@ -888,7 +888,7 @@ def escrever_conteudo(
     **Nada é apagado antes de o conteúdo novo estar escrito.** A ordem é:
 
     1. converter e **validar** o Markdown contra os limites documentados da API
-       (:func:`~notion_starter.content.validar_blocos`) — entrada vazia ou que
+       (:func:`~felixo_notion_mcp.domain.content.validar_blocos`) — entrada vazia ou que
        a API recusaria levanta erro sem tocar na página;
     2. ler a página uma vez (guarda de database e, ao substituir, o plano do que
        apagar, com os IDs guardados **antes** de escrever);
@@ -1010,7 +1010,7 @@ def criar_subpagina(
     diretamente na página-pai — o mesmo padrão usado para organizar READMEs de
     repositório e as subpáginas de acompanhamento de projeto (Estado atual,
     Trabalho em andamento, Problemas encontrados, Decisões e registros — ver
-    ``DESIGN-WORKSPACE-NOTION.md`` no hub Automações do Notion).
+    ``DESIGN-WORKSPACE-NOTION.md`` na raiz deste repositório).
 
     Args:
         pagina_pai_id: ID da página que receberá a subpágina.
@@ -1190,7 +1190,7 @@ def trocar_trecho(
     Raises:
         BlocoSemTextoError: O bloco não tem texto.
         TrechoNaoEncontradoError, TrechoAmbiguoError, TrechoAtravessaItensError:
-            Ver :func:`~notion_starter.content.trocar_trecho_rich_text`.
+            Ver :func:`~felixo_notion_mcp.domain.content.trocar_trecho_rich_text`.
         RichTextNaoRegravavelError: O bloco tem item que a API não aceita de
             volta (ex.: menção de prévia de link).
     """
@@ -1424,7 +1424,7 @@ def listar_linhas(
         propriedades: Quando ``True``, cada linha ganha a chave extra
             ``"propriedades"`` com todas as colunas da página já reduzidas a
             ``nome -> valor simples`` (mesmo leitor usado por
-            :func:`ler_conteudo`, via :func:`~notion_starter.readers.extrair_valores`)
+            :func:`ler_conteudo`, via :func:`~felixo_notion_mcp.domain.readers.extrair_valores`)
             — cobre analisar um database inteiro sem uma chamada de
             ``conteudo``/``obter_pagina`` por linha. ``False`` (padrão) mantém
             a resposta enxuta de sempre.

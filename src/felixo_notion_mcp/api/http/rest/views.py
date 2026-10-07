@@ -1,7 +1,7 @@
 """Views da borda HTTP — finas: parse, validação e delegação a ``services``.
 
 Sem regra de negócio aqui (isso vive em ``services``) nem formato cru do Notion
-(isso é do ``notion_starter``). O contrato das rotas segue ``docs/CONTRATOS.md``:
+(isso é de ``domain`` e ``integrations``). O contrato das rotas segue ``docs/CONTRATOS.md``:
 
     GET   /api/tarefas[?status=<nome>&duracao=<nome>&area=<id>] lista (filtros opcionais)
     POST  /api/tarefas                    cria  {nome, status?, prazo?, duracao?, areas?}  -> 201

@@ -2,7 +2,7 @@
 
 Este módulo só interpreta o comando de alto nível e delega as regras existentes
 para a CLI de tarefas, o launcher do app e o servidor MCP. O comportamento de
-domínio continua nos módulos consumidores e no ``notion-starter``.
+domínio fica em ``domain/`` e ``services/``.
 """
 
 from __future__ import annotations

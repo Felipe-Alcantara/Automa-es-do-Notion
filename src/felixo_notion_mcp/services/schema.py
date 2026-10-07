@@ -4,7 +4,7 @@ Nenhuma ferramenta do ecossistema atualiza o schema de um database existente
 de forma genérica — `criar-database` só define colunas na criação;
 `editar-linha`/`importar-planilha` só escrevem em colunas que já existem. Este
 módulo generaliza o padrão já usado internamente por
-:func:`~notion_starter.services.inventario_github.garantir_coluna_hash` (que
+:func:`~felixo_notion_mcp.services.inventario_github.garantir_coluna_hash` (que
 adiciona só a coluna de hash do README) para qualquer coluna, em qualquer
 database.
 """
@@ -65,7 +65,7 @@ def garantir_coluna(
 
     Usa o *data source* (modelo novo do Notion) quando o database expõe um;
     cai para o endpoint clássico de database caso contrário — mesma estratégia
-    de :func:`~notion_starter.services.inventario_github.garantir_coluna_hash`.
+    de :func:`~felixo_notion_mcp.services.inventario_github.garantir_coluna_hash`.
     Não mexe em nada se a coluna já existe (idempotente).
 
     Args:
@@ -184,7 +184,7 @@ def remover_coluna(
     Destrutivo: quem expõe (CLI/MCP) deve pedir confirmação explícita. Serve,
     por exemplo, para desfazer as colunas que o Notion **acrescenta** ao schema
     do destino quando uma linha é movida entre databases (medido em
-    2026-09-27; ver :mod:`notion_starter.services.movimentacao`). A coluna de
+    2026-09-27; ver :mod:`felixo_notion_mcp.services.movimentacao`). A coluna de
     título não pode ser removida. Usa o *data source* quando o database expõe
     um (``{nome: null}`` no PATCH); cai para o endpoint clássico caso contrário.
 

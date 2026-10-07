@@ -2,7 +2,7 @@
 
 O ``/search`` do Notion casa só o título. Para achar a ideia escondida no corpo
 de uma página de título genérico, baixa-se o corpo com
-:mod:`notion_starter.services.corpos` e procura-se aqui, sem rede. A busca
+:mod:`felixo_notion_mcp.services.corpos` e procura-se aqui, sem rede. A busca
 devolve trechos com contexto para uma pessoa (ou IA) decidir — não decide
 sozinha.
 

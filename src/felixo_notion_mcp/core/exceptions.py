@@ -1,4 +1,4 @@
-"""Exceções de domínio do ``notion_starter``."""
+"""Exceções de domínio do ``felixo_notion_mcp``."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from typing import Any
 
 
 class NotionSyncError(Exception):
-    """Classe base para todas as falhas do ``notion_starter``."""
+    """Classe base para todas as falhas do ``felixo_notion_mcp``."""
 
 
 class NotionAPIError(NotionSyncError):
@@ -283,7 +283,7 @@ class ExclusaoArriscadaError(NotionSyncError, ValueError):
 
 
 class TrechoError(EdicaoDeBlocoError):
-    """Base das recusas de :func:`~notion_starter.services.conteudo.trocar_trecho`."""
+    """Base das recusas de :func:`~felixo_notion_mcp.services.conteudo.trocar_trecho`."""
 
 
 class TrechoNaoEncontradoError(TrechoError):

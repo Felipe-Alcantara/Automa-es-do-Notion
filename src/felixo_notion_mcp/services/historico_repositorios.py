@@ -152,8 +152,8 @@ def descobrir_repositorios(
     e o esquecido, por definição, não está nessa lista. A varredura é o que
     transforma "os projetos que eu citei" em "tudo que existe no disco".
 
-    Desce até ``profundidade`` níveis para alcançar submódulos em ``modules/``
-    sem varrer a árvore inteira, e não entra em pasta de dependência.
+    Desce até ``profundidade`` níveis para alcançar repositórios aninhados em
+    subpastas sem varrer a árvore inteira, e não entra em pasta de dependência.
 
     Args:
         raiz: Pasta a varrer.

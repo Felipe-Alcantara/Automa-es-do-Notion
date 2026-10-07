@@ -6,7 +6,7 @@ verboso de blocos do Notion. Uma IA (ou um humano) escreve Markdown comum e
 recebe Markdown de volta ao ler uma página; a montagem dos blocos fica aqui.
 
 São funções pequenas e puras — sem rede, sem estado. O acesso HTTP aos blocos
-vive em :class:`notion_starter.client.NotionClient` (``ler_blocos``,
+vive em :class:`felixo_notion_mcp.integrations.notion_client.NotionClient` (``ler_blocos``,
 ``anexar_blocos``, ``atualizar_bloco``, ``excluir_bloco``); a orquestração
 ("ler a página como texto", "anexar conteúdo") fica na camada de serviço.
 

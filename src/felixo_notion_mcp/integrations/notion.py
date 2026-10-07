@@ -1,6 +1,7 @@
-"""Adaptador do Notion — fábrica fina sobre o pacote ``notion_starter``.
+"""Adaptador do Notion — fábrica fina sobre o ``NotionClient`` e a ``TaskList``.
 
-O ``notion_starter`` (cliente, schema, TaskList) é a base reutilizável do projeto.
+O ``NotionClient`` (``integrations/notion_client.py``) e a ``TaskList`` (``domain/tasks.py``)
+são a base reutilizável do projeto.
 Esta camada apenas o **conecta à configuração do servidor** (``core.config``), para
 que ``services`` peça um cliente/TaskList pronto sem conhecer o token nem o ambiente.
 Não há regra de negócio aqui.

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from felixo_notion_mcp.services.ingestao import FontePlanilha, ingerir
@@ -105,6 +107,17 @@ def test_xlsx_aba_inexistente_levanta(tmp_path):
     openpyxl.Workbook().save(caminho)
     with pytest.raises(ValueError, match="não existe"):
         list(FontePlanilha(caminho, aba="Outra").coletar())
+
+
+def test_xlsx_sem_openpyxl_manda_instalar_o_extra_do_pacote(tmp_path, monkeypatch):
+    monkeypatch.setitem(sys.modules, "openpyxl", None)  # import levanta ImportError
+    caminho = tmp_path / "dados.xlsx"
+    caminho.write_text("x", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=r"felixo-notion-mcp\[planilha\]") as erro:
+        list(FontePlanilha(caminho).coletar())
+
+    assert "notion-starter" not in str(erro.value)
 
 
 # -- Integração com o caso de uso idempotente -------------------------------

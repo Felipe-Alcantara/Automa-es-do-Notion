@@ -1,8 +1,8 @@
 """Camada ``services`` — casos de uso (regra de negócio).
 
 Orquestra a tasklist, a ingestão e as sincronizações, **finos sobre o
-``notion_starter``** via ``integrations``. Não conhece HTTP (isso é da ``api``) nem
-o formato cru do Notion (isso é do ``notion_starter``).
+``domain.tasks``** via ``integrations``. Não conhece HTTP (isso é da ``api``) nem
+o formato cru do Notion (isso é de ``domain`` e ``integrations``).
 
 Os helpers públicos leves também podem ser importados diretamente daqui; a
 implementação continua organizada no módulo especializado.

@@ -12,7 +12,7 @@ bloco:
    ``synced_block``, ``image``… não passam), o bloco não pode ter filhos e o
    texto precisa ser regravável;
 2. gravar o backup em JSON (fora do diretório corrente, ver
-   :mod:`notion_starter.services.backups`);
+   :mod:`felixo_notion_mcp.services.backups`);
 3. **anexar a cópia** na posição pedida (``start`` ou ``after_block``) e
    conferir o ID que a API devolveu;
 4. **só então apagar o original**.
@@ -328,7 +328,7 @@ def reordenar_bloco(
             ``child_page`` passou a ser recusado sempre (ver o docstring do
             módulo).
         diretorio_backup: Pasta do backup; ``None`` usa a pasta de estado do
-            usuário (:func:`~notion_starter.services.backups.diretorio_backup_padrao`),
+            usuário (:func:`~felixo_notion_mcp.services.backups.diretorio_backup_padrao`),
             nunca o diretório corrente.
         cliente: Cliente Notion opcional (injeção para testes).
 

@@ -44,6 +44,9 @@ def test_sem_python_docx_so_a_renderizacao_falha(tmp_path):
 
     assert resultado.returncode != 0
     assert "python-docx" in resultado.stderr
+    # A mensagem manda reinstalar o pacote atual, não o antigo notion-starter.
+    assert "felixo-notion-mcp" in resultado.stderr
+    assert "notion-starter" not in resultado.stderr
 
 
 def test_renderizar_carrega_docx_sob_demanda(tmp_path):

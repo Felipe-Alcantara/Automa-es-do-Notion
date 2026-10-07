@@ -11,9 +11,9 @@ um ``proximo_passo`` quando há um comando óbvio e os ``detalhes`` estruturados
 A classificação vem do **tipo** da exceção e dos campos estruturados
 (``status_code``, ``codigo`` do corpo do Notion) — nunca do texto da mensagem.
 É regra de apresentação da borda: a biblioteca levanta exceções tipadas e a CLI
-decide como mostrá-las. O vocabulário reaproveita os códigos que o
-``notion-workspace-app`` já usa na API (``validacao``, ``nao_encontrado``,
-``erro_upstream``, ``erro_interno``) e acrescenta só os que faltavam.
+decide como mostrá-las. O vocabulário reaproveita os códigos que a borda HTTP
+(``api/http``) já usa (``validacao``, ``nao_encontrado``, ``erro_upstream``,
+``erro_interno``) e acrescenta só os que faltavam.
 
 Código de saída: ``0`` sucesso; ``2`` uso inválido ou recusa antes de qualquer
 escrita (nada mudou); ``1`` falha da API, da rede, no meio de uma escrita ou

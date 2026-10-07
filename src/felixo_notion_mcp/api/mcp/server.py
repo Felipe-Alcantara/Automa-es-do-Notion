@@ -14,7 +14,7 @@ Guarda-corpos
   o host deve exigir confirmacao antes de executar.
 - Segredos (token, database ID) vem do ambiente, nunca hardcoded.
 
-A ``TaskList`` e criada diretamente do ``notion_starter`` (sem Django),
+A ``TaskList`` e criada diretamente de ``domain.tasks`` (sem Django),
 e **injetada** nas funcoes de ``services.tarefas`` — o mesmo padrao de DI
 que os testes usam.
 

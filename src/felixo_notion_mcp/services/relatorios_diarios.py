@@ -8,7 +8,7 @@ ser perdido nem sobrescrito.
 
 Não conhece a origem do conteúdo: recebe :class:`RelatorioDiario` já pronto.
 Para montar relatórios a partir do histórico de um repositório, veja
-:mod:`notion_starter.git_historico`.
+:mod:`felixo_notion_mcp.domain.git_historico`.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ class RelatorioDiario:
     """Conteúdo de um dia, pronto para virar (ou complementar) uma página.
 
     ``propriedades`` aceita valores **já no formato do Notion** (montados com
-    :mod:`notion_starter.properties`), permitindo preencher qualquer coluna do
+    :mod:`felixo_notion_mcp.domain.properties`), permitindo preencher qualquer coluna do
     database sem que este serviço precise conhecê-las.
     """
 

@@ -144,7 +144,7 @@ class Relacao:
 
         Ou seja: pelo tipo declarado não dá para saber se o espelho acontece. O
         único caminho seguro é **conferir a outra ponta depois de escrever** —
-        que é o que :func:`notion_starter.services.relacoes.relacionar` faz, em
+        que é o que :func:`felixo_notion_mcp.services.relacoes.relacionar` faz, em
         vez de assumir.
         """
 

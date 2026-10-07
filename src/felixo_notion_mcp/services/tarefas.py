@@ -1,9 +1,9 @@
 """Casos de uso de tarefas — a regra de negócio fina sobre a ``TaskList``.
 
 Cada função é um caso de uso: recebe dados simples, delega à ``TaskList`` do
-``notion_starter`` e devolve objetos :class:`Tarefa`. Esta camada **não conhece
+``domain.tasks`` e devolve objetos :class:`Tarefa`. Esta camada **não conhece
 HTTP** (isso é da camada ``api``) nem o **formato cru do Notion** (isso é do
-``notion_starter``) — é a fronteira de negócio do servidor.
+``domain`` e ``integrations``) — é a fronteira de negócio do servidor.
 
 A ``TaskList`` é resolvida da configuração do servidor por padrão, mas pode ser
 **injetada** (testes, ou um database alternativo). Isso mantém estas funções

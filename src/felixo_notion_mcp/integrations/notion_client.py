@@ -402,7 +402,7 @@ class NotionClient:
         duplicatas. Respostas com ``Retry-After`` têm prioridade. A regra toda
         está em :func:`deve_retentar`: 429 "bloqueado" nunca se repete e 503
         numa **escrita** também não — se o corpo disser que a escrita foi
-        salva, sobe :class:`~notion_starter.exceptions.NotionEscritaSalvaError`.
+        salva, sobe :class:`~felixo_notion_mcp.core.exceptions.NotionEscritaSalvaError`.
 
         Args:
             method: Método HTTP.
@@ -1062,7 +1062,7 @@ class NotionClient:
         Cada requisição aceita no máximo 100 blocos de topo, 1000 elementos de
         bloco (contando os filhos, como linhas de tabela) e 500 KB; o primeiro
         lote que cabe entra na criação e o restante é anexado em lotes
-        (:func:`~notion_starter.content.planejar_lotes`), de forma transparente
+        (:func:`~felixo_notion_mcp.domain.content.planejar_lotes`), de forma transparente
         para o chamador.
 
         Args:
@@ -1279,7 +1279,7 @@ class NotionClient:
         (medido em 2026-09-27): o Notion acrescenta ao schema do destino as
         colunas da origem que não existem lá e descarta valores que conflitam
         (opção inexistente, tipo diferente) e relações. Para prever isso antes,
-        use :func:`notion_starter.services.movimentacao.prever_movimento`.
+        use :func:`felixo_notion_mcp.services.movimentacao.prever_movimento`.
 
         Args:
             page_id: ID da página a mover.
@@ -1418,7 +1418,7 @@ class NotionClient:
         arquivos de parte única (até 20 MB): (1) cria um ``file_upload`` e
         (2) envia os bytes por ``multipart/form-data``. O id retornado pode ser
         anexado a uma propriedade ``files`` ou a um bloco, via
-        :func:`notion_starter.properties.arquivo_enviado`.
+        :func:`felixo_notion_mcp.domain.properties.arquivo_enviado`.
 
         Args:
             conteudo: Bytes do arquivo.

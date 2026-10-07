@@ -45,7 +45,8 @@ src/felixo_notion_mcp/integrations/.openrouter_models_cache.json
 /Padrão de qualidade - Felixo System Design
 /Padr├úo de qualidade - Felixo System Design
 
-# Workspace de desenvolvimento dos módulos (bootstrap.py)
+# Clones dos módulos antigos (o hub deixou de usá-los na etapa 1 do monólito);
+# segue ignorada para não versionar clones que ainda existam na máquina de quem atualiza.
 modules/
 
 # Exportações locais de relatórios (notion-tasks exportar-docx)

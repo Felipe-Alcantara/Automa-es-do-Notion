@@ -89,8 +89,8 @@ def _carregar_docx() -> None:
         from docx.shared import RGBColor as cor_rgb
     except ImportError as exc:  # pragma: no cover - depende do ambiente
         raise RuntimeError(
-            "A exportacao DOCX exige a dependencia 'python-docx'. "
-            "Instale o pacote ou reinstale notion-starter."
+            "A exportação DOCX exige a dependência 'python-docx'. "
+            "Reinstale o felixo-notion-mcp ou instale 'python-docx' no ambiente."
         ) from exc
     globals().update(
         {

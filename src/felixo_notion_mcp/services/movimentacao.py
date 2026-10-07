@@ -14,7 +14,7 @@ do destino **antes** e devolve a previsão (:class:`PrevisaoMovimento`):
 colunas que serão criadas no destino, valores que serão perdidos e o que fica.
 :func:`mover_pagina` aplica o movimento só quando não há perda ou quando quem
 chamou aceitou as perdas, e confirma o pai relendo a página
-(:meth:`~notion_starter.client.NotionClient.mover_pagina`).
+(:meth:`~felixo_notion_mcp.integrations.notion_client.NotionClient.mover_pagina`).
 
 As regras de previsão seguem o que foi medido; os casos não medidos (tipo
 diferente com o mesmo nome, destino página para uma linha de database) são

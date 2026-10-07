@@ -1,4 +1,4 @@
-"""Utilitários compartilhados para o notion_starter."""
+"""Utilitários compartilhados do pacote ``felixo_notion_mcp``."""
 
 from __future__ import annotations
 

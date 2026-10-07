@@ -127,4 +127,8 @@ def test_starter_sem_o_servico_recusa_com_configuracao(monkeypatch):
 
     assert codigo == 2
     assert saida["erro"]["codigo"] == "configuracao"
+    # No pacote único, serviço ausente é instalação quebrada, não "atualize o notion-starter".
+    assert "felixo_notion_mcp.services.copia_corpo" in saida["erro"]["mensagem"]
+    assert "notion-starter" not in saida["erro"]["mensagem"]
+    assert "doctor" in saida["erro"]["proximo_passo"]
     assert cliente.anexos == []

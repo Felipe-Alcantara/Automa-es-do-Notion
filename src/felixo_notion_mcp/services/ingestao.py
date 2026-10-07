@@ -57,7 +57,7 @@ class ItemColetado:
     """Item normalizado produzido por uma fonte.
 
     ``propriedades`` carrega valores de propriedade **já no formato do Notion**
-    (montados com :mod:`notion_starter.properties`); fontes tabulares como a
+    (montados com :mod:`felixo_notion_mcp.domain.properties`); fontes tabulares como a
     :class:`FontePlanilha` usam este campo para que cada coluna vire uma
     propriedade tipada da linha, e não só texto.
     """
@@ -234,7 +234,7 @@ class FontePlanilha:
     descartados**: vão para a propriedade "Observações" da linha.
 
     Números e datas aceitam o formato brasileiro (``1.614``, ``2,7 mil``,
-    ``dd/mm/aaaa``, serial do Excel) via :mod:`notion_starter.valores_br`.
+    ``dd/mm/aaaa``, serial do Excel) via :mod:`felixo_notion_mcp.domain.valores_br`.
 
     Args:
         caminho: Arquivo ``.xlsx`` (requer ``openpyxl``, extra ``planilha``)
@@ -378,7 +378,7 @@ class FontePlanilha:
         except ImportError as exc:  # pragma: no cover - depende do ambiente
             raise ValueError(
                 "Ler .xlsx requer o pacote openpyxl. Instale com: "
-                "pip install 'notion-starter[planilha]'"
+                "pip install 'felixo-notion-mcp[planilha]'"
             ) from exc
 
         pasta = openpyxl.load_workbook(self._caminho, data_only=True, read_only=True)

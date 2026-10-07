@@ -7,7 +7,7 @@ criação, de modo que reexecutar o import **pula o que já existe** em vez de
 duplicar.
 
 Complementa a idempotência por propriedade (upsert por "Origem" em
-:mod:`notion_starter.services.ingestao`): o estado local não gasta chamadas de
+:mod:`felixo_notion_mcp.services.ingestao`): o estado local não gasta chamadas de
 consulta ao Notion e sobrevive a fontes sem propriedade única.
 """
 

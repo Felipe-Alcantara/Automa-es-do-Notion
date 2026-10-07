@@ -98,6 +98,10 @@ def test_starter_sem_remover_coluna_recusa_com_configuracao(monkeypatch):
     )
 
     assert (codigo, saida["erro"]["codigo"]) == (2, "configuracao")
+    # No pacote único, serviço ausente é instalação quebrada, não "atualize o notion-starter".
+    assert "felixo_notion_mcp.services.schema.remover_coluna" in saida["erro"]["mensagem"]
+    assert "notion-starter" not in saida["erro"]["mensagem"]
+    assert "doctor" in saida["erro"]["proximo_passo"]
 
 
 @precisa_leitores

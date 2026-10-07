@@ -1,4 +1,4 @@
-"""Constantes compartilhadas do ``notion_starter``."""
+"""Constantes compartilhadas do ``felixo_notion_mcp``."""
 
 from __future__ import annotations
 

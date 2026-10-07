@@ -16,7 +16,7 @@ conversão:
 
 Numa falha no meio, os blocos de topo já criados no destino são apagados de
 novo (vão para a lixeira) e sobe
-:class:`~notion_starter.exceptions.EscritaParcialError` — repetir o comando não
+:class:`~felixo_notion_mcp.core.exceptions.EscritaParcialError` — repetir o comando não
 duplica conteúdo.
 """
 
@@ -488,7 +488,7 @@ def copiar_corpo(
         so_se_vazio: Não escreve nada se o destino já tiver algum bloco
             (torna a cópia idempotente para quem roda de novo).
         mesmo_com_database: Aceita escrever num destino que contém database
-            (sem isso, recusa como :func:`~notion_starter.services.conteudo.escrever_conteudo`).
+            (sem isso, recusa como :func:`~felixo_notion_mcp.services.conteudo.escrever_conteudo`).
         dry_run: Lê e planeja, sem escrever.
         conferir: Relê o destino antes e depois e compara as contagens por tipo.
         cliente: Cliente Notion opcional (injeção para testes).

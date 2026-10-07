@@ -113,7 +113,7 @@ def _id_notion(valor: str | None, campo: str, *, bloco: bool = False) -> str:
     """ID do Notion vindo de quem opera: UUID com ou sem hífens, ou um link.
 
     Devolve o UUID canônico (``8-4-4-4-12``, minúsculo) pela regra da
-    biblioteca (:func:`notion_starter.utils.normalizar_id`): a forma sem
+    biblioteca (:func:`felixo_notion_mcp.core.utils.normalizar_id`): a forma sem
     hífens é a que aparece no ``url`` das respostas, e comparar a forma crua
     dizia "não encontrado" para um ID certo. Num link, vale o ID do caminho
     (``?v=`` de view é ignorado; ``?p=`` de painel vence) e, com ``bloco``, a
@@ -141,25 +141,34 @@ def _id_opcional(valor: str | None, campo: str, *, bloco: bool = False) -> str |
     return _id_notion(valor, campo, bloco=bloco)
 
 
+#: Próximo passo mostrado quando um serviço do próprio pacote não pode ser importado.
+PROXIMO_PASSO_INSTALACAO_QUEBRADA = (
+    "Rode 'felixo-notion-mcp doctor' para ver de onde o pacote é importado e reinstale-o "
+    "(no checkout: uv sync --locked --all-extras)."
+)
+
+
 def _servico_do_starter(nome: str, *, comando: str) -> ModuleType:
-    """Importa ``notion_starter.services.<nome>`` só quando o comando roda.
+    """Importa ``felixo_notion_mcp.services.<nome>`` só quando o comando roda.
 
     Os comandos de organização do workspace (``mover-pagina`` verificado,
-    ``modelos``, ``copiar-corpo``, ``inventario``…) usam serviços que entraram
-    no ``notion-starter`` depois do último release publicado. Importar no topo
-    derrubaria a CLI inteira com o starter do PyPI; aqui só o comando que
-    precisa do serviço recusa, com uma mensagem que diz o que atualizar.
+    ``modelos``, ``copiar-corpo``, ``inventario``…) carregam o serviço sob
+    demanda. A função vem do tempo em que esses serviços podiam faltar no
+    ``notion-starter`` publicado; no pacote único eles sempre estão presentes,
+    então um ``ImportError`` aqui significa instalação incompleta ou quebrada, e
+    só o comando que precisa do serviço recusa, com uma mensagem que diz isso.
+    As chamadas são simplificadas na etapa 2.
     """
 
     try:
         return importlib.import_module(f"felixo_notion_mcp.services.{nome}")
     except ImportError as exc:
         raise CLIError(
-            f"'{comando}' precisa do serviço felixo_notion_mcp.services.{nome}, que o "
-            "notion-starter instalado ainda não tem. Atualize o notion-starter (checkout "
-            "de desenvolvimento em modo editável, ou o próximo release publicado).",
+            f"'{comando}' precisa do serviço felixo_notion_mcp.services.{nome}, que não "
+            "pôde ser importado. No pacote único isso indica uma instalação incompleta "
+            "ou quebrada, não uma dependência desatualizada.",
             codigo="configuracao",
-            proximo_passo="python -m pip install -e ../notion-starter",
+            proximo_passo=PROXIMO_PASSO_INSTALACAO_QUEBRADA,
         ) from exc
 
 
@@ -2787,7 +2796,7 @@ def cmd_relatorio_do_dia(args: argparse.Namespace, *, client_factory: ClientFact
     relato foi parar no lugar errado.
 
     Idempotente pela data, via
-    :func:`notion_starter.services.relatorios_diarios.publicar_relatorios`: dia
+    :func:`felixo_notion_mcp.services.relatorios_diarios.publicar_relatorios`: dia
     que já existe é complementado (o corpo novo entra depois do que já
     estava), nunca sobrescrito; as propriedades de um dia existente ficam como
     estão, porque costumam descrever o trabalho de outro projeto no mesmo dia.
@@ -2902,7 +2911,7 @@ def cmd_copiar_corpo(args: argparse.Namespace, *, client_factory: ClientFactory)
     """Copia o corpo de uma página para o fim de outra, bloco a bloco.
 
     A regra (lista branca de tipos, remoção de ``null``, aninhamento em etapas,
-    desfazer em falha) vive em ``notion_starter.services.copia_corpo``.
+    desfazer em falha) vive em ``felixo_notion_mcp.services.copia_corpo``.
     """
 
     origem = _id_notion(args.origem_id, "origem_id")
@@ -2946,7 +2955,7 @@ def cmd_modelos(args: argparse.Namespace, *, client_factory: ClientFactory) -> A
     """``modelos listar|preencher``: modelos nativos (templates) de um database.
 
     A regra (vazio = "New page" sem corpo, idempotência, validação das colunas
-    antes de escrever) vive em ``notion_starter.services.modelos``.
+    antes de escrever) vive em ``felixo_notion_mcp.services.modelos``.
     """
 
     servico = _servico_do_starter("modelos", comando="modelos")
@@ -3166,10 +3175,11 @@ def cmd_remover_coluna(args: argparse.Namespace, *, client_factory: ClientFactor
     remover = getattr(schema_starter, "remover_coluna", None)
     if remover is None:
         raise CLIError(
-            "'remover-coluna' precisa de notion_starter.services.schema.remover_coluna, que o "
-            "notion-starter instalado ainda não tem. Atualize o notion-starter.",
+            "'remover-coluna' precisa de felixo_notion_mcp.services.schema.remover_coluna, "
+            "que não foi encontrada. No pacote único isso indica uma instalação "
+            "incompleta ou quebrada.",
             codigo="configuracao",
-            proximo_passo="python -m pip install -e ../notion-starter",
+            proximo_passo=PROXIMO_PASSO_INSTALACAO_QUEBRADA,
         )
     return remover(database_id, coluna, cliente=client_factory())
 
@@ -3284,8 +3294,9 @@ def cmd_importar_planilha(args: argparse.Namespace, *, client_factory: ClientFac
         "atualizados": resultado.atualizados,
         "erros": resultado.erros,
         "itens_processados": resultado.itens_processados,
-        # Mantém a borda compatível durante atualizações em que o CLI chega
-        # antes da versão do notion-starter que introduziu estes campos.
+        # Herança do tempo em que a CLI e o ``notion-starter`` tinham versões separadas:
+        # a borda aceitava um resultado sem estes campos. No pacote único eles sempre
+        # existem; os ``getattr`` saem junto com a simplificação da etapa 2.
         "falhas": getattr(resultado, "falhas", []),
         "conflitos": getattr(resultado, "conflitos", []),
         "simulado": getattr(resultado, "simulado", False),
@@ -3306,7 +3317,7 @@ def cmd_mover_pagina(args: argparse.Namespace, *, client_factory: ClientFactory)
     """Move uma página prevendo antes o que muda nas colunas, e confere o pai.
 
     A regra (previsão, recusa de perda, endpoint ``/move`` e releitura) vive em
-    ``notion_starter.services.movimentacao``; aqui só se traduzem as recusas
+    ``felixo_notion_mcp.services.movimentacao``; aqui só se traduzem as recusas
     para o envelope, com o comando para aceitar a perda ou escolher a fonte.
     """
 

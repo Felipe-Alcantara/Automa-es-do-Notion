@@ -1,7 +1,7 @@
 """Casos de uso para investigar e replicar a *forma* de páginas de projeto.
 
-O workspace "Central pessoal" (ver ``DESIGN-WORKSPACE-NOTION.md`` no hub
-Automações do Notion) segue um padrão fixo por projeto: README + tópico
+O workspace "Central pessoal" (ver ``DESIGN-WORKSPACE-NOTION.md`` na raiz deste
+repositório) segue um padrão fixo por projeto: README + tópico
 "Acompanhamento" (4 subpáginas) + tópico "Planejamento e documentação" (2
 databases). Investigar esse padrão manualmente — abrindo blocos e subpáginas
 uma a uma — é lento e não deixa rastro reutilizável. Este módulo cobre dois
@@ -210,7 +210,7 @@ def clonar_estrutura_projeto(
     Percorre os filhos diretos (``profundidade=1``) da página de referência:
     para cada ``child_page`` cria uma subpágina de mesmo título (vazia) na
     página destino; para cada ``child_database`` clona o schema (sem linhas,
-    via :func:`~notion_starter.services.clonagem.clonar_database`) para a
+    via :func:`~felixo_notion_mcp.services.clonagem.clonar_database`) para a
     página destino. Headings, dividers e demais blocos são copiados como texto
     simples, preservando a moldura visual (tópicos) sem o conteúdo específico
     do projeto de origem.
