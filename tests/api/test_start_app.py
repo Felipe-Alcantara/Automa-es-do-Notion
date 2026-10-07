@@ -969,6 +969,23 @@ def test_status_mostra_a_versao_quando_o_pacote_esta_pronto(monkeypatch):
     assert f"v{felixo_notion_mcp.__version__}" in saida.getvalue()
 
 
+def test_status_mostra_de_onde_o_pacote_vem(monkeypatch):
+    """Substitui o ``check-dev.py`` do hub: o Status diz se o código é o do checkout."""
+
+    from felixo_notion_mcp.core.origem import origem_do_pacote
+
+    monkeypatch.setattr(start_app, "_dependencias_faltando", lambda: [])
+    monkeypatch.setattr(start_app, "_resolver_runtime_front", lambda: None)
+    saida = io.StringIO()
+
+    start_app.acao_status(Console(file=saida, force_terminal=False, width=400))
+
+    texto = saida.getvalue()
+    assert "Origem do pacote" in texto
+    assert str(origem_do_pacote().pasta) in texto
+    assert "checkout editável" in texto
+
+
 # --------------------------------------------------------------------------- #
 # Só reexecuta no .venv do projeto se ele consegue importar o pacote           #
 # --------------------------------------------------------------------------- #

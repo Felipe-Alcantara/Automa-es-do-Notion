@@ -23,6 +23,7 @@ from typing import Any
 
 from felixo_notion_mcp.api.cli import atualizacao_nativa
 from felixo_notion_mcp.api.cli.versao import VERSAO_FONTE, ler_versao_embutida
+from felixo_notion_mcp.core.origem import origem_do_pacote
 
 DISTRIBUICAO = "felixo-notion-mcp"
 PORTAS_APP = (8000, 5173)
@@ -220,6 +221,23 @@ def _checar_perfis() -> dict[str, Any]:
     }
 
 
+def _checar_origem_do_pacote() -> dict[str, Any]:
+    """Diz a versão e de onde o pacote vem (checkout editável, instalação ou binário).
+
+    Substitui o ``check-dev.py``: se você edita o código e nada muda, é aqui que se vê
+    que o Python está lendo outra cópia.
+    """
+
+    origem = origem_do_pacote()
+    if origem is None:
+        return _status(
+            DISTRIBUICAO,
+            "erro",
+            "pacote não encontrado; reinstale a distribuição",
+        )
+    return _status(DISTRIBUICAO, "ok", f"{versao_distribuicao()} · {origem.descricao()}")
+
+
 def diagnosticar() -> dict[str, Any]:
     """Executa diagnóstico seguro, sem exigir token e sem chamar a API do Notion."""
 
@@ -234,14 +252,7 @@ def diagnosticar() -> dict[str, Any]:
         )
     )
 
-    starter_ok = _importavel("felixo_notion_mcp")
-    checks.append(
-        _status(
-            "notion-starter",
-            "ok" if starter_ok else "erro",
-            "importável" if starter_ok else "não instalado; reinstale a distribuição",
-        )
-    )
+    checks.append(_checar_origem_do_pacote())
 
     perfis = _checar_perfis()
     checks.append(perfis["check"])

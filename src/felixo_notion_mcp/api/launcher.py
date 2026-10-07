@@ -34,6 +34,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 from felixo_notion_mcp.core.config import ENV_FILE, REPO_RAIZ
+from felixo_notion_mcp.core.origem import origem_do_pacote
 
 
 def _raiz_e_checkout(raiz: Path) -> bool:
@@ -1571,6 +1572,7 @@ def acao_qualidade(console) -> None:
 def acao_status(console) -> None:
     """Status: mostra o estado real do ambiente, sem expor segredo."""
 
+    from rich.markup import escape
     from rich.table import Table
 
     console.rule("[bold]Status")
@@ -1596,6 +1598,11 @@ def acao_status(console) -> None:
             "use Instalar/Setup)",
         )
 
+    origem = origem_do_pacote()
+    tabela.add_row(
+        "Origem do pacote",
+        escape(origem.descricao()) if origem else "[yellow]não encontrada[/yellow]",
+    )
     tabela.add_row(
         "Deps do menu (rich/questionary)",
         "[green]ok[/green]" if _tui_disponivel() else "[yellow]faltando[/yellow]",
