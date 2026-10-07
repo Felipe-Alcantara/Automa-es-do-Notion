@@ -54,6 +54,8 @@ dev = [
 felixo-notion-mcp = "felixo_notion_mcp.api.cli.unificada:main"
 notion-tasks = "felixo_notion_mcp.api.cli.notion_tasks:main"
 notion-automacoes = "felixo_notion_mcp.api.cli.unificada:main"
+notion-automacoes-app = "felixo_notion_mcp.api.launcher:main"
+notion-automacoes-mcp = "felixo_notion_mcp.api.mcp.server:main"
 
 [project.urls]
 Homepage = "https://github.com/Felipe-Alcantara/Felixo-Notion-MCP"
@@ -61,6 +63,11 @@ Repository = "https://github.com/Felipe-Alcantara/Felixo-Notion-MCP"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/felixo_notion_mcp"]
+# O bundle da SPA sai de `npm run build` e fica fora do git; o wheel e o sdist precisam levá-lo.
+artifacts = ["src/felixo_notion_mcp/api/http/static/frontend/**"]
+
+[tool.hatch.build.targets.sdist]
+artifacts = ["src/felixo_notion_mcp/api/http/static/frontend/**"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -74,7 +81,7 @@ target-version = "py310"
 # `tests` fora da lista: `tests/core`, `tests/services` etc. seriam lidos como pacotes
 # de primeira parte chamados `core`, `services`..., e o isort reordenaria `from core import`.
 src = ["src"]
-extend-exclude = ["_importado", "**/migrations/*.py"]
+extend-exclude = ["**/migrations/*.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

@@ -26,11 +26,17 @@ else:  # Python 3.10: o pytest já instala o tomli nessa versão.
 
 RAIZ = Path(__file__).resolve().parents[3]
 
-#: Executáveis que já valem nesta etapa: o principal, o apelido permanente e o de transição.
+#: Executáveis da CLI: o principal, o apelido permanente e o de transição.
 EXECUTAVEIS_DA_CLI = {
     "felixo-notion-mcp": "felixo_notion_mcp.api.cli.unificada:main",
     "notion-tasks": "felixo_notion_mcp.api.cli.notion_tasks:main",
     "notion-automacoes": "felixo_notion_mcp.api.cli.unificada:main",
+}
+
+#: Apelidos de transição do app: o launcher (menu) e o servidor MCP.
+EXECUTAVEIS_DO_APP = {
+    "notion-automacoes-app": "felixo_notion_mcp.api.launcher:main",
+    "notion-automacoes-mcp": "felixo_notion_mcp.api.mcp.server:main",
 }
 
 
@@ -78,10 +84,15 @@ def test_executavel_da_cli_aponta_para_uma_funcao_que_existe(pyproject, executav
     assert callable(getattr(importlib.import_module(modulo), funcao))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="notion-automacoes-app e notion-automacoes-mcp passam a existir na Tarefa 6",
-)
+@pytest.mark.parametrize(("executavel", "destino"), sorted(EXECUTAVEIS_DO_APP.items()))
+def test_executavel_do_app_aponta_para_uma_funcao_que_existe(pyproject, executavel, destino):
+    scripts = pyproject["project"]["scripts"]
+    assert scripts[executavel] == destino
+
+    modulo, _, funcao = destino.partition(":")
+    assert callable(getattr(importlib.import_module(modulo), funcao))
+
+
 def test_executaveis_de_transicao_declarados(pyproject):
     scripts = pyproject["project"]["scripts"]
     assert {
