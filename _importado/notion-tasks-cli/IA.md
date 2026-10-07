@@ -1,0 +1,1085 @@
+# 🤖 IA.md — Contexto operacional do notion-tasks-cli
+
+> **O que é**: Memória técnica deste repositório para retomada de contexto por IA ou
+> por um novo mantenedor, sem reler todo o código. Baseado no template de contexto do
+> Felixo System Design.
+>
+> **Histórico anterior**: este módulo nasceu da separação do monorepo
+> [Automações do Notion](https://github.com/Felipe-Alcantara/Automa-es-do-Notion)
+> em 2026-07-02. A linha do tempo anterior (decisões da CLI dentro do monorepo)
+> permanece no `IA.md` do hub — este arquivo cobre a vida do módulo a partir da
+> separação.
+
+---
+
+## 📊 ESTADO ATUAL (RESUMO VIVO)
+
+Última atualização: [2026-09-04]
+
+- Fase: fachada distribuída `notion-automacoes==0.3.0` publicada, com alias
+  histórico `notion-tasks`, saída JSON estável e perfis persistentes.
+- Qualidade: 198 testes verdes e `ruff` limpo; CI cobre Python 3.10–3.13.
+- Documentação: README alinhado ao Felixo System Design e contrato de qualidade
+  centralizado em `QUALIDADE.md`.
+- Próximos passos abertos: escrita multi-fonte e paginação de saídas grandes,
+  como contribuições isoladas.
+- Risco conhecido: ambientes consumidores devem fixar sua própria resolução
+  quando precisarem de builds reproduzíveis; o pacote público usa faixas
+  compatíveis para evitar conflitos no ambiente consumidor.
+
+---
+
+## 🎯 OBJETIVO DO PROJETO
+
+[2026-07-02] `notion-tasks-cli` é a CLI do ecossistema para pessoas e IAs
+("MCP via CLI"): tarefas (listar/criar/editar/mover/concluir), conteúdo
+(ler/escrever/editar blocos), busca, mapeamento do workspace, clonagem,
+exportação DOCX e sincronização de repositórios GitHub. Expõe o comando
+`notion-tasks` com envelope JSON estável para automação e, desde a preparação da
+distribuição, também fornece a fachada `notion-automacoes`.
+
+---
+
+## 📐 DECISÕES DE ARQUITETURA
+
+- [2026-07-02] A CLI é **borda fina**: `cli/notion_tasks.py` valida argumentos e
+  formata saída; a regra de negócio compartilhada vive no `notion-starter`
+  (`integrations/github.py`, `integrations/openrouter.py` e os `services/` comuns
+  aqui são shims). O que é específico da CLI permanece aqui (ex.:
+  `services/propriedades.py`).
+- [2026-07-02] Contrato público: envelope JSON `{ok,dados}` / `{ok,erro}`;
+  `--help` é o guia completo, escrito para ser lido por modelos.
+- [2026-07-08] `start_app.py` adicionado como porta de entrada interativa
+  (Instalar / Configurar `.env` / Status / Usar), conforme o contrato de menu de
+  entrada do padrão de qualidade.
+- [2026-07-08] Suporte inicial a múltiplos workspaces no CLI por perfis locais:
+  `core/workspaces.py` guarda aliases em `.notion-workspaces.json` (ignorado pelo
+  Git), mascara tokens em saídas públicas e aplica o perfil escolhido ao ambiente
+  antes de criar `NotionClient`/`TaskList`. O `.env` segue compatível como fallback.
+
+---
+
+## 🛠️ STACK & DEPENDÊNCIAS
+
+- Python 3.10+ (CI: 3.10–3.13). Runtime: `notion-starter>=0.3.0,<0.4.0`.
+- Dev: `pytest`, `responses`, `ruff`. Menu: `questionary` + `rich` (instaladas pelo
+  próprio menu quando faltam).
+
+---
+
+## 🧪 TESTES & GATE
+
+- Gate: `ruff check .` + `python -m pytest` (109 testes em 2026-07-08, sem rede).
+- CI: GitHub Actions (`.github/workflows/ci.yml`) com matriz Python 3.10–3.13.
+
+---
+
+## 🧠 LINHA DO TEMPO
+
+- [2026-07-02] ✅ Módulo extraído do monorepo; depois consolidado sobre o
+  `notion-starter` (shims em `integrations/` e `services/` comuns).
+- [2026-07-08] ✅ Alinhamento ao padrão de qualidade Felixo: adicionados
+  `CONTRIBUTING.md`, `IA.md`, `start_app.py` (menu de entrada) e CI GitHub Actions.
+  Validação: `ruff check .` limpo e 109 testes verdes; menu verificado manualmente
+  (Status e fluxo de instalação).
+- [2026-07-08] ✅ Perfis de workspaces/keys adicionados ao CLI (`perfis adicionar`,
+  `perfis listar`, `perfis usar`, `perfis mostrar`, `perfis remover` e `--perfil`).
+  Decisão: entregar primeiro na borda CLI, onde a necessidade operacional já existe,
+  sem levar regra de perfis para os services compartilhados.
+- [2026-07-13] ✅ Novos subcomandos como bordas finas sobre o notion-starter:
+  `criar-database` (schema tipado via --prop), `importar-planilha` (.xlsx/.csv,
+  upsert idempotente por Origem, tipos BR), `anexar-arquivo` (File Upload API,
+  preservando anexos) e `mover-pagina`/`mover-database` (re-parent). Validação:
+  124 testes verdes e ruff limpo.
+- [2026-07-18] ✅ Documentação alinhada ao Felixo System Design: README passou a
+  ter badges, índice, árvore real, guia operacional e rodapé open source;
+  `QUALIDADE.md` centralizou o gate e registrou a exceção motivada de versões
+  mínimas para um CLI instalável. Motivo: facilitar uso e contribuição sem impor
+  pins incompatíveis ao ambiente consumidor. Validação: 127 testes verdes e
+  `ruff` limpo.
+
+- [2026-07-23] ✅ `atualizar-github --contas` passa a aceitar repositório
+  específico (`owner/repo`/URL do repo), não só contas inteiras — mudança feita
+  na implementação real em `notion-starter` (`services/inventario_github.py`,
+  este módulo consome via shim). Motivo: trazer um projeto pontual de terceiros
+  para o database sem importar toda a conta dele. Testes cobrindo o
+  reconhecimento de formato e a coleta sem duplicar em
+  `tests/test_services_inventario_github.py`; 132 testes verdes, ruff limpo.
+
+- [2026-07-23] ✅ Quatro novos subcomandos como bordas finas sobre o
+  `notion-starter` (`services/estrutura_projeto.py`): `criar-subpagina`,
+  `inspecionar-estrutura`, `clonar-estrutura` e `montar-estrutura-projeto` —
+  cobrem investigar e replicar a moldura fixa de projeto do workspace
+  (README + Acompanhamento com 4 subpáginas + Planejamento e documentação com
+  2 databases). Testes de CLI ponta a ponta com `FakeEstruturaClient` em
+  `tests/test_cli_notion_tasks.py`; 137 testes verdes, ruff limpo.
+
+- [2026-07-23] ✅ Novo subcomando `reordenar-bloco <pagina_id> <bloco_id>
+  (--apos <id> | --inicio) [--forcar-tipos-arriscados]`, borda fina sobre
+  `services/reordenacao.reordenar_bloco` do notion-starter. Recusa por padrão
+  mover `child_page`/`child_database` (o ID muda e quebra referências
+  externas) — a flag de força é obrigatória e o `--help` do comando avisa
+  explicitamente do risco. Sempre grava backup em JSON antes de apagar o
+  bloco original. Testes de CLI cobrindo o caminho seguro, a rejeição sem
+  forçar e a validação de exatamente um alvo (`--apos` xor `--inicio`) em
+  `tests/test_cli_notion_tasks.py`; 140 testes verdes, ruff limpo.
+
+- [2026-07-23] ✅ `reordenar-bloco` atualizado: `--help` e o guia de exemplos
+  deixam explícito que `child_database` nunca é suportado (mesmo com
+  `--forcar-tipos-arriscados`) — acompanha a correção em
+  `notion-starter/services/reordenacao.py` que virou `BlocoImpossivelError`.
+  Removido o `except BlocoArriscadoError` redundante em `cmd_reordenar_bloco`:
+  o catch genérico `(CLIError, ValueError, ...)` do dispatcher já cobre as
+  duas exceções (ambas herdam de `ValueError`). Novo teste cobrindo a
+  rejeição de `child_database` mesmo com a flag; 141 testes verdes, ruff
+  limpo.
+
+- [2026-07-24] ✅ Novo subcomando `garantir-coluna <database_id> <nome_coluna>
+  <tipo>`, borda fina sobre `services.schema.garantir_coluna` do
+  notion-starter. Reusa `starter_properties.schema_propriedade` para os
+  mesmos nomes de tipo em português já usados em `criar-database` (titulo,
+  texto, numero, select, …). Idempotente: reporta `criada: false` sem tocar
+  em nada se a coluna já existe. TDD: 5 testes de CLI escritos e confirmados
+  falhando (comando inexistente) antes da implementação; 146 testes verdes,
+  ruff limpo.
+
+---
+
+Ideias abertas à contribuição: mais subcomandos de escrita em databases
+multi-fonte, saída paginada para workspaces grandes, empacotamento no PyPI.
+
+---
+
+## [2026-08-17] Comandos que impedem o erro em vez de documentá-lo
+
+**Contexto.** Uma sessão longa operando o Notion de verdade (17 tarefas criadas,
+16 reescritas, 48 ligações) mostrou que a CLI documentava as regras certas e não
+as **fazia valer**. Quatro mudanças, todas nascidas de fricção medida:
+
+### `schema <database_id>` — a pergunta que antecede toda escrita
+
+Descobrir nome exato de coluna, valores aceitos por select/status, o que o Notion
+calcula e como cada relação está configurada exigia chamar a API crua. Agora é um
+comando. `--editaveis` esconde o que não aceita PATCH. Implementação em
+`notion_starter.schema.descrever_database`.
+
+### `relacionar <a> <b> --coluna "Nome"`
+
+Ligar duas linhas com `editar-linha` na mão exige saber se o Notion espelha a
+outra ponta — e **o tipo declarado não permite saber** (ver `IA.md` do
+`notion-starter`, mesma data, com o experimento). O comando confere e grava só o
+que faltar; idempotente, com `--desfazer`. Mensagens de erro listam as colunas de
+relação disponíveis quando o nome não existe, e mandam para `editar-linha` quando
+a coluna não é relação.
+
+### `escrever` recusa página que contém database
+
+Era o erro relatado com modelos mais fracos: link de uma página que **contém** a
+database, texto escrito solto abaixo da tabela. Agora falha com a lista das
+databases (título + ID) e os comandos prontos; `--mesmo-com-database` libera.
+`conteudo` também passou a devolver `databases_dentro` + `aviso`, para o problema
+aparecer já na **leitura**. A exceção é tratada na borda como erro de uso (código
+2, mensagem inteira, sem traceback) — traceback só atrapalha quem lê.
+
+### `criar --set` e `--conteudo`
+
+O ciclo `criar` → `editar-linha` → `escrever` eram três chamadas, e um script que
+estourasse no meio deixava linha órfã sem o operador saber o ID. Agora `criar`
+aceita qualquer coluna e o corpo em Markdown. Se algo falhar **depois** da linha
+existir, o erro traz o ID e a instrução explícita de completar em vez de recriar.
+
+### `--apagar-tudo` em `escrever`/`limpar`
+
+`--substituir` agora preserva blocos não recriáveis por padrão e **relata** o que
+manteve. `--apagar-tudo` volta ao comportamento antigo, sob pedido explícito.
+
+**Efeito colateral nos testes**: `test_cli_status_validation` e
+`test_integration_status_validation` usavam `Mock()` para os args, e `Mock`
+auto-cria atributos — `args.set` virava verdadeiro e o `criar` tentava completar
+a linha com um Mock. Os fakes passaram a declarar `set`/`conteudo` como `None`.
+
+**Validação real** (2026-08-17): todos os caminhos rodados contra o workspace do
+usuário, com quatro linhas de teste criadas e arquivadas ao fim. 166 testes
+verdes, `ruff` limpo.
+
+---
+
+## [2026-08-24] Os perfis saíram de junto do pacote e foram para a pasta de configuração (0.2.1)
+
+### O sintoma
+
+`notion-tasks perfis listar` respondeu **Nenhum perfil configurado** logo depois de
+uma reinstalação, com os quatro perfis reais salvos. Pareceu perda de dado — e dado
+aqui é token de integração do Notion.
+
+### A causa
+
+`core/workspaces.py` derivava o endereço do store de `__file__`:
+
+```python
+ARQUIVO_PADRAO = Path(__file__).resolve().parents[1] / ".notion-workspaces.json"
+```
+
+O arquivo morava **ao lado do pacote instalado**. Trocar o modo de instalação
+troca o endereço:
+
+| Modo | Onde a CLI procurava |
+| --- | --- |
+| não editável | `site-packages/.notion-workspaces.json` |
+| editável | `modules/notion-tasks-cli/.notion-workspaces.json` |
+
+Nada se perdia, mas só se recuperava quem soubesse procurar. E cada modo deixava
+mais uma cópia de tokens espalhada pelo disco — na máquina do Felipe havia duas.
+Uma delas dentro de um repositório git, protegida por uma linha de `.gitignore`.
+
+### A decisão
+
+Store na pasta de configuração do usuário, pela convenção do sistema:
+`$XDG_CONFIG_HOME/notion-tasks/` (padrão `~/.config/notion-tasks/`) e
+`%APPDATA%\notion-tasks\` no Windows. Arquivo `600`, pasta `700`.
+
+**Migração automática na primeira leitura**, uma vez, com aviso em `stderr`. Se ela
+falhar (disco somente leitura, permissão), a CLI **continua usando o endereço
+antigo** em vez de dizer que não há perfil — manter o usuário funcionando no lugar
+errado é melhor do que fingir amnésia.
+
+### Duas armadilhas que a implementação encontrou
+
+**1. `chmod 700` no diretório-pai quase fechou a HOME.** A primeira versão
+restringia a pasta do store sempre. Como o parâmetro `caminho` aceita qualquer
+lugar, um store apontado para dentro da HOME faria a CLI trancar a HOME inteira.
+Agora `_garantir_pasta` só restringe a pasta **que ela mesma criou**; pasta
+preexistente não é tocada, e há teste para isso.
+
+**2. O teste que deveria proteger a mudança não protegia.** A asserção rodava no
+processo da suíte, onde a fixture `perfis_isolados` (autouse) troca
+`ARQUIVO_PADRAO` por `tmp_path` — necessário para o perfil real não vazar, mas
+apaga justamente o valor que o teste precisava observar. **Medido:** com a
+mutação `ARQUIVO_PADRAO = Path(__file__)...`, os 16 testes passavam. O teste passou
+a ler o valor num subprocesso e a mutação passou a derrubá-lo, como devia.
+
+Também por causa do `pathlib`: testar a variante do Windows trocando `os.name` no
+processo faz o próprio `pathlib` construir `WindowsPath` e explodir em POSIX. A
+decisão virou função pura — `decidir_pasta_configuracao(windows=, ambiente=, home=)`
+— e o sistema entra por parâmetro.
+
+### Validação
+
+179 testes verdes, `ruff` limpo. Migração real medida na máquina: os quatro perfis
+saíram de `modules/notion-tasks-cli/` para `~/.config/notion-tasks/`, arquivo `600`,
+pasta `700`, aviso impresso uma vez só. Critério de ponta: instalação trocada de
+editável para não editável e de volta — `perfis listar` devolveu exatamente a mesma
+lista nos dois modos. Ao fim, restou **uma** cópia do store no disco, fora de
+qualquer repositório git.
+
+### Validação em Windows (27/08/2026) — e um risco real encontrado
+
+A entrada acima media só Linux. Três pontos conferidos agora num Python 3.14 no
+Windows, com dados sintéticos (sem tocar no store real desta máquina):
+
+1. **`pasta_configuracao()` devolve o `%APPDATA%` de verdade** —
+   `C:\Users\...\AppData\Roaming\notion-tasks`, não o fallback `~/AppData/Roaming`.
+2. **A migração funciona** — `.notion-workspaces.json` sintético num "endereço
+   antigo" isolado, primeira chamada de `_migrar_legado` move o arquivo, imprime
+   o aviso uma vez em stderr, o antigo deixa de existir e `carregar_store` lê os
+   perfis migrados sem diferença de conteúdo.
+3. **O risco de maior severidade da task era real, e agora está medido.**
+   `os.chmod` é, como o próprio código já admitia, um no-op de fato no Windows —
+   e a ACL herdada não é equivalente a um `0600` POSIX nesta máquina: a pasta
+   `%APPDATA%\Roaming` (e, por herança, `%APPDATA%\notion-tasks\` e qualquer
+   arquivo criado dentro) concede `(RX)` — Leitura e Execução — ao grupo local
+   `CodexSandboxUsers`, que existe nesta máquina para isolar sessões do Codex CLI
+   (`CodexSandboxOffline`, `CodexSandboxOnline`). Confirmado num arquivo real
+   criado dentro da pasta (`icacls`): a herança inclui leitura de conteúdo, não
+   só listagem de diretório. Isto significa que **um processo sandboxed do Codex
+   nesta máquina pode ler o token do Notion do usuário**, e nada no código atual
+   detecta ou avisa isso — `_restringir` engole o `OSError` de propósito.
+
+   **Não ficou hipotético.** No meio desta mesma investigação, `carregar_store()`
+   disparou a migração real desta máquina (o `.notion-workspaces.json` do
+   repositório, com os tokens `felipe`/`flavia` de verdade, ainda não tinha sido
+   migrado). O arquivo real resultante em `%APPDATA%\notion-tasks\` tem a mesma
+   ACL medida acima — `CodexSandboxUsers:(I)(RX)` — confirmada com `icacls` no
+   arquivo de credenciais real, não numa cópia sintética.
+
+   Isto é específico da configuração desta máquina (o grupo é "managed" pelo
+   próprio Codex, não algo que o `notion-tasks-cli` controla), não um defeito
+   universal do Windows: um perfil sem esse grupo de sandbox teria a ACL
+   default de `%APPDATA%` restrita a dono + SYSTEM + Administradores, que já
+   seria aceitável. Mas o código não tem como saber disso, e hoje não tenta.
+   Virou task própria — não é escopo desta consertar em cima da hora.
+
+---
+
+## [2026-08-24] Escolher database e escolher perfil passam a gravar no mesmo lugar
+
+**Contexto.** O caminho documentado para uma IA começar a operar um workspace —
+`escolher-database <id>` e depois `criar` — não funcionava com perfil ativo.
+Medido: `escolher-database` respondia sucesso, mas gravava em um `.env` **dentro
+de `site-packages/`**; o perfil ativo continuava com `database_id` vazio e, como
+o perfil vence o `.env` na resolução, o `criar` seguinte falhava com
+"NOTION_DATABASE_ID não configurado". Dois comandos sobre a mesma configuração
+escrevendo em arquivos diferentes — e o que o usuário lê (`perfis mostrar`) não
+era o que o comando tinha gravado.
+
+`cmd_escolher_database` agora resolve o perfil (o de `--perfil`, ou o ativo) e
+grava nele, via `workspaces.definir_database`. Sem nenhum perfil, o `.env`
+continua valendo — é o modo sem perfil, não um fallback silencioso. A resposta
+passa a dizer **onde** gravou e **em qual perfil**.
+
+### O 400 do Notion parou de ser engolido
+
+Todo erro que não fosse 404 virava `"Falha ao falar com o Notion."`. O corpo do
+400 — o único lugar que nomeia a propriedade recusada, ex.: *"Etapa is expected
+to be select"* — era descartado. Quem lê a saída (pessoa ou modelo) ficava sem o
+dado que resolveria o problema, e a reação natural era repetir a tentativa.
+
+`_mensagem_erro_notion` mantém 404 curto (é diagnóstico de compartilhamento, não
+de payload) e devolve `HTTP <status>: <message> [<code>]` para o resto,
+com o corpo cru de reserva quando não é JSON.
+
+`NotionSchemaError`, que a biblioteca passou a levantar antes de chamar a API,
+é tratado como **erro de uso** (exit 2) e ganha o caminho de saída na mensagem:
+`rode 'schema <database_id>' para ver as colunas reais`.
+
+### Validação
+
+182 testes verdes e `ruff` limpo. Contra o workspace real, com o código do
+módulo: `listar --status "Entrada"` → 31 linhas (antes, 400 genérico);
+`listar --area a1` numa base sem a coluna → mensagem nomeando
+`Áreas da vida` em vez de traceback.
+
+## [2026-08-25] `criar` funciona fora do database de tarefas
+
+O comando dizia aceitar qualquer `--set`, mas a primeira chamada ainda criava a
+linha pelo `TaskList` com o título fixo `Tarefa`. Em `Relatórios diários`, cuja
+coluna title é `Relatório`, a API recusava o payload antes de `Data`, `Status` e o
+corpo serem preenchidos.
+
+A descoberta do título e a omissão dos campos de tarefa ausentes ficaram no
+`notion-starter`; a CLI permaneceu borda fina. O mesmo `TaskList` agora é
+reutilizado entre a validação de status e a criação, aproveitando o cache de
+schema. Erros HTTP deixaram de virar apenas "Falha ao falar com o Notion": a
+saída inclui status e o corpo (truncado e tipado pelo cliente), que normalmente
+contém `code` e `message` acionáveis.
+
+**Validação.** 181 testes verdes e `ruff` limpo. Prova real nos perfis
+`relatorios` e `home-pessoal`: criação com `--set Data`, `--set Status` e
+`--conteudo` no primeiro; criação com `--status`/`--duracao` no segundo. As duas
+linhas temporárias foram arquivadas ao fim.
+
+---
+
+## [2026-08-28] O token deixa de confiar na ACL herdada no Windows
+
+**Continuação da entrada de 24/08 e da validação de 27/08 acima.** O achado real
+era: `_restringir` chamava `os.chmod(alvo, 0o600)` e engolia o `OSError` — mas
+`os.chmod` **não aplica ACL no Windows**, então o store de perfis continuava com
+a herança de `%APPDATA%\Roaming`. Medido nesta mesma máquina: o grupo
+`CodexSandboxUsers` tinha `(RX)` herdado, ou seja, conseguia ler o token.
+
+### O que mudou
+
+`_restringir` passa a se ramificar por `os.name`:
+
+- **POSIX**: continua `os.chmod`, sem regressão — mas a falha agora também vira
+  aviso em stderr em vez de silêncio, pelo mesmo motivo do Windows abaixo.
+- **Windows**: `_restringir_windows` chama `icacls /inheritance:r` e concede
+  acesso só ao dono (via `%USERNAME%`), `SYSTEM` e Administradores — este
+  último pelo SID bem-conhecido `*S-1-5-32-544`, não pelo nome (que muda com o
+  idioma do Windows). Sem `pywin32`: `subprocess` + `icacls` evita adicionar
+  dependência específica de plataforma a um projeto que hoje não tem nenhuma.
+
+A falha deixou de ser um `except OSError: pass` mudo nos dois sistemas — é
+exatamente o padrão que deixou o achado original passar despercebido até ser
+medido em 27/08. Falha vira `print(..., file=sys.stderr)`, sempre.
+
+### Validação
+
+Sem máquina Windows disponível nesta sessão, então o comportamento do `icacls`
+foi coberto por teste que mocka `subprocess.run` e força `os.name = "nt"` — a
+mesma técnica que `decidir_pasta_configuracao` já usa para testar o ramo Windows
+em máquina POSIX (ver comentário na função, entrada de 24/08). Três testes
+novos: comando sem herança e com os três `/grant:r` corretos; falha do `icacls`
+vira aviso em stderr; `USERNAME` ausente não chama `icacls` e avisa em vez de
+arriscar um comando sem dono. 184 testes verdes (181 + 3), suíte completa.
+
+**Não medido**: `icacls` de verdade numa máquina Windows real, confirmando com
+`icacls <arquivo>` que o grupo de sandbox perdeu o acesso. Fica como o próximo
+passo natural — mockar prova a chamada certa, não o efeito real na ACL do
+sistema operacional. Task original permanece aberta até essa medição.
+
+---
+
+## [2026-08-31] A ACL do store foi confirmada no Windows real
+
+**Continuação direta da entrada de 28/08.** A máquina Windows desta sessão
+permitiu fechar a lacuna que mantinha a task de segurança aberta: medir o efeito
+do `icacls`, e não apenas a montagem do comando em um mock.
+
+### Medição real
+
+Foi criado um arquivo sintético temporário dentro de `%APPDATA%\notion-tasks\`,
+sem ler nem alterar o store de credenciais. A ACL foi capturada antes e depois
+de chamar `_restringir`:
+
+- **Antes:** `CodexSandboxUsers:(I)(RX)`, além de SYSTEM, Administradores e o
+  usuário dono com herança `(I)`.
+- **Depois:** somente Administradores, SYSTEM e o usuário dono, todos com
+  `(F)` direto; `CodexSandboxUsers` e a herança desapareceram.
+
+O arquivo temporário foi removido ao fim da medição. Portanto, o critério de
+aceite desta task foi confirmado no Windows real: um novo arquivo do store não
+mantém o acesso herdado do grupo de sandbox.
+
+### Ajuste de portabilidade encontrado no gate
+
+O primeiro `python -m pytest` encontrou uma falha no teste
+`test_endereco_do_store_nao_depende_de_onde_o_pacote_esta_instalado`: o teste
+usava `.split()` para ler caminhos impressos por um subprocesso, quebrando o
+caminho Windows que contém espaços. O teste passou a ler as duas linhas com
+`.splitlines()`, preservando o comportamento medido.
+
+### Validação final e estado
+
+`python -m pytest`: **188 passed, 2 skipped**. `ruff check .`: **All checks
+passed**. A correção da ACL, o aviso visível em caso de falha e a validação
+POSIX existente permanecem cobertos; esta task pode ser marcada como concluída.
+
+## [2026-09-04] Fachada única e pacote instalável sem checkout
+
+O pacote público candidato passou a se chamar tecnicamente `notion-automacoes`
+na versão `0.3.0`. `cli/unificada.py` é uma borda fina: expõe `tasks`/`tarefas`,
+`auth`/`perfis`, `doctor`, `app start`, `mcp start` e `update`/`atualizar`,
+delegando a implementação existente de `notion-tasks`, perfis, launcher e MCP.
+Os dois entry points (`notion-automacoes` e `notion-tasks`) convivem no mesmo
+wheel, e `notion-starter` agora é resolvido por faixa versionada, sem
+`Requires-Dist` apontando para Git.
+
+Durante a validação foi corrigido um risco de instalação conjunta: o CLI não
+insere mais o diretório `server/` do app no `sys.path`, pois isso fazia o pacote
+legado `core` do app sombrear o `core` da CLI. O MCP é iniciado em processo
+separado pela fachada para manter as duas árvores de importação isoladas.
+
+**Validação:** `ruff check .` limpo, **198 testes verdes**, `twine check` aprovado
+para wheel e sdist, `--version`/`--help`/`doctor`/`auth listar` exercitados em
+ambiente limpo e o alias `notion-tasks` preservado. A publicação efetiva não foi
+executada até confirmar nome, ownership, metadados legais e Trusted Publishing.
+
+## [2026-09-04] Documentação e estado público atualizados
+
+O README, `AGENTS.md`, `CONTRIBUTING.md` e `QUALIDADE.md` agora tratam
+`notion-automacoes==0.3.0` como pacote público, mantendo `notion-tasks` como
+alias de compatibilidade. O guia separa instalação distribuída de desenvolvimento,
+documenta `doctor`/`auth` e aponta para as evidências de release. A titularidade
+legal registrada no pacote é `Felipe Alcantara`; a publicação e o Trusted
+Publishing deixam de ser descritos como pendência.
+
+## [2026-09-07] Comando `exemplo` para copiar padrões de tarefas
+
+A CLI ganhou `notion-tasks exemplo [--n 3]`, uma borda fina que usa o database
+padrão do perfil (`NOTION_DATABASE_ID`), seleciona de 2 a 4 linhas na ordem
+devolvida pelo Notion e relê cada página para devolver propriedades e corpo em
+Markdown na mesma resposta. O resultado JSON inclui a quantidade solicitada,
+retornada e total de linhas, além da lista `exemplos`; a saída humana imprime
+cada exemplo com título, URL, propriedades e corpo.
+
+A escolha de manter a regra no CLI é deliberada: listar linhas e orquestrar a
+leitura de páginas é comportamento específico da borda, enquanto a leitura
+completa continua sendo delegada a `notion_starter.services.conteudo`. Foram
+adicionados testes sem rede para amostra, leitura completa, limite de `--n` e
+exposição no guia. Validação final registrada na task do Notion.
+
+## [2026-09-07] Comando `renomear-coluna`
+
+A CLI ganhou `notion-tasks renomear-coluna <database_id> <nome_atual> <novo_nome>`,
+para o caso que faltava desde sempre: o Notion cria sozinho a coluna espelho de
+toda relação nova com um nome genérico (`"Related to <database> (<coluna>)"`), e
+não havia como corrigir isso sem sair da ferramenta — `renomear-database` só troca
+o título do database inteiro, não uma propriedade dele.
+
+A regra de negócio foi pro `notion_starter` (`services/schema.py:renomear_coluna`),
+ao lado de `garantir_coluna` e com a mesma estratégia dela: usa o *data source*
+(modelo novo do Notion, `PATCH /data_sources/{id}`, versão `2025-09-03`) quando o
+database expõe um, cai para o endpoint clássico de database caso contrário.
+Valida que a coluna atual existe e que o novo nome não colide com outra já
+existente antes de gravar. O CLI é só a borda fina de sempre (parse + dispatch).
+
+Testes cobrem os dois caminhos (data source e clássico) e as duas rejeições
+(coluna inexistente, colisão de nome), reaproveitando o `ClienteFake` já usado
+pelos testes de `garantir_coluna`. O mecanismo (`atualizar_data_source`/
+`atualizar_database` com `{"properties": {nome: {"name": novo_nome}}}`) já tinha
+sido usado manualmente, fora da CLI, para renomear a coluna espelho de "Bloqueada
+por" pra "Bloqueia" na database de Tarefas — este comando fecha essa lacuna de
+verdade, sem precisar de script solto na próxima vez.
+
+## [2026-09-07] `linhas` ganhou `--completo`
+
+`notion-tasks linhas` sempre devolveu só id/título/url por linha — quem
+precisava das propriedades completas de uma database inteira (classificar
+colunas em massa, cruzar relações, auditar cobertura) tinha que sair da CLI e
+chamar o client Python direto. Bateu nesse teto pelo menos quatro vezes numa
+sessão só, preenchendo a database de Tarefas.
+
+`--completo` repassa `propriedades=True` para o `listar_linhas` do
+`notion-starter` (que ganhou o parâmetro na mesma leva) — cada linha passa a
+trazer `"propriedades"` com todas as colunas já em `nome -> valor simples`.
+Sem a flag, a saída continua idêntica à de sempre. Borda fina de sempre: o CLI
+só repassa a flag, a leitura e a normalização vivem no `notion-starter`.
+
+Testes cobrem os dois casos (com e sem `--completo`) no nível do CLI, além dos
+4 testes de serviço no `notion-starter`.
+
+**Validação:** 198 testes verdes (1 falha pré-existente sem relação,
+`test_doctor_funciona_sem_token_e_nao_exibe_credencial`, confirmada via `git
+stash` antes desta mudança) e `ruff check .` limpo. Testado ao vivo contra a
+database "Áreas da vida" real.
+
+## [2026-09-07] `relacionar` aceita vários pares numa chamada
+
+O comando `relacionar` preserva a forma legada com dois IDs posicionais e agora
+aceita `--par page_a:page_b` repetido ou `--arquivo pares.json`. O arquivo pode
+conter objetos com `page_a`/`page_b`, listas de dois IDs ou strings no mesmo
+formato de `--par`.
+
+A borda valida todo o lote antes da primeira escrita, cria o `NotionClient` uma
+única vez e chama `notion_starter.services.relacoes.relacionar` para cada par,
+mantendo a conferência idempotente das duas pontas. A saída de lote traz
+`total`, `sucessos`, `erros` e um `resultados` por par; falha em um item não
+impede os demais, enquanto a chamada legada mantém o envelope anterior.
+
+Testes sem rede cobrem o modo posicional, dois pares na mesma execução, um único
+cliente, arquivo JSON, erro por par e arquivo inválido. No gate desta task,
+`ruff check .` passou e `python -m pytest` teve **202 passed, 2 skipped e 1
+falha pré-existente** em `test_doctor_funciona_sem_token_e_nao_exibe_credencial`,
+fora do escopo e sem arquivos alterados por esta mudança.
+
+## [2026-09-07] Teste do `doctor` isola perfis reais no Windows
+
+O teste `test_doctor_funciona_sem_token_e_nao_exibe_credencial` agora troca tanto
+`XDG_CONFIG_HOME` quanto `APPDATA`. O `doctor` resolve `pasta_configuracao()` em
+tempo de execução e, no Windows, consulta `%APPDATA%`; trocar apenas
+`ARQUIVO_PADRAO` na fixture e `XDG_CONFIG_HOME` no teste deixava o store real da
+máquina entrar no diagnóstico. O teste também fixa caminho temporário, zero
+perfis e nenhum perfil ativo antes de verificar o aviso de credencial.
+
+**Validação:** o teste focado e os 8 testes de `test_cli_unificada.py` passaram,
+`ruff check .` passou e o gate completo teve **203 passed, 2 skipped**.
+
+## [2026-09-07] Lote para criar e editar linhas numa única execução
+
+Uma sessão com operações em centenas de linhas mostrou que chamar `criar` ou
+`editar-linha` repetidamente pagava o custo de inicialização/importação do CLI a
+cada linha. A CLI agora aceita `--arquivo` em ambos os comandos, com JSON ou
+CSV, mantendo a forma individual compatível.
+
+O JSON usa `page_id` (ou `id`) para edição e `nome` (ou `titulo`) para criação;
+`propriedades`/`set` substitui valores e `append`/`acrescentos` acrescenta texto.
+No CSV, a primeira coluna de identificação pode ser `page_id` ou `nome`, as
+demais viram propriedades e o prefixo `append:` representa acréscimos. O
+parser reaproveita a sintaxe de `Nome=valor`, lê o arquivo uma vez e rejeita
+misturas ambíguas entre `--arquivo` e os argumentos da forma individual.
+
+Cada entrada é processada no mesmo processo. Edições reutilizam um único
+`NotionClient`; criações reutilizam um único `TaskList` e, quando necessário,
+um único cliente para completar propriedades. Uma falha de validação ou API
+fica no resultado da própria linha e não interrompe as seguintes. Se a criação
+da página já ocorreu e o preenchimento posterior falha, o estado é
+`pendente` e o ID criado é preservado para retomada. O envelope final informa
+`total`, `processados`, `sucessos`, `erros`, `pendentes` e o resultado de cada
+linha; o progresso periódico vai para `stderr`, mantendo o JSON de `stdout`
+válido.
+
+**Validação:** **207 testes passaram e 2 foram pulados**, `ruff check .` limpo;
+testes novos cobrem reutilização de fábrica, continuidade após erro, criação
+parcial, JSON, CSV com `append` e documentação no `guia`.
+
+## [2026-09-08] Preflight de projeto por URL no criar/editar-linha
+
+O vínculo entre uma tarefa e a database `GITHUB` passou a poder ser derivado de
+`URL de referência`, em vez de exigir que a IA descubra e informe manualmente o
+ID da relação. `services/preflight.py` normaliza URLs `github.com` para
+`owner/repo`, removendo `.git`, subcaminho, query e fragmento, consulta a coluna
+`URL` da database apontada pelo schema de `Projeto` e só aceita uma linha
+correspondente. Duplicidades são erro explícito; URL desconhecida não inventa
+relação.
+
+`criar` e `editar-linha` aplicam a relação com o serviço `relacionar` e relêem a
+linha para confirmar o ID canônico. Com `--strict`, o preflight ocorre antes de
+qualquer escrita e bloqueia URL/Projeto divergentes, projeto não encontrado e
+títulos fora de `<projeto>/<contexto> — descrição`. Com `--dry-run`, somente o
+plano é devolvido. Em lotes estritos, todas as entradas são pré-validadas antes
+da primeira escrita, evitando criação/edição parcial. A exceção de compatibilidade
+é preservada: tarefas pessoais sem URL GitHub e sem `Projeto` continuam válidas;
+sem `--strict`, IDs legados e URLs desconhecidas permanecem aceitos com aviso.
+
+**Validação:** 226 testes passaram e 2 foram pulados; `ruff check .` limpo. Os
+testes novos cobrem parser de URL, subcaminho/query/fragmento, acentos, projeto
+conhecido/desconhecido/duplicado, bloqueio sem PATCH, releitura da relação,
+`--dry-run` e preflight integral de lote.
+
+## [2026-09-08] Mecanismo de auto-update e rollback dos binários nativos
+
+A distribuição Python `0.3.0` não deve se atualizar por cima do ambiente do
+usuário nem baixar um executável sem validação. A task de distribuição definiu
+que o update nativo fica embutido no executável PyInstaller, consulta a Release
+estável do GitHub e deixa o rollback de produto manual pela Release anterior.
+
+### O que foi implementado
+
+- `cli/atualizacao_nativa.py` define a matriz `windows-x64`, `macos-x64`,
+  `macos-arm64` e `linux-x64`, com nomes de asset determinísticos e checksum
+  `.sha256` irmão;
+- a consulta rejeita draft/pré-release e tags que não sejam SemVer estável,
+  monta um plano sem tocar no disco e exige o asset do alvo detectado;
+- o download é conferido com SHA-256 antes da troca; macOS/Linux usam
+  `os.replace`, preservam permissões e guardam `<executável>.previous`;
+- no Windows, a entrada agenda um helper do próprio executável, que espera o
+  processo pai sair, troca o arquivo bloqueado e relança os argumentos originais;
+- `cli/unificada.py` verifica automaticamente apenas em binários nativos, usa
+  cache de 24 horas, respeita `NOTION_AUTOMACOES_NO_UPDATE=1` e mantém `update`
+  Python como sugestão de `pipx`/`uv`/`pip`; `update --dry-run` permite auditar o
+  plano sem baixar;
+- README, `QUALIDADE.md` e o contrato do hub documentam a retenção mínima de
+  duas Releases estáveis e o procedimento de rollback manual.
+
+### Validação e limite conhecido
+
+Os testes offline cobrem a matriz, parsing de Release, filtro de pré-release,
+checksum correto/incorreto, proteção de destino preexistente, troca atômica,
+backup, helper Windows, `dry-run`, cache e integração da fachada. A validação
+física dos quatro executáveis, assinatura/notarização e rollback usando assets
+reais ainda depende das tasks irmãs de PyInstaller e assinatura; nenhum binário
+nativo foi publicado ou executado nesta mudança.
+
+## [2026-09-08] Workflow de empacotamento PyInstaller para a matriz nativa
+
+A task de empacotamento passou a ter um caminho reproduzível no próprio
+`notion-tasks-cli`, sem alterar a Release Python `0.3.0`. O builder
+`scripts/build_native.py` centraliza os quatro alvos (`windows-x64`,
+`macos-x64`, `macos-arm64` e `linux-x64`), os nomes de asset definidos pelo
+updater, a versão da tag e o checksum SHA-256. `scripts/native_entrypoint.py`
+mantém o import relativo da fachada `cli.unificada`; `cli/versao.py` lê a versão
+embutida no bundle para que o auto-update compare a versão real da tag, não o
+fallback do ambiente Python.
+
+O workflow `.github/workflows/native-release.yml` executa builds em runners
+separados por arquitetura, roda smoke diretamente no executável e disponibiliza
+os binários como artefatos do workflow. A anexação ao GitHub Release exige um
+despacho manual, `publicar_release=true` e aprovação do ambiente
+`native-release`; isso evita publicar binários sem a assinatura/notarização da
+task irmã. A validação em máquinas limpas sem Python e a assinatura real ainda
+dependem das tasks de certificação e aceitação física.
+
+## [2026-09-09] Comando `relatorio-do-dia` e perfil ativo no erro 404
+
+**Diagnóstico.** O prompt-padrão que orienta agentes a escrever nos
+Relatórios diários dizia "preencha as colunas, não só o corpo" sem nunca
+mandar escrever o corpo de fato. Medido no dia: mais de um agente (rodando
+fora deste repositório, via `editar-linha`/`escrever` soltos) despejou o
+relato inteiro na propriedade "O que fiz" — até 21 mil caracteres numa
+coluna só numa linha antiga, 7 mil numa nova — e em pelo menos um caso
+deixou o corpo da página vazio. Uma varredura das 249 linhas do database não
+achou mais nenhum caso de corpo vazio (o problema foi isolado àquele dia),
+mas confirmou que a ambiguidade property-vs-corpo é real e vinha do próprio
+prompt, não só de um agente distraído.
+
+**Implementação.**
+
+- `cmd_relatorio_do_dia` (`cli/notion_tasks.py`) — comando novo,
+  `relatorio-do-dia --database <id> [--data AAAA-MM-DD] --corpo "..." [--resumo
+  ...] [--o-que-fiz ...] [--bloqueios ...] [--proximos-passos ...] [--status
+  ...] [--area ...]`. `--corpo` é o único destino do relato completo; recusa
+  rodar sem ele a menos que `--permitir-corpo-vazio` seja passado
+  explicitamente. Reaproveita
+  `notion_starter.services.relatorios_diarios.publicar_relatorios` (já
+  idempotente por data, já complementa em vez de sobrescrever) — nenhuma
+  lógica de escrita nova, só a borda que fecha a ambiguidade em código.
+- Cada propriedade de resumo (`--resumo`, `--o-que-fiz`, `--bloqueios`,
+  `--proximos-passos`) acima de 400 caracteres gera um aviso na saída
+  (`avisos`), sem bloquear a escrita — algumas colunas legitimamente
+  precisam de mais espaço, então o comando avisa em vez de decidir sozinho.
+- REGRA 8 do prompt "Operar Notion com segurança" ("confira o perfil antes
+  de concluir que algo não existe") também virou código:
+  `_mensagem_erro_notion` agora acrescenta o alias do perfil ativo a
+  qualquer 404, poupando a chamada separada a `perfis listar` que a regra
+  em prosa exigia lembrar de fazer.
+- O prompt-padrão "WORKFLOW ATUALIZADO 3.0" (fora deste repositório, salvo
+  como automação no Felixo AI Core) foi reescrito na mesma sessão para
+  explicitar a separação propriedade-curta/corpo-longo, citando o erro
+  medido como exemplo do que não fazer.
+
+**Validação.** 259/259 testes da suíte (7 novos: dois cobrindo o 404 com e
+sem perfil ativo, cinco cobrindo `relatorio-do-dia` — corpo obrigatório,
+escrita bem-sucedida com resumo curto e corpo separado, aviso de propriedade
+grande, `--permitir-corpo-vazio`). `ruff check` limpo. Não validado contra a
+API real do Notion nesta sessão — os testes usam clientes falsos, como o
+resto da suíte deste módulo; a prova de ponta a ponta fica para o primeiro
+uso real do comando.
+
+**Estado no ponto do registro.** Implementação e testes concluídos; commit,
+push e o uso real do comando (substituindo `editar-linha`/`escrever` soltos
+nos relatórios diários) ficam para o fechamento desta execução.
+
+## [2026-09-21] Validação real do auto-update e rollback no Windows
+
+O código do auto-update já estava publicado no `main` do módulo (`df95557`).
+Com as Releases `v0.4.0` e `v0.4.1` disponíveis, a validação foi repetida em
+uma cópia temporária do asset Windows, sem tocar em uma instalação do usuário,
+sem credencial e sem alterar a Release pública.
+
+**O que foi medido.**
+
+- `python check-dev.py`, `python -m ruff check .` e `python -m pytest -q`:
+  ambiente editável confirmado, lint limpo e `257 passed, 2 skipped`.
+- `gh release view v0.4.1 --repo Felipe-Alcantara/notion-tasks-cli`:
+  Release estável com os quatro binários e quatro assets `.sha256`; `v0.4.0`
+  também permanece publicada, satisfazendo a retenção mínima de duas Releases.
+- O executável `notion-automacoes-windows-x64.exe` da `v0.4.0` respondeu
+  `notion-automacoes 0.4.0`; o SHA-256 local bateu com o asset irmão publicado.
+- `--json update --dry-run` detectou `windows-x64` e planejou `v0.4.1` sem
+  baixar nem tocar no arquivo.
+- `--json update` baixou e validou o asset `v0.4.1`, agendou o helper porque o
+  executável estava em uso e, após a saída do processo pai, a cópia temporária
+  respondeu `notion-automacoes 0.4.1`; o backup `.previous` preservou a
+  `v0.4.0` original.
+- A restauração manual de `.previous` devolveu `notion-automacoes 0.4.0` e
+  manteve o backup disponível. Depois, um comando normal `tasks` disparou o
+  auto-update novamente e a cópia voltou a `0.4.1` com código de saída `0`.
+
+**Limites.** A execução real foi feita somente em Windows x64 e com binários
+sem assinatura. macOS Intel, macOS Apple Silicon e Linux x64 ainda precisam de
+máquinas/VMs reais; Authenticode e notarização ainda dependem da task de
+certificado, que continua em `Entrada`. A task de implementação permanece em
+`Aguardando resposta`/não em andamento até essas dependências demonstrarem o
+critério assinado; as pendências já estão nas tasks relacionadas de validação e
+certificação.
+
+## [2026-09-25] Borda da auditoria de perda de dados: blocos seguros, IDs e envelope com código
+
+Registro gravado em 2026-09-26 às 02:28 (-03), ao fim da execução. Uma
+auditoria do uso real por agentes confirmou achados de perda de dados e de
+ergonomia nas escritas de blocos. A regra de negócio foi corrigida no
+`notion-starter` (commits `bd58ee9`…`484263c` daquele repositório); este
+registro cobre só a borda da CLI, que expõe o que a biblioteca passou a oferecer.
+
+**O que mudou na CLI.**
+
+- **Envelope de erro com código** (`cli/erros.py`, novo): toda exceção vira
+  `erro = {codigo, mensagem, proximo_passo, http_status, notion_code, detalhes}`,
+  classificada pelo tipo e pelos campos estruturados (`status_code`, `code` do
+  corpo), nunca pelo texto. `EscritaParcialError`, `LimpezaIncompletaError` e
+  `ReordenacaoIncompletaError` escapavam como traceback; agora trazem em
+  `detalhes` o que foi gravado, desfeito, apagado ou ficou pendente. Um 503 com
+  a escrita salva vira `escrita_salva` ("não repita"), argumento inválido com
+  `--json` vira `uso_invalido`, e o resto vira `erro_interno` com o traceback no
+  stderr. `CLIError` passou a derivar de `NotionSyncError`. Itens de lote ganham
+  `erro.codigo`; `databases_dentro` continua também no topo.
+- **IDs**: todo argumento de ID usa `normalizar_id` da biblioteca (UUID com ou
+  sem hífens, links com `?v=` ignorado, `?p=` vencendo e âncora `#bloco` em
+  argumentos de bloco); link sem ID é recusado antes da API. As comparações
+  manuais passaram a `chave_de_id`. `ler` com o ID do campo `url` deixou de dizer
+  "não encontrada".
+- **escrever**: `--apos <bloco>`/`--inicio` (recusados com `--substituir`),
+  `posicao` e `blocos_criados` na saída; `--substituir` agora escreve antes de
+  apagar e devolve `blocos_apagados_ids` e `desfazer`.
+- **limpar**/**restaurar-bloco**: IDs apagados, motivo de cada bloco preservado e
+  o comando novo `restaurar-bloco <id>...`.
+- **blocos** `--metadados/--completo/--recursivo/--contendo` e o comando novo
+  **ler-bloco**.
+- **editar-bloco**: confere o bloco atual (tipo mantido, várias linhas e troca de
+  tipo recusadas, perda de menção/sublinhado/cor só com
+  `--aceitar-perda-de-formatacao`), `--trocar/--por/--todas` e `--arquivo` para
+  lotes; a saída confirma `tipo`, `markdown` e `editado_em`.
+- **apagar-bloco**: lê o alvo, exige `--forcar-tipos-arriscados` para subpágina e
+  database, aceita vários IDs e diz o que apagou.
+- **reordenar-bloco** `--dir-backup`; o backup saiu do diretório corrente.
+- **stdin/`--arquivo-md`** nos comandos que recebem Markdown;
+  **importar-planilha** `--chave`/`--dry-run`; **conteudo** mostra o pai, a URL e
+  a última edição.
+
+**Achado da validação real.** `restaurar-bloco` de uma subpágina respondeu HTTP
+400 "Updating a page via the blocks endpoint unsupported. Call patch
+/v1/pages/:page_id instead" — a documentação de "Delete a block" manda restaurar
+bloco de página por "Update page". O `desfazer` passou a separar
+`desfazer_manual` (subpágina/database, pela Lixeira) do comando pronto. Restaurar
+página pela API fica para o `notion-starter`, que ainda não expõe esse método.
+
+**Validação.** `ruff check .` limpo; `python3 -m pytest` com 323 testes (eram
+259). 64 testes da suíte nova falham contra o código de antes deste trabalho
+(`721042c`) e passam agora. Na API real, dentro de uma subpágina-sandbox criada e
+arquivada na mesma execução, foram conferidos: stdin e `--arquivo-md`, link e ID
+sem hífens, `--apos`/`--inicio` (com os irmãos que a API devolve fora de
+`blocos_criados`), metadados e recursão, `ler-bloco`, as recusas de
+`editar-bloco` e o `--trocar` preservando código inline e link, o lote de
+edições, apagar/restaurar (um e vários IDs), a recusa de subpágina sem a flag,
+`limpar` + `desfazer`, `--substituir` preservando a subpágina, `reordenar-bloco
+--dir-backup` (arquivo `0600`, caminho absoluto), o envelope de `id_invalido`,
+404 e `uso_invalido`, a âncora recusada sem gravar nada e
+`importar-planilha --chave` com a planilha reordenada casando os mesmos
+registros.
+
+**Pendências para quem quiser contribuir.** Restaurar subpágina/database pela API
+(método no `notion-starter`); `ler` ainda lista o database inteiro para achar
+uma tarefa (a comparação com o `parent` e a leitura de uma página só dependem de
+um `TaskList.obter` na biblioteca); `--dry-run` do `editar-bloco` exigiria uma
+função de planejamento pura na biblioteca. A faixa `notion-starter>=0.3.0,<0.4.0`
+do `pyproject.toml` precisa acompanhar a próxima versão publicada do
+`notion-starter`, que é a que contém as APIs usadas aqui.
+
+## [2026-09-25] Revisão da borda: recuo do Markdown e dependência do starter
+
+Registro gravado em 2026-09-26 às 03:13 (-03), durante a correção dos
+bloqueantes que a revisão apontou no registro anterior. Nada foi publicado: os
+commits são locais.
+
+### `editar-bloco` apagava o recuo do código
+
+**O que estava errado (reproduzido na API real, numa subpágina-sandbox).**
+`printf '    return valor\n\nfim\n' | notion-tasks --json editar-bloco <code> -`
+respondia `ok: true`, mas o `GET /blocks/<id>` mostrava `return valor\n\nfim`,
+sem os quatro espaços. O mesmo com `--arquivo-md`. A causa estava só na borda:
+`cmd_editar_bloco` fazia `_normalizar_texto(...)`, um `strip()` do texto inteiro,
+e a biblioteca já preservava o recuo. O mesmo `strip()` estava em `escrever`,
+`criar --conteudo`, `criar-subpagina --conteudo` e `relatorio-do-dia --corpo`,
+onde mudava a estrutura: `  - a` / `  - b` (dois itens irmãos) virava `b`
+filho de `a`, porque só a primeira linha perdia o recuo.
+
+**Decisão.** `_markdown_da_entrada` passou a devolver o texto como veio. Só o
+que é inteiro espaço em branco conta como ausente, e `\r\n` vira `\n` nas três
+fontes (o stdin é lido em bytes e, sem isso, o CRLF do Windows deixava `\r` no
+código; o arquivo já era lido em modo texto). As cinco chamadas deixaram de
+cortar as pontas. Para uma linha de Markdown, espaço nas pontas não muda o
+bloco gerado (conferido no conversor da biblioteca), então o resto do
+comportamento fica igual.
+
+**Achado da validação.** Com o código já gravado certo, a saída ainda mostrava
+o código sem o recuo: o leitor da biblioteca (`blocos_para_markdown`) também
+fazia `strip()`. A correção foi no `notion-starter` (commit `69dfe76` daquele
+repositório); `ler-bloco` e a saída de `editar-bloco` passaram a mostrar o que
+o `GET` devolve.
+
+**Validação.** Cinco testes novos falham com a borda anterior e passam agora:
+stdin e `--arquivo-md` num bloco de código (conferindo o `rich_text` do PATCH),
+CRLF no stdin, lista recuada por igual em `escrever` (stdin) e em `criar`
+(`--arquivo-md`). Dois testes guardam que texto só com espaços continua sendo
+recusado. Na API real, na sandbox: stdin, `--arquivo-md` e CRLF gravaram o
+código com o recuo e sem `\r` (conferido por `GET`), e `escrever` com
+`  - a` / `  - b` criou dois itens de topo sem filhos.
+
+### A CLI não importava com o starter publicado (correção do risco registrado)
+
+**O risco estava subestimado.** O registro anterior disse que a faixa
+`notion-starter>=0.3.0,<0.4.0` "precisa acompanhar a próxima versão
+publicada", e o relato da execução falava em comandos novos virando
+`erro_interno`. Não é isso: `cli/notion_tasks.py` e `cli/erros.py` importam no
+topo nomes que só existem no starter local (`EdicaoMultiblocoError`,
+`normalizar_id`, `chave_de_id`, `ReordenacaoIncompletaError`…), e
+`tests/conftest.py` importa `notion_starter.services.backups`. Reproduzido com
+o `origin/main` do starter (`git archive`, `0.3.1`, a mesma versão do PyPI) na
+frente do `sys.path`: `python -m cli --help` sai com `ImportError: cannot import
+name 'EdicaoMultiblocoError'`. **A CLI inteira não abre**, nem `--help`,
+`guia` ou `perfis`; a CI (que instala só esta CLI e resolve o starter do PyPI)
+quebraria já no `conftest`, e uma tag geraria um binário nativo que não abre.
+
+**Decisão.** A faixa passou a `notion-starter>=0.4.0,<0.5.0` e a CLI a `0.5.0`
+(`pyproject.toml`, `cli/versao.py`), no mesmo commit. O starter subiu para
+`0.4.0` no repositório dele. Até o `0.4.0` estar no PyPI, a instalação da CI e
+dos workflows de release falha: é a trava de ordem. `tests/test_pyproject.py`
+(novo) falha quando a suíte testa um starter fora da faixa ou de outra série
+que o piso, e quando `VERSAO_FONTE` diverge do `pyproject.toml`.
+
+**Ordem de publicação.** (1) push e tag `v0.4.0` do `notion-starter`; (2)
+release do `notion-workspace-app` com a faixa do starter aberta para `<0.5.0`
+(hoje o app publicado, `0.3.0`, exige `<0.4.0`, e `notion-automacoes[app]` não
+resolveria); (3) push e tag desta CLI. O app não foi alterado nesta execução.
+
+**Validação.** `ruff check .` limpo e `python -m pytest` com 333 testes. Os três
+testes de `tests/test_pyproject.py` falham com o `pyproject.toml` anterior
+(conferido restaurando o arquivo do `HEAD`) e passam agora.
+
+## [2026-09-27] `mover-pagina` verificado: previsão de colunas e recusa de perda
+
+**O que estava errado (medido no workspace real em 2026-09-27).** O comando
+chamava `NotionClient.mover_pagina`, que fazia `PATCH /pages/{id}` com
+`parent`; o Notion responde 200 e ignora o campo, e a CLI dizia que tinha
+movido. O `aviso` sobre "página que contém databases" descrevia um caso
+particular do mesmo defeito.
+
+**Decisão.** A regra foi para o `notion-starter` (commit `3130d5e` daquele
+repositório): o cliente usa `POST /pages/{id}/move` e relê o pai, e
+`services.movimentacao` prevê as colunas. A borda:
+
+- ganhou `--tipo-pai data_source_id`, `--dry-run` e `--aceitar-perdas`;
+- traduz `MovimentoComPerdasError` e `FonteDeDadosIndefinidaError` em
+  `validacao`, com `proximo_passo` pronto e a previsão (ou as fontes) em
+  `detalhes`;
+- mantém `id`, `novo_pai` e `aviso` na saída e acrescenta a previsão
+  (`colunas_acrescentadas_no_destino`, `valores_perdidos`, `colunas_mantidas`,
+  `movido`, `pai_novo`);
+- mostra, na saída humana, uma linha por coluna criada e por valor perdido.
+
+**Dependência do starter.** O serviço não existe no `notion-starter 0.4.1`
+publicado. Importá-lo no topo derrubaria a CLI inteira na CI (que resolve o
+starter do PyPI), então ele é importado dentro do comando por
+`_servico_do_starter`, que recusa com `configuracao` quando falta. Os testes do
+comando pulam sem o serviço; o teste da recusa roda sempre. Quando o starter
+com a API nova for publicado, a faixa do `pyproject.toml` deve subir e a
+importação pode voltar ao topo.
+
+**Validação.** `tests/test_cli_mover_pagina.py` (6 testes; o antigo
+`test_mover_pagina_avisa_sobre_databases` saiu, porque fixava o aviso do
+`PATCH`). Suíte com o starter do checkout: 336 passam; com o starter 0.4.1 do
+PyPI, como na CI: 331 passam e 7 pulam. Não houve teste contra o Notion real
+nesta entrega.
+
+## [2026-09-27] `copiar-corpo`: cópia bloco a bloco entre páginas
+
+**Contexto.** Consolidar páginas e preencher modelos exigia copiar um corpo com
+tabela, checklist e colunas; o único caminho da CLI era `conteudo` + `escrever`,
+que passa por Markdown e perde isso. Não havia comando parecido no `main`
+0.5.0 (`clonar-estrutura` copia títulos de subpágina e schema, não blocos).
+
+**Decisão.** Comando novo `copiar-corpo <origem> <destino>` com
+`--so-se-vazio`, `--dry-run`, `--conferir` e `--mesmo-com-database`. A regra
+é do `notion-starter` (`services.copia_corpo`, commit `445f3cc` daquele
+repositório), importada dentro do comando por `_servico_do_starter`. A saída
+JSON é `ResultadoCopia.para_dict()` (`por_tipo`, `ignorados` com motivo,
+`degradados`, `escritas`, `pulado`, `conferencia`); a humana resume a contagem
+e lista cada bloco ignorado. Falha no meio vira `EscritaParcialError`, que a
+classificação existente já transforma em `escrita_parcial` com o que foi
+desfeito.
+
+**Validação.** `tests/test_cli_copiar_corpo.py` (5 testes: cópia com
+subpágina ignorada e payload sem `null`/`plain_text`, `--so-se-vazio`, dry-run
+humano, origem igual ao destino, recusa sem o serviço). Nada foi escrito no
+Notion real.
+
+## [2026-09-27] `modelos listar|preencher`: modelos nativos de database
+
+**Contexto.** O `main` 0.5.0 não tinha nada para modelos nativos: o hub já
+registrava (10/08/2026) que a API não cria modelo, e preencher os modelos
+exigia script de tarefa com chamada privada ao cliente.
+
+**Decisão.** Comando novo com dois subcomandos, sobre
+`notion_starter.services.modelos` (commit `9cfe49e` daquele repositório),
+importado por `_servico_do_starter`:
+
+- `modelos listar <database_id> [--fonte]` devolve `id`, `nome`, `padrao` e o
+  aviso do limite da API;
+- `modelos preencher <database_id> --manifesto <arquivo> [--fonte] [--dry-run]`
+  devolve uma ação por item (`preenchido`, `completado`, `ja_existia`,
+  `sem_modelo_vazio`) e `faltam_modelos_vazios`;
+- `ManifestoInvalidoError` vira `validacao` com a lista de `problemas`;
+  database com várias fontes vira `validacao` com as fontes e o `--fonte`
+  pronto.
+
+**Validação.** `tests/test_cli_modelos.py` (6 testes). Nada foi escrito no
+Notion real.
+
+## [2026-09-27] `criar --database`: linha em qualquer database
+
+**O que faltava.** `criar` só gravava no database do perfil ativo /
+`NOTION_DATABASE_ID`. O `TaskList` já descobria a coluna de título de qualquer
+schema (o README chamava isso de "linha em qualquer database"), mas não havia
+como apontar outro database sem trocar de perfil ou escrever script — a
+implementação de tarefa que organizou artigos em 2026-09-27 criava a linha com
+chamada direta ao cliente e completava com `editar_linha`.
+
+**Decisão.** `--database <id|link>` troca o destino **só desta chamada**
+(`_tasklist_do_database`), inclusive no modo `--arquivo` e no `--dry-run`; a
+saída ganha `database_id` quando a flag é usada (e sempre no `--dry-run`). O
+resto (`--set`, `--conteudo`, `--arquivo-md`, `--strict`) segue o mesmo
+caminho. Não depende de API nova do starter.
+
+**Validação.** `tests/test_cli_criar_database.py` (4 testes) falham no código
+anterior (a flag nem existia) e passam agora; o double do padrão levanta erro
+se o comando cair no database do perfil. Nada foi escrito no Notion real.
+
+## [2026-09-27] Acervo: `inventario`, `baixar-corpos` e `buscar-conteudo`
+
+**Contexto.** O `main` 0.5.0 tinha `mapear` (árvore e duplicatas, sem datas) e
+`buscar` (título). Faltava o que a organização de artigos de 2026-09-27 fez
+com script de tarefa: inventário com datas e caminho, download retomável dos
+corpos e busca no texto completo.
+
+**Decisão.** Três comandos sobre os serviços do starter (commit `576d323`
+daquele repositório), importados por `_servico_do_starter`:
+
+- `inventario --saida <json> [--filtro page|database]` grava o inventário e
+  devolve o resumo (totais, datas extremas, segundos);
+- `baixar-corpos <inventario> --destino <pasta>` com `--ignorar-caminho`,
+  `--ignorar-database`, `--somente-database` (repetíveis), `--priorizar`,
+  `--limite`, `--trabalhadores` (3), `--incluir-arquivados` e
+  `--progresso-a-cada` (stderr; o stdout continua JSON);
+- `buscar-conteudo <pasta> <regex>` com `--contexto`, `--max-trechos`,
+  `--limite`, `--com-acentos` e `--diferenciar-caixa`.
+
+Inventário ilegível e expressão inválida viram `validacao` (as exceções do
+starter derivam de `ValueError`); `--priorizar` inválido é recusado na borda.
+
+**Validação.** `tests/test_cli_acervo.py` (7 testes: fluxo de ponta a ponta,
+retomada, saída humana, erros e a recusa sem os serviços para os três
+comandos). Nada foi chamado no Notion real.
+
+## [2026-09-27] `remover-coluna` e `Criado em` no `linhas --completo`
+
+**Contexto.** Mover linhas entre databases faz o Notion criar colunas no
+destino (medido em 2026-09-27), e não havia comando para desfazê-las: o `main`
+0.5.0 tinha `garantir-coluna` e `renomear-coluna`, mas não remover. E
+`linhas --completo` mostrava `"Criado em": null`, porque o leitor da
+biblioteca não conhecia `created_time`.
+
+**Decisão.**
+
+- `remover-coluna <database_id> <coluna> --sim` chama
+  `notion_starter.services.schema.remover_coluna` (commit `42da753` daquele
+  repositório). Sem `--sim` recusa (`validacao`) sem ler nada e devolve o
+  comando pronto; a biblioteca recusa a coluna de título e coluna inexistente
+  antes de escrever. Como o módulo `schema` já existe no starter publicado, a
+  borda confere o **atributo** e recusa com `configuracao` quando ele falta.
+- `linhas --completo` não mudou na CLI: com o starter novo os leitores de
+  `created_time`, `last_edited_time`, `created_by`, `last_edited_by` e
+  `unique_id` preenchem as colunas que voltavam `null`.
+
+**Validação.** `tests/test_cli_remover_coluna.py` (5 testes; os que dependem
+do starter novo pulam na CI). Nada foi escrito no Notion real.
+
+## [2026-10-02] Auto-update em macOS/Linux relança o comando no executável novo
+
+**Contexto.** A validação física do auto-update no Linux x64 (cópia isolada do
+asset `v0.4.1` publicado, `HOME`/`XDG_CACHE_HOME` temporários) mostrou que o
+`update` manual funciona — 0.4.1 → 0.5.0, SHA-256 igual ao `.sha256` da
+Release, modo `755` preservado, `.previous` = 0.4.1 —, mas o **auto-update
+disparado por comando comum** quebra o próprio comando: `auth listar` e
+`tasks opcoes` voltam `Error -3 while decompressing data: incorrect header
+check`, exit 2. A troca acontece com o processo antigo vivo; o executável
+onefile lê módulos do próprio arquivo sob demanda, e o import tardio de
+`_delegar_tasks`/`_delegar_auth` lê o arquivo novo com os offsets do antigo. O
+Windows não sofre disso porque troca num helper filho e relança.
+
+**Decisão.**
+
+- `atualizar_automaticamente` marca `reiniciar=True` quando a troca foi
+  aplicada no processo atual (`aplicado=True`); o `agendado` do Windows segue
+  com `reiniciar=False`, pois o helper já relança.
+- `relancar_atualizado` executa o binário novo com os mesmos argumentos e
+  `PYINSTALLER_RESET_ENVIRONMENT=1` (o bootloader novo extrai o próprio
+  conteúdo em vez de herdar a pasta do antigo) e repassa o código de saída.
+  `main` chama isso logo depois do auto-update, antes de qualquer import tardio.
+- O resultado aplicado passa a dizer `Atualizado de X para Y.` e expõe
+  `executavel`; antes repetia `A versão Y está disponível`.
+- O Windows não mudou: o helper validado em 21/09/2026 continua igual.
+
+**Validação.** 5 testes novos (`tests/test_atualizacao_nativa.py`,
+`tests/test_cli_unificada.py`); o de integração falha sem a mudança em
+`cli/unificada.py`. Gate: `ruff check .` limpo, `pytest` 370 passed. Binário
+construído localmente com `scripts/build_native.py --target linux-x64 --version
+v0.4.9` (PyInstaller 6.22.3): com cache limpo, `auth listar` atualiza para a
+`v0.5.0` publicada e responde `Nenhum perfil configurado.` com exit 0;
+`--json tasks opcoes` devolve o mesmo envelope que a 0.5.0 devolve direto; sem
+sobra de `/tmp/_MEI*`. Rollback validado pelas duas vias: restaurar
+`.previous` e baixar o asset da Release anterior. **Limite:** a correção só
+age no binário que está *sendo* atualizado — a 0.5.0 publicada ainda tem o
+defeito ao se atualizar para a próxima; o primeiro comando depois desse salto
+pode falhar uma vez (o update em si é aplicado). macOS não foi exercitado.

@@ -1,0 +1,138 @@
+# ✅ Qualidade — notion-tasks-cli
+
+Este documento registra o gate de qualidade do módulo e as exceções motivadas ao
+[Felixo System Design](https://github.com/Felipe-Alcantara/Felixo-System-Design).
+
+## Gate local
+
+Execute na raiz do repositório:
+
+```bash
+python -m ruff check .
+python -m pytest
+```
+
+Os testes usam integrações mockadas e não exigem token real. A CI em
+`.github/workflows/ci.yml` executa o mesmo gate em Python 3.10–3.13 para pushes no
+`main` e pull requests.
+
+## Critério de pronto
+
+Uma mudança está pronta quando:
+
+- lint e suíte automatizada passam;
+- o envelope JSON, o `--help` e os contratos dos subcomandos foram preservados ou
+  documentados;
+- nenhum segredo, ID real ou perfil local foi versionado;
+- README, `IA.md` e testes foram atualizados quando afetados;
+- riscos ou limitações restantes foram registrados.
+
+## Exceção motivada: versões mínimas
+
+As dependências versionadas pelo `pyproject.toml` usam limites mínimos (`>=`).
+Esta é uma exceção deliberada à recomendação geral de pinagem: o CLI é instalado
+via pip no ambiente de outras ferramentas, e pins exatos poderiam causar
+conflitos com bibliotecas já usadas pela pessoa.
+
+A compatibilidade é verificada continuamente pela matriz da CI em Python
+3.10–3.13. Quem precisar de um ambiente totalmente reproduzível deve fixar a
+resolução no ambiente consumidor.
+
+## Distribuição
+
+O pacote público `notion-automacoes` (`0.3.0`) expõe a fachada unificada e
+mantém o executável histórico `notion-tasks`. A dependência do `notion-starter` é
+uma faixa versionada (`>=0.4.0,<0.5.0`), sem URL Git em `Requires-Dist`. O piso
+é a série do starter que a suíte testa (`tests/test_pyproject.py`), porque a CLI
+importa a API dele no topo do módulo: com um starter mais antigo, a CLI inteira
+não importa (nenhum comando abre, nem `--help`), não é só um comando que falha.
+Por isso o starter é publicado antes da CLI; a ordem está no README. Exceção
+motivada: comandos que dependem de serviço do starter ainda **não publicado**
+importam esse serviço dentro do próprio comando (`_servico_do_starter`), para a
+CLI continuar abrindo com o starter do PyPI; os testes deles usam `skipif` e rodam
+por inteiro no desenvolvimento com o starter editável. O extra
+`app` adiciona o app Django/MCP. Wheel e sdist são validados por `twine check` e
+publicados no [PyPI](https://pypi.org/project/notion-automacoes/) por Trusted
+Publishing. A titularidade legal declarada no pacote é `Felipe Alcantara`.
+
+## Documentação
+
+Mudanças em subcomandos, entry points, envelope JSON, instalação ou perfis exigem
+atualização do `README.md`, do `--help` e de `IA.md` no mesmo passo. Exemplos
+usam placeholders e nunca registram tokens, IDs reais ou caminhos privados.
+
+O subcomando `exemplo` usa o database padrão configurado no perfil, seleciona de 2 a
+4 linhas (3 por padrão) e reúne propriedades e corpo de cada linha em uma única
+execução da CLI. O teste correspondente usa um cliente falso e não acessa o Notion.
+
+O subcomando `relacionar` mantém a forma legada de um par e também aceita lotes
+com `--par` repetido ou `--arquivo`. O lote valida todas as entradas antes de
+escrever, reutiliza o cliente e devolve o resultado individual de cada par.
+
+`criar` e `editar-linha` aceitam `--arquivo` em JSON/CSV para processar muitas
+linhas na mesma execução. O arquivo é lido uma vez, o cliente/TaskList é
+reutilizado, o progresso sai em stderr e o envelope final separa sucessos, erros
+e criações pendentes, sem interromper o lote por uma falha individual.
+
+## Escritas de blocos e envelope de erro
+
+As escritas de blocos seguem a ordem segura da biblioteca e a borda não pode
+escondê-la: toda operação que apaga devolve os IDs (`blocos_apagados_ids`) e o
+comando de desfazer (`desfazer`; subpágina e database em `desfazer_manual`, porque
+a API não os restaura pelo endpoint de blocos); `apagar-bloco` lê o alvo antes e
+exige `--forcar-tipos-arriscados` para subpágina e database; `editar-bloco`
+confere o bloco atual e recusa várias linhas, troca de tipo e perda de
+formatação sem gravar nada.
+
+Com `--json`, nenhuma exceção pode escapar como traceback: `cli/erros.py`
+classifica cada uma num `codigo` estável pelo tipo e pelos campos estruturados,
+nunca pelo texto, e o que não tem tratamento vira `erro_interno` com o
+traceback no stderr. Um código novo precisa entrar em `CodigoErro`, que o `guia`
+lista. Os testes que reordenam blocos isolam a pasta de backup com
+`NOTION_AUTOMACOES_BACKUP_DIR` (fixture `backups_isolados`), para a suíte nunca
+gravar na pasta de estado real do usuário.
+
+O Markdown recebido (argumento, stdin `-` ou `--arquivo-md`) passa por
+`_markdown_da_entrada` e chega à biblioteca sem `strip()`: o recuo da primeira
+linha é conteúdo (o código de um bloco `code`, o nível de uma lista recuada por
+igual). A borda só decide se o texto está vazio e troca `\r\n` por `\n`. Os
+testes de `editar-bloco` conferem o `rich_text` enviado no PATCH, não só o
+código de saída.
+
+Todo argumento de ID passa por `_id_notion` (regra `normalizar_id` da
+biblioteca); texto que não é UUID nem link segue para a API, o que mantém os
+doubles de teste com IDs curtos.
+
+## Preflight de projetos
+
+`criar` e `editar-linha` aceitam `--strict` e `--dry-run` para o contrato de
+projetos. A URL GitHub é reduzida à identidade `owner/repo` (com suporte a
+`.git`, subcaminho, query e fragmento) e resolvida contra a coluna `URL` da
+database relacionada por `Projeto`. Uma única correspondência é aplicada via
+`relacionar` e confirmada com releitura após o PATCH. Duplicidade, URL não
+encontrada, projeto divergente ou título fora de
+`<projeto>/<contexto> — descrição` bloqueiam antes da escrita em `--strict`.
+
+Sem `--strict`, o modo legado continua aceitando IDs explícitos e tarefas
+pessoais sem URL GitHub/Projeto; uma URL GitHub desconhecida não cria relação e
+é devolvida como aviso. `--dry-run` é somente leitura. Em lotes estritos, todos
+os preflights são executados antes de qualquer criação/edição, evitando escrita
+parcial quando uma entrada falha.
+
+## Atualização nativa
+
+`cli/atualizacao_nativa.py` é coberto offline: a suíte valida a matriz de quatro
+alvos, o contrato de assets, o filtro de Releases estáveis, o SHA-256, a troca
+atômica, o backup local e o helper de troca no Windows. Não é permitido que a
+suíte baixe ou execute um binário real. A validação física de PyInstaller,
+assinatura, notarização e rollback de uma Release depende dos workflows de
+empacotamento/assinatura e deve ser feita quando esses artefatos existirem.
+
+O workflow `.github/workflows/native-release.yml` usa `scripts/build_native.py`
+para construir um executável `--onefile` por runner, embutir a versão da tag,
+gerar os quatro nomes oficiais e escrever o checksum `.sha256`. O
+`scripts/smoke_native.py` executa o binário produzido diretamente, sem importar
+Python da aplicação, e confere `--version`, `--help`, `tasks --help` e `doctor`.
+Os artefatos são anexados a uma Release somente por despacho manual e pelo
+ambiente protegido `native-release`; a assinatura/notarização continua sendo um
+pré-requisito humano da task irmã.
