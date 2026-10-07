@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "felixo-notion-mcp"
+version = "0.6.0.dev0"
+description = "Automações do Notion em um único pacote: biblioteca, CLI, servidor MCP e app."
+requires-python = ">=3.10"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/felixo_notion_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# A raiz entra no pythonpath para que `scripts.*` seja importável nos testes.
+pythonpath = ["src", "."]
+addopts = "--import-mode=importlib"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+src = ["src", "tests"]
+extend-exclude = ["_importado"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
