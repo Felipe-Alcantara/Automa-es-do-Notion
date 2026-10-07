@@ -341,8 +341,8 @@ def test_imports_relativos_nao_mudam():
     assert _reescrever(src)[0] == src
 
 
-def test_comentarios_e_f_strings_nao_mudam():
-    src = '# from core import workspaces\nx = f"cli.notion_tasks.{nome}"\ny = b"core"\n'
+def test_comentarios_e_bytes_nao_mudam():
+    src = '# from core import workspaces\n# "cli.notion_tasks.main"\ny = b"core"\n'
     assert _reescrever(src)[0] == src
 
 

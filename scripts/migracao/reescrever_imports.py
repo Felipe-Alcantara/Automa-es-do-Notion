@@ -10,16 +10,23 @@ Usa o mapa antigo → novo de `mapa_modulos.montar_mapa`. O que reescreve:
 2. literais de string cujo conteúdo é um nome antigo ou começa com `nome_antigo.` (alvos de
    `monkeypatch.setattr("cli.notion_tasks.main", ...)`, `os.environ[...] = "config.settings"`,
    `import_module("start_app")`), e o código de exemplo dentro de strings e docstrings
-   (`python -c "from core import x"`). Não se aplica a migrações do Django, cujas strings são
-   rótulos de app, não módulos. Duas guardas evitam trocar o que não é módulo: nome de arquivo
-   (`"mcp_server.py"`) e nome comum sozinho (`"config"`, `"api.notion.com"`), que ficam como
-   estão e saem na lista de avisos para conferência manual;
+   (`python -c "from core import x"`). Numa f-string vale a parte literal antes do primeiro
+   campo `{...}`: `f"notion_starter.services.{nome}"` vira `f"felixo_notion_mcp.services.{nome}"`.
+   Um nome que continua dentro do campo (`f"notion_starter{x}"`) não é nome antigo. Texto entre
+   aspas dentro de um campo (`f"{d['cli.notion_tasks']}"`) nunca é reescrito, em nenhuma versão
+   do Python: no 3.10 e no 3.11 a f-string é um token só e no 3.12+ ela vem em vários tokens, e
+   o reescritor a lê pelo texto de ponta a ponta nos dois casos para se comportar igual. Bytes
+   nunca são tocados. Nada disso se aplica a migrações do Django, cujas strings são rótulos de
+   app, não módulos. Duas guardas evitam trocar o que não é módulo: nome de arquivo ou de site
+   (`"mcp_server.py"`, `"api.notion.com"`) e nome comum sozinho (`"config"`, `"cli"`). Toda
+   string que uma guarda pula, e todo texto de campo de f-string que casaria, sai na lista de
+   avisos como `arquivo:linha` para conferência manual: nenhuma string é pulada em silêncio;
 3. `from P import x`, quando `P.x` está no mapa: o import só troca o pai (`from <pai novo> import
    x`) se o último nome do destino continua `x`; se o módulo foi renomeado ou se os nomes
    importados juntos vão para pais diferentes, o import fica como está e vira pendência
    (`ImportAmbiguo`) para correção manual.
 
-A leitura é por `tokenize`, então comentários, f-strings e bytes nunca são tocados, e o nome mais
+A leitura é por `tokenize`, então comentários nunca são tocados, e o nome mais
 longo do mapa vence (`cli.notion_tasks` antes de `cli`). A reescrita é idempotente. Com pendências,
 o resto do arquivo é reescrito e o import ambíguo fica como estava. A própria ferramenta e os
 testes dela (`IGNORADOS`) nunca são reescritos, porque citam nomes antigos de propósito.
@@ -91,6 +98,10 @@ _STRING = re.compile(
     r"""^(?P<prefixo>[A-Za-z]{0,3})(?P<aspas>'''|\"\"\"|'|")(?P<conteudo>.*)(?P=aspas)$""",
     re.DOTALL,
 )
+# Só existem a partir do Python 3.12, quando a f-string passou a ter tokens próprios.
+_FSTRING_INICIO = getattr(tokenize, "FSTRING_START", None)
+_FSTRING_FIM = getattr(tokenize, "FSTRING_END", None)
+_TEXTO_ENTRE_ASPAS_SIMPLES = re.compile(r"""(["'])(?P<texto>[^"'\\\n]*)\1""")
 _NAO_SIGNIFICATIVOS = frozenset(
     {tokenize.NL, tokenize.COMMENT, tokenize.INDENT, tokenize.DEDENT, tokenize.ENCODING}
 )
@@ -115,12 +126,23 @@ class _Edicao:
     novo: str
 
 
+@dataclass(frozen=True)
+class Aviso:
+    """Uma string que a reescrita pulou de propósito e que exige conferência manual."""
+
+    linha: int
+    mensagem: str
+
+    def __str__(self) -> str:
+        return f"linha {self.linha}: {self.mensagem}"
+
+
 @dataclass
 class _Analise:
     edicoes: list[_Edicao] = field(default_factory=list)
     trocas: list[str] = field(default_factory=list)
     pendencias: list[ImportAmbiguo] = field(default_factory=list)
-    avisos: list[str] = field(default_factory=list)
+    avisos: list[Aviso] = field(default_factory=list)
 
 
 @dataclass
@@ -130,7 +152,7 @@ class ResultadoDaAnalise:
     texto: str
     trocas: list[str]
     pendencias: list[ImportAmbiguo]
-    avisos: list[str]
+    avisos: list[Aviso]
 
 
 def trocar_prefixo(nome: str, mapa: Mapping[str, str]) -> str:
@@ -398,35 +420,50 @@ class _Reescritor:
 
     # -- strings -----------------------------------------------------------------------------
 
-    def _string(self, token: tokenize.TokenInfo, *, so_codigo: bool) -> None:
-        """Reescreve nomes antigos num literal de string (nunca em f-string nem bytes)."""
-        casou = _STRING.match(token.string)
+    def _string(self, inicio: int, texto: str, linha: int, *, so_codigo: bool) -> None:
+        """Reescreve nomes antigos num literal de string ou na parte literal de uma f-string.
+
+        `texto` é o literal como está no fonte, com prefixo e aspas, e começa no deslocamento
+        `inicio`. Bytes não são tocados. Numa f-string só entra a parte antes do primeiro campo.
+        """
+        casou = _STRING.match(texto)
         if casou is None:
             return
         prefixo = casou["prefixo"].lower()
-        if "f" in prefixo or "b" in prefixo:
+        if "b" in prefixo:
             return
-        base = self.deslocamento(token.start) + len(casou["prefixo"]) + len(casou["aspas"])
+        base = inicio + len(casou["prefixo"]) + len(casou["aspas"])
         conteudo = casou["conteudo"]
-        linha = token.start[0]
+        eh_f = "f" in prefixo
+        literal, completo = conteudo, True
+        if eh_f and "{" in conteudo:
+            literal, completo = conteudo[: conteudo.index("{")], False
         if not so_codigo:
-            self._string_de_nome(conteudo, base, linha)
-        for achado in _CODIGO_EM_STRING.finditer(conteudo):
+            self._string_de_nome(
+                literal, base, linha, completo=completo, tipo="f-string" if eh_f else "string"
+            )
+        for achado in _CODIGO_EM_STRING.finditer(literal):
             grupo = "de" if achado["de"] else "nome"
             antigo = achado[grupo]
             novo = trocar_prefixo(antigo, self.mapa)
             if novo != antigo:
-                inicio = base + achado.start(grupo)
-                self._trocar(inicio, inicio + len(antigo), antigo, novo, linha, "código em string ")
+                posicao = base + achado.start(grupo)
+                rotulo = "código em string "
+                self._trocar(posicao, posicao + len(antigo), antigo, novo, linha, rotulo)
+        if eh_f:
+            self._avisar_textos_em_campos(conteudo, linha)
 
-    def _string_de_nome(self, conteudo: str, base: int, linha: int) -> None:
-        """Conteúdo que é um nome antigo, ou que começa com `nome_antigo.` (ou `nome_antigo:`)."""
+    def _prefixo_do_mapa(self, conteudo: str, *, completo: bool) -> str | None:
+        """Maior nome do mapa com que o conteúdo é igual ou começa (`nome.`, `nome:atributo`).
+
+        Com `completo=False` o conteúdo é só o começo de uma f-string, cortado no primeiro campo:
+        o último componente pode continuar dentro do campo e, se é ele que termina o texto, o
+        conteúdo não carrega um nome inteiro.
+        """
         achado = _PREFIXO_DE_NOME_NA_STRING.match(conteudo)
-        if achado is None:
-            return
+        if achado is None or (not completo and len(achado.group()) == len(conteudo)):
+            return None
         partes = achado.group().split(".")
-        if len(partes) > 1 and partes[-1].lower() in EXTENSOES_DE_ARQUIVO:
-            return
         for tamanho in range(len(partes), 0, -1):
             prefixo = ".".join(partes[:tamanho])
             if prefixo not in self.mapa:
@@ -434,17 +471,85 @@ class _Reescritor:
             seguinte = conteudo[len(prefixo) : len(prefixo) + 1]
             if seguinte == ":" and conteudo[len(prefixo) + 1 :][:1].isidentifier():
                 seguinte = ""  # `modulo:atributo`, como em ponto de entrada
-            if seguinte not in ("", "."):
-                continue
-            if prefixo in NOMES_COMUNS:
-                self.resultado.avisos.append(
-                    f'linha {linha}: string ambígua não alterada: "{conteudo[:60]}"'
-                    f" ('{prefixo}' é nome comum)"
-                )
-                return
-            novo = self.mapa[prefixo]
-            self._trocar(base, base + len(prefixo), prefixo, novo, linha, "string ")
+            if seguinte in ("", "."):
+                return prefixo
+        return None
+
+    def _avisar(self, linha: int, mensagem: str) -> None:
+        self.resultado.avisos.append(Aviso(linha, mensagem))
+
+    def _string_de_nome(
+        self, conteudo: str, base: int, linha: int, *, completo: bool = True, tipo: str = "string"
+    ) -> None:
+        """Conteúdo que é um nome antigo, ou que começa com `nome_antigo.` (ou `nome_antigo:`)."""
+        prefixo = self._prefixo_do_mapa(conteudo, completo=completo)
+        achado = _PREFIXO_DE_NOME_NA_STRING.match(conteudo)
+        if prefixo is None or achado is None:
             return
+        mostrado = conteudo[:60] + ("" if completo else "{...}")
+        partes = achado.group().split(".")
+        if len(partes) > 1 and partes[-1].lower() in EXTENSOES_DE_ARQUIVO:
+            self._avisar(
+                linha,
+                f'{tipo} não alterada: "{mostrado}" parece nome de arquivo ou de site, '
+                f"não de módulo ('{prefixo}' está no mapa)",
+            )
+            return
+        if prefixo in NOMES_COMUNS:
+            self._avisar(
+                linha, f"{tipo} ambígua não alterada: \"{mostrado}\" ('{prefixo}' é nome comum)"
+            )
+            return
+        self._trocar(base, base + len(prefixo), prefixo, self.mapa[prefixo], linha, "string ")
+
+    def _avisar_textos_em_campos(self, conteudo: str, linha: int) -> None:
+        """Avisa de texto entre aspas, dentro de um campo `{...}`, que casaria com o mapa.
+
+        Esse texto nunca é reescrito (igual em todas as versões do Python); o aviso garante que
+        ele não passe despercebido.
+        """
+        i, n = 0, len(conteudo)
+        while i < n:
+            if conteudo[i] != "{":
+                i += 1
+                continue
+            if conteudo[i + 1 : i + 2] == "{":  # `{{` é uma chave literal
+                i += 2
+                continue
+            profundidade, j = 1, i + 1
+            while j < n and profundidade:
+                profundidade += {"{": 1, "}": -1}.get(conteudo[j], 0)
+                j += 1
+            campo = conteudo[i + 1 : j - 1]
+            for achado in _TEXTO_ENTRE_ASPAS_SIMPLES.finditer(campo):
+                texto = achado["texto"]
+                if self._prefixo_do_mapa(texto, completo=True) is not None:
+                    onde = linha + conteudo.count("\n", 0, i)
+                    self._avisar(
+                        onde,
+                        f'texto dentro de campo de f-string não alterado: "{texto[:60]}" '
+                        "(confira à mão)",
+                    )
+            i = j
+
+    def _fim_da_string(self, i: int) -> int:
+        """Índice do último token do literal que começa em `i`.
+
+        Um `STRING` é um token só. No Python 3.12+ a f-string vai de `FSTRING_START` até o
+        `FSTRING_END` correspondente (há f-strings dentro dos campos), com os tokens dos campos
+        no meio; pular esse trecho dá o mesmo resultado que o token único do 3.10 e do 3.11.
+        """
+        if self.tokens[i].type != _FSTRING_INICIO:
+            return i
+        profundidade = 0
+        for j in range(i, len(self.tokens)):
+            if self.tokens[j].type == _FSTRING_INICIO:
+                profundidade += 1
+            elif self.tokens[j].type == _FSTRING_FIM:
+                profundidade -= 1
+                if profundidade == 0:
+                    return j
+        return len(self.tokens) - 1
 
     # -- laço principal ----------------------------------------------------------------------
 
@@ -467,16 +572,25 @@ class _Reescritor:
                 i = self._import(i)
             elif comeca_instrucao and token.type == tokenize.NAME and token.string == "from":
                 i = self._from(i)
-            else:
-                if token.type == tokenize.STRING and not self.em_migracao_django:
-                    seguinte = _significativo(tokens, i + 1)
+            elif token.type == tokenize.STRING or (
+                _FSTRING_INICIO is not None and token.type == _FSTRING_INICIO
+            ):
+                ultimo = self._fim_da_string(i)
+                if not self.em_migracao_django:
+                    inicio = self.deslocamento(token.start)
+                    fim = self.deslocamento(tokens[ultimo].end)
+                    seguinte = _significativo(tokens, ultimo + 1)
                     # Texto solto numa linha (docstring): só o código de exemplo dentro dele.
                     docstring = (
                         comeca_instrucao
                         and seguinte < len(tokens)
                         and tokens[seguinte].type == tokenize.NEWLINE
                     )
-                    self._string(token, so_codigo=docstring)
+                    literal = self.texto[inicio:fim]
+                    self._string(inicio, literal, token.start[0], so_codigo=docstring)
+                token = tokens[ultimo]
+                i = ultimo + 1
+            else:
                 i += 1
             anterior = token
         return self.resultado
@@ -576,7 +690,7 @@ class ResultadoDoArquivo:
     caminho: Path
     trocas: list[str]
     pendencias: list[ImportAmbiguo]
-    avisos: list[str] = field(default_factory=list)
+    avisos: list[Aviso] = field(default_factory=list)
     erro: str = ""
     mudou: bool = False
 
@@ -649,7 +763,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     for arquivo in coletar_arquivos(args.caminhos):
         resultado = reescrever_arquivo(arquivo, mapa, aplicar=args.aplicar)
         pendencias.extend(resultado.pendencias)
-        avisos.extend(f"{_relativo(arquivo)}: {aviso}" for aviso in resultado.avisos)
+        avisos.extend(
+            f"{_relativo(arquivo)}:{aviso.linha}: {aviso.mensagem}" for aviso in resultado.avisos
+        )
         if resultado.erro:
             erros.append(f"{_relativo(arquivo)}: {resultado.erro}")
         if resultado.trocas:
