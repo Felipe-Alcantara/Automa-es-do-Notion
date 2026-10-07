@@ -108,6 +108,94 @@ def test_fora_do_binario_meipass_perdido_no_ambiente_e_ignorado(monkeypatch, tmp
     assert config._raiz_do_repositorio() == RAIZ_ESPERADA
 
 
+# --- Instalação comum (wheel em site-packages) ------------------------------------
+#
+# Numa instalação, ``config.py`` mora em ``<venv>/lib/pythonX.Y/site-packages/felixo_notion_mcp/
+# core``: ``parents[3]`` seria ``<venv>/lib/pythonX.Y``, uma pasta que um ``pipx upgrade`` (que
+# reaproveita o venv) não preserva. O ``.env`` e o ``operacional.sqlite3`` ficam, como na CLI e no
+# app antigos, ao lado do pacote: em ``site-packages``. Só um checkout (``pyproject.toml`` na
+# raiz) sobe até a raiz do repositório.
+
+
+def _copiar_config_para(destino_do_pacote: Path) -> Path:
+    """Copia ``config.py`` para ``<destino_do_pacote>/felixo_notion_mcp/core/config.py``."""
+
+    pasta_core = destino_do_pacote / "felixo_notion_mcp" / "core"
+    pasta_core.mkdir(parents=True)
+    arquivo = pasta_core / "config.py"
+    arquivo.write_text(Path(config.__file__).read_text(encoding="utf-8"), encoding="utf-8")
+    return arquivo
+
+
+def test_instalacao_comum_usa_o_site_packages_como_raiz(monkeypatch, tmp_path):
+    site_packages = tmp_path / "venv" / "lib" / "python3.12" / "site-packages"
+    arquivo = _copiar_config_para(site_packages)
+
+    copia = _carregar_copia(monkeypatch, arquivo, "config_instalado")
+
+    assert copia.REPO_RAIZ == site_packages.resolve()
+    assert copia.ENV_FILE == site_packages.resolve() / ".env"
+    # Nunca a pasta acima (``lib/pythonX.Y``), que o upgrade do pipx não preserva.
+    assert copia.REPO_RAIZ != site_packages.resolve().parent
+
+
+def test_instalacao_comum_grava_o_banco_local_ao_lado_do_pacote(monkeypatch, tmp_path):
+    site_packages = tmp_path / "venv" / "lib" / "python3.12" / "site-packages"
+    arquivo = _copiar_config_para(site_packages)
+    monkeypatch.delenv(config.ENV_DB_PATH, raising=False)
+
+    copia = _carregar_copia(monkeypatch, arquivo, "config_instalado_banco")
+
+    resolvida = copia.carregar_config(carregar_dotenv=False)
+    assert resolvida.database_path == site_packages.resolve() / "operacional.sqlite3"
+
+
+def test_instalacao_no_layout_do_windows_tambem_fica_no_site_packages(monkeypatch, tmp_path):
+    site_packages = tmp_path / "venv" / "Lib" / "site-packages"
+    arquivo = _copiar_config_para(site_packages)
+
+    copia = _carregar_copia(monkeypatch, arquivo, "config_instalado_windows")
+
+    assert copia.REPO_RAIZ == site_packages.resolve()
+
+
+def test_checkout_com_pyproject_usa_a_raiz_do_repositorio(monkeypatch, tmp_path):
+    checkout = tmp_path / "checkout"
+    checkout.mkdir()
+    (checkout / "pyproject.toml").write_text("[project]\nname = 'x'\n", encoding="utf-8")
+    arquivo = _copiar_config_para(checkout / "src")
+
+    copia = _carregar_copia(monkeypatch, arquivo, "config_checkout")
+
+    assert copia.REPO_RAIZ == checkout.resolve()
+    assert copia.ENV_FILE == checkout.resolve() / ".env"
+
+
+def test_pasta_src_sem_pyproject_acima_nao_e_checkout(monkeypatch, tmp_path):
+    """``src/`` sem ``pyproject.toml`` acima é instalação: a raiz é a pasta que tem o pacote."""
+
+    sem_projeto = tmp_path / "solto"
+    arquivo = _copiar_config_para(sem_projeto / "src")
+
+    copia = _carregar_copia(monkeypatch, arquivo, "config_sem_pyproject")
+
+    assert copia.REPO_RAIZ == (sem_projeto / "src").resolve()
+
+
+def test_launcher_cli_e_banco_local_leem_a_raiz_de_core_config(monkeypatch):
+    """O launcher, a CLI e o banco local leem a raiz de ``core.config``; ninguém recalcula."""
+
+    from felixo_notion_mcp.api import launcher
+
+    monkeypatch.delenv(config.ENV_DB_PATH, raising=False)
+
+    assert launcher.RAIZ == config.REPO_RAIZ
+    assert launcher.ENV_FILE == config.ENV_FILE
+    assert notion_tasks.RAIZ == config.REPO_RAIZ
+    resolvida = config.carregar_config(carregar_dotenv=False)
+    assert resolvida.database_path == config.REPO_RAIZ / "operacional.sqlite3"
+
+
 def test_store_legado_no_binario_tambem_fica_na_pasta_privada(monkeypatch, tmp_path):
     """O ``parents[2]`` do store legado já cai em ``_MEIPASS``: aqui só se confere."""
 

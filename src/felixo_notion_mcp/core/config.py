@@ -15,18 +15,22 @@ from pathlib import Path
 
 
 def _raiz_do_repositorio() -> Path:
-    """Raiz de onde o ``.env`` é lido e gravado.
+    """Raiz de onde o ``.env`` e o banco local são lidos e gravados.
 
-    Num checkout ou numa instalação, é a raiz do repositório: em
-    ``src/felixo_notion_mcp/core/config.py``, ``parents[0]`` é ``core``, ``[1]`` é
-    ``felixo_notion_mcp``, ``[2]`` é ``src`` e ``[3]`` é a raiz.
+    A conta vale para quem usa a raiz (a CLI, o launcher, o servidor MCP e o Django): ninguém
+    a repete. Há três casos, e o ``__file__`` de ``core/config.py`` é o ponto de partida:
 
-    No binário nativo (PyInstaller) o arquivo mora em ``<_MEIPASS>/felixo_notion_mcp/core``,
-    e ``parents[3]`` sairia da pasta privada de extração para a pasta que a contém (no Linux,
-    a temporária do sistema, gravável por qualquer usuário local): um ``.env`` plantado ali
-    seria carregado a cada execução. Por isso, congelado, a raiz é a própria ``_MEIPASS``,
-    como era antes da reorganização. Sem ``_MEIPASS``, o mais longe que se sobe é a pasta que
-    contém o pacote de topo (``parents[2]``), o mesmo ponto onde a raiz antiga ficava.
+    - **Binário nativo (PyInstaller):** a própria ``_MEIPASS``, a pasta privada de extração.
+      O arquivo mora em ``<_MEIPASS>/felixo_notion_mcp/core``, e ``parents[3]`` sairia dela
+      para a pasta que a contém (no Linux, a temporária do sistema, gravável por qualquer
+      usuário local): um ``.env`` plantado ali seria carregado a cada execução.
+    - **Checkout:** a raiz do repositório. Em ``src/felixo_notion_mcp/core/config.py``,
+      ``parents[0]`` é ``core``, ``[1]`` é ``felixo_notion_mcp``, ``[2]`` é ``src`` e ``[3]``
+      é a raiz. Só vale se ela tem o ``pyproject.toml`` do projeto.
+    - **Instalação (wheel, pipx):** não há repositório. A raiz é ``parents[2]``, a pasta que
+      contém o pacote ``felixo_notion_mcp`` (``site-packages``), o mesmo ponto onde a CLI e o
+      app antigos guardavam o ``.env`` e o banco. ``parents[3]`` seria ``<venv>/lib/pythonX.Y``.
+      Sem ``_MEIPASS`` num binário congelado, cai neste mesmo ponto.
     """
 
     if getattr(sys, "frozen", False):
@@ -34,10 +38,14 @@ def _raiz_do_repositorio() -> Path:
         if pasta_privada:
             return Path(pasta_privada)
         return Path(__file__).resolve().parents[2]
-    return Path(__file__).resolve().parents[3]
+    arquivo = Path(__file__).resolve()
+    if (arquivo.parents[3] / "pyproject.toml").is_file():
+        return arquivo.parents[3]
+    return arquivo.parents[2]
 
 
-#: Raiz do checkout (no binário nativo, a pasta privada de extração).
+#: Raiz do checkout; numa instalação, a pasta que contém o pacote (``site-packages``); no
+#: binário nativo, a pasta privada de extração.
 REPO_RAIZ = _raiz_do_repositorio()
 
 #: ``.env`` local opcional, no mesmo padrão usado por ``start_app.py``.
