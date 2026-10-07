@@ -11,7 +11,8 @@
           "--help",
           "-h"
         ],
-        "padrao": null
+        "padrao": null,
+        "tipo": null
       },
       {
         "acao": "_StoreTrueAction",
@@ -22,7 +23,8 @@
         "opcoes": [
           "--json"
         ],
-        "padrao": "False"
+        "padrao": "False",
+        "tipo": null
       },
       {
         "acao": "_StoreAction",
@@ -33,9 +35,11 @@
         "opcoes": [
           "--perfil"
         ],
-        "padrao": "None"
+        "padrao": "None",
+        "tipo": null
       }
     ],
+    "exclusivos": [],
     "subcomandos": {
       "anexar-arquivo": {
         "argumentos": [
@@ -49,7 +53,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -58,7 +63,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -67,7 +73,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -78,7 +85,8 @@
             "opcoes": [
               "--propriedade"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -89,10 +97,14 @@
             "opcoes": [
               "--substituir"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "apagar-bloco": {
         "argumentos": [
@@ -106,7 +118,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -115,7 +128,8 @@
             "nargs": "+",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -126,7 +140,8 @@
             "opcoes": [
               "--sim"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -137,10 +152,14 @@
             "opcoes": [
               "--forcar-tipos-arriscados"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "atualizar-github": {
         "argumentos": [
@@ -154,7 +173,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -165,7 +185,8 @@
             "opcoes": [
               "--contas"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -176,7 +197,8 @@
             "opcoes": [
               "--database"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -187,7 +209,8 @@
             "opcoes": [
               "--sem-readme"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -198,7 +221,8 @@
             "opcoes": [
               "--sem-arquivados"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -209,10 +233,14 @@
             "opcoes": [
               "--apenas-mudancas"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "baixar-corpos": {
         "argumentos": [
@@ -226,7 +254,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -235,7 +264,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -246,7 +276,8 @@
             "opcoes": [
               "--destino"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -257,7 +288,8 @@
             "opcoes": [
               "--ignorar-caminho"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -268,7 +300,8 @@
             "opcoes": [
               "--ignorar-database"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -279,7 +312,8 @@
             "opcoes": [
               "--somente-database"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -290,7 +324,8 @@
             "opcoes": [
               "--priorizar"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -301,7 +336,8 @@
             "opcoes": [
               "--limite"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": "int"
           },
           {
             "acao": "_StoreAction",
@@ -312,7 +348,8 @@
             "opcoes": [
               "--trabalhadores"
             ],
-            "padrao": "3"
+            "padrao": "3",
+            "tipo": "int"
           },
           {
             "acao": "_StoreTrueAction",
@@ -323,7 +360,8 @@
             "opcoes": [
               "--incluir-arquivados"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -334,10 +372,14 @@
             "opcoes": [
               "--progresso-a-cada"
             ],
-            "padrao": "25"
+            "padrao": "25",
+            "tipo": "int"
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "blocos": {
         "argumentos": [
@@ -351,7 +393,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -360,7 +403,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -371,7 +415,8 @@
             "opcoes": [
               "--metadados"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -382,7 +427,8 @@
             "opcoes": [
               "--completo"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -393,7 +439,8 @@
             "opcoes": [
               "--recursivo"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -404,10 +451,14 @@
             "opcoes": [
               "--contendo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "buscar": {
         "argumentos": [
@@ -421,7 +472,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -430,10 +482,14 @@
             "nargs": "?",
             "obrigatorio": false,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "buscar-conteudo": {
         "argumentos": [
@@ -447,7 +503,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -456,7 +513,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -465,7 +523,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -476,7 +535,8 @@
             "opcoes": [
               "--contexto"
             ],
-            "padrao": "90"
+            "padrao": "90",
+            "tipo": "int"
           },
           {
             "acao": "_StoreAction",
@@ -487,7 +547,8 @@
             "opcoes": [
               "--max-trechos"
             ],
-            "padrao": "4"
+            "padrao": "4",
+            "tipo": "int"
           },
           {
             "acao": "_StoreAction",
@@ -498,7 +559,8 @@
             "opcoes": [
               "--limite"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": "int"
           },
           {
             "acao": "_StoreTrueAction",
@@ -509,7 +571,8 @@
             "opcoes": [
               "--com-acentos"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -520,10 +583,14 @@
             "opcoes": [
               "--diferenciar-caixa"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "clonar-database": {
         "argumentos": [
@@ -537,7 +604,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -546,7 +614,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -557,7 +626,8 @@
             "opcoes": [
               "--titulo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -568,7 +638,8 @@
             "opcoes": [
               "--pagina"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -579,7 +650,8 @@
             "opcoes": [
               "--com-linhas"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -593,10 +665,14 @@
             "opcoes": [
               "--relacoes"
             ],
-            "padrao": "'auto-novo'"
+            "padrao": "'auto-novo'",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "clonar-estrutura": {
         "argumentos": [
@@ -610,7 +686,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -619,7 +696,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -628,10 +706,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "concluir": {
         "argumentos": [
@@ -645,7 +727,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -654,7 +737,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -663,10 +747,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "conteudo": {
         "argumentos": [
@@ -680,7 +768,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -689,10 +778,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "copiar-corpo": {
         "argumentos": [
@@ -706,7 +799,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -715,7 +809,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -724,7 +819,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -735,7 +831,8 @@
             "opcoes": [
               "--so-se-vazio"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -746,7 +843,8 @@
             "opcoes": [
               "--dry-run"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -757,7 +855,8 @@
             "opcoes": [
               "--conferir"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -768,10 +867,14 @@
             "opcoes": [
               "--mesmo-com-database"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "criar": {
         "argumentos": [
@@ -785,7 +888,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -794,7 +898,8 @@
             "nargs": "?",
             "obrigatorio": false,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -805,7 +910,8 @@
             "opcoes": [
               "--database"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -816,7 +922,8 @@
             "opcoes": [
               "--status"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -827,7 +934,8 @@
             "opcoes": [
               "--prazo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -838,7 +946,8 @@
             "opcoes": [
               "--duracao"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -849,7 +958,8 @@
             "opcoes": [
               "--area"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -860,7 +970,8 @@
             "opcoes": [
               "--set"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -871,7 +982,8 @@
             "opcoes": [
               "--conteudo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -882,7 +994,8 @@
             "opcoes": [
               "--arquivo-md"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -893,7 +1006,8 @@
             "opcoes": [
               "--arquivo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -904,7 +1018,8 @@
             "opcoes": [
               "--strict"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -915,7 +1030,8 @@
             "opcoes": [
               "--dry-run"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -926,10 +1042,14 @@
             "opcoes": [
               "--progresso-a-cada"
             ],
-            "padrao": "10"
+            "padrao": "10",
+            "tipo": "int"
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "criar-database": {
         "argumentos": [
@@ -943,7 +1063,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -952,7 +1073,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -961,7 +1083,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -972,7 +1095,8 @@
             "opcoes": [
               "--prop"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -983,7 +1107,8 @@
             "opcoes": [
               "--inline"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -994,7 +1119,8 @@
             "opcoes": [
               "--icone"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1005,7 +1131,8 @@
             "opcoes": [
               "--descricao"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1016,10 +1143,14 @@
             "opcoes": [
               "--prefixo-id"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "criar-subpagina": {
         "argumentos": [
@@ -1033,7 +1164,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1042,7 +1174,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1051,7 +1184,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1062,7 +1196,8 @@
             "opcoes": [
               "--conteudo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1073,10 +1208,14 @@
             "opcoes": [
               "--arquivo-md"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "database-atual": {
         "argumentos": [
@@ -1090,10 +1229,14 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "databases": {
         "argumentos": [
@@ -1107,7 +1250,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1118,10 +1262,14 @@
             "opcoes": [
               "--query"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "editar": {
         "argumentos": [
@@ -1135,7 +1283,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1144,7 +1293,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1155,7 +1305,8 @@
             "opcoes": [
               "--nome"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1166,7 +1317,8 @@
             "opcoes": [
               "--status"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1177,7 +1329,8 @@
             "opcoes": [
               "--prazo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1188,7 +1341,8 @@
             "opcoes": [
               "--duracao"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -1199,10 +1353,14 @@
             "opcoes": [
               "--area"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "editar-bloco": {
         "argumentos": [
@@ -1216,7 +1374,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1225,7 +1384,8 @@
             "nargs": "?",
             "obrigatorio": false,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1234,7 +1394,8 @@
             "nargs": "?",
             "obrigatorio": false,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1245,7 +1406,8 @@
             "opcoes": [
               "--arquivo-md"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1256,7 +1418,8 @@
             "opcoes": [
               "--trocar"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1267,7 +1430,8 @@
             "opcoes": [
               "--por"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1278,7 +1442,8 @@
             "opcoes": [
               "--todas"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1289,7 +1454,8 @@
             "opcoes": [
               "--aceitar-perda-de-formatacao"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1300,7 +1466,8 @@
             "opcoes": [
               "--arquivo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1311,10 +1478,14 @@
             "opcoes": [
               "--progresso-a-cada"
             ],
-            "padrao": "10"
+            "padrao": "10",
+            "tipo": "int"
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "editar-linha": {
         "argumentos": [
@@ -1328,7 +1499,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1337,7 +1509,8 @@
             "nargs": "?",
             "obrigatorio": false,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -1348,7 +1521,8 @@
             "opcoes": [
               "--set"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -1359,7 +1533,8 @@
             "opcoes": [
               "--append"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1370,7 +1545,8 @@
             "opcoes": [
               "--arquivo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1381,7 +1557,8 @@
             "opcoes": [
               "--strict"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1392,7 +1569,8 @@
             "opcoes": [
               "--dry-run"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1403,10 +1581,14 @@
             "opcoes": [
               "--progresso-a-cada"
             ],
-            "padrao": "10"
+            "padrao": "10",
+            "tipo": "int"
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "escolher-database": {
         "argumentos": [
@@ -1420,7 +1602,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1429,10 +1612,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "escrever": {
         "argumentos": [
@@ -1446,7 +1633,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1455,7 +1643,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1464,7 +1653,8 @@
             "nargs": "?",
             "obrigatorio": false,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1475,7 +1665,8 @@
             "opcoes": [
               "--arquivo-md"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1486,7 +1677,8 @@
             "opcoes": [
               "--apos"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1497,7 +1689,8 @@
             "opcoes": [
               "--inicio"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1508,7 +1701,8 @@
             "opcoes": [
               "--substituir"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1519,7 +1713,8 @@
             "opcoes": [
               "--mesmo-com-database"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1530,10 +1725,22 @@
             "opcoes": [
               "--apagar-tudo"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [
+          {
+            "destinos": [
+              "apos",
+              "inicio"
+            ],
+            "obrigatorio": false
+          }
+        ],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "exemplo": {
         "argumentos": [
@@ -1547,7 +1754,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1558,10 +1766,14 @@
             "opcoes": [
               "--n"
             ],
-            "padrao": "3"
+            "padrao": "3",
+            "tipo": "int"
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "exportar-docx": {
         "argumentos": [
@@ -1575,7 +1787,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1586,7 +1799,8 @@
             "opcoes": [
               "--database"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1597,7 +1811,8 @@
             "opcoes": [
               "--de"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1608,7 +1823,8 @@
             "opcoes": [
               "--ate"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1619,7 +1835,8 @@
             "opcoes": [
               "--saida"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1630,10 +1847,14 @@
             "opcoes": [
               "--campo-data"
             ],
-            "padrao": "'Data'"
+            "padrao": "'Data'",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "garantir-coluna": {
         "argumentos": [
@@ -1647,7 +1868,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1656,7 +1878,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1665,7 +1888,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1674,7 +1898,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1685,10 +1910,14 @@
             "opcoes": [
               "--relacionar-com"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "guia": {
         "argumentos": [
@@ -1702,10 +1931,14 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "importar-planilha": {
         "argumentos": [
@@ -1719,7 +1952,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1728,7 +1962,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1737,7 +1972,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1748,7 +1984,8 @@
             "opcoes": [
               "--aba"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1759,7 +1996,8 @@
             "opcoes": [
               "--coluna-titulo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -1770,7 +2008,8 @@
             "opcoes": [
               "--tipo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -1781,7 +2020,8 @@
             "opcoes": [
               "--renomear"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1792,7 +2032,8 @@
             "opcoes": [
               "--chave"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1803,10 +2044,14 @@
             "opcoes": [
               "--dry-run"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "inspecionar-estrutura": {
         "argumentos": [
@@ -1820,7 +2065,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1829,7 +2075,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1840,10 +2087,14 @@
             "opcoes": [
               "--profundidade"
             ],
-            "padrao": "3"
+            "padrao": "3",
+            "tipo": "int"
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "inventario": {
         "argumentos": [
@@ -1857,7 +2108,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1868,7 +2120,8 @@
             "opcoes": [
               "--saida"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1882,10 +2135,14 @@
             "opcoes": [
               "--filtro"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "ler": {
         "argumentos": [
@@ -1899,7 +2156,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1908,10 +2166,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "ler-bloco": {
         "argumentos": [
@@ -1925,7 +2187,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1934,10 +2197,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "limpar": {
         "argumentos": [
@@ -1951,7 +2218,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -1960,7 +2228,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1971,7 +2240,8 @@
             "opcoes": [
               "--sim"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -1982,10 +2252,14 @@
             "opcoes": [
               "--apagar-tudo"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "linhas": {
         "argumentos": [
@@ -1999,7 +2273,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2008,7 +2283,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -2019,10 +2295,14 @@
             "opcoes": [
               "--completo"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "listar": {
         "argumentos": [
@@ -2036,7 +2316,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2047,7 +2328,8 @@
             "opcoes": [
               "--status"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2058,7 +2340,8 @@
             "opcoes": [
               "--duracao"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -2069,10 +2352,14 @@
             "opcoes": [
               "--area"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "mapear": {
         "argumentos": [
@@ -2086,7 +2373,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2097,7 +2385,8 @@
             "opcoes": [
               "--query"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2108,7 +2397,8 @@
             "opcoes": [
               "--page-size"
             ],
-            "padrao": "100"
+            "padrao": "100",
+            "tipo": "int"
           },
           {
             "acao": "_StoreAction",
@@ -2119,10 +2409,14 @@
             "opcoes": [
               "--limite-duplicatas"
             ],
-            "padrao": "10"
+            "padrao": "10",
+            "tipo": "int"
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "modelos": {
         "argumentos": [
@@ -2136,9 +2430,11 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           }
         ],
+        "exclusivos": [],
         "subcomandos": {
           "listar": {
             "argumentos": [
@@ -2152,7 +2448,8 @@
                   "--help",
                   "-h"
                 ],
-                "padrao": null
+                "padrao": null,
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2161,7 +2458,8 @@
                 "nargs": "None",
                 "obrigatorio": true,
                 "opcoes": [],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2172,10 +2470,14 @@
                 "opcoes": [
                   "--fonte"
                 ],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               }
             ],
-            "subcomandos": {}
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
           },
           "preencher": {
             "argumentos": [
@@ -2189,7 +2491,8 @@
                   "--help",
                   "-h"
                 ],
-                "padrao": null
+                "padrao": null,
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2198,7 +2501,8 @@
                 "nargs": "None",
                 "obrigatorio": true,
                 "opcoes": [],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2209,7 +2513,8 @@
                 "opcoes": [
                   "--fonte"
                 ],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2220,7 +2525,8 @@
                 "opcoes": [
                   "--manifesto"
                 ],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreTrueAction",
@@ -2231,12 +2537,18 @@
                 "opcoes": [
                   "--dry-run"
                 ],
-                "padrao": "False"
+                "padrao": "False",
+                "tipo": null
               }
             ],
-            "subcomandos": {}
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
           }
-        }
+        },
+        "subcomandos_destino": "acao_modelos",
+        "subcomandos_obrigatorio": true
       },
       "montar-estrutura-projeto": {
         "argumentos": [
@@ -2250,7 +2562,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2259,10 +2572,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "mover": {
         "argumentos": [
@@ -2276,7 +2593,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2285,7 +2603,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2294,10 +2613,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "mover-database": {
         "argumentos": [
@@ -2311,7 +2634,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2320,7 +2644,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2329,10 +2654,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "mover-pagina": {
         "argumentos": [
@@ -2346,7 +2675,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2355,7 +2685,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2364,7 +2695,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2379,7 +2711,8 @@
             "opcoes": [
               "--tipo-pai"
             ],
-            "padrao": "'page_id'"
+            "padrao": "'page_id'",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -2390,7 +2723,8 @@
             "opcoes": [
               "--dry-run"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -2401,10 +2735,14 @@
             "opcoes": [
               "--aceitar-perdas"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "normalizar-nomes": {
         "argumentos": [
@@ -2418,7 +2756,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -2429,10 +2768,14 @@
             "opcoes": [
               "--dry-run"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "opcoes": {
         "argumentos": [
@@ -2446,10 +2789,14 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "perfis": {
         "argumentos": [
@@ -2463,9 +2810,11 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           }
         ],
+        "exclusivos": [],
         "subcomandos": {
           "adicionar": {
             "argumentos": [
@@ -2479,7 +2828,8 @@
                   "--help",
                   "-h"
                 ],
-                "padrao": null
+                "padrao": null,
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2488,7 +2838,8 @@
                 "nargs": "None",
                 "obrigatorio": true,
                 "opcoes": [],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2499,7 +2850,8 @@
                 "opcoes": [
                   "--token"
                 ],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2510,7 +2862,8 @@
                 "opcoes": [
                   "--database"
                 ],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2521,7 +2874,8 @@
                 "opcoes": [
                   "--nome"
                 ],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2532,7 +2886,8 @@
                 "opcoes": [
                   "--descricao"
                 ],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreTrueAction",
@@ -2543,7 +2898,8 @@
                 "opcoes": [
                   "--ativar"
                 ],
-                "padrao": "False"
+                "padrao": "False",
+                "tipo": null
               },
               {
                 "acao": "_StoreTrueAction",
@@ -2554,10 +2910,14 @@
                 "opcoes": [
                   "--sobrescrever"
                 ],
-                "padrao": "False"
+                "padrao": "False",
+                "tipo": null
               }
             ],
-            "subcomandos": {}
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
           },
           "listar": {
             "argumentos": [
@@ -2571,10 +2931,14 @@
                   "--help",
                   "-h"
                 ],
-                "padrao": null
+                "padrao": null,
+                "tipo": null
               }
             ],
-            "subcomandos": {}
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
           },
           "mostrar": {
             "argumentos": [
@@ -2588,7 +2952,8 @@
                   "--help",
                   "-h"
                 ],
-                "padrao": null
+                "padrao": null,
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2597,10 +2962,14 @@
                 "nargs": "?",
                 "obrigatorio": false,
                 "opcoes": [],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               }
             ],
-            "subcomandos": {}
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
           },
           "remover": {
             "argumentos": [
@@ -2614,7 +2983,8 @@
                   "--help",
                   "-h"
                 ],
-                "padrao": null
+                "padrao": null,
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2623,7 +2993,8 @@
                 "nargs": "None",
                 "obrigatorio": true,
                 "opcoes": [],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               },
               {
                 "acao": "_StoreTrueAction",
@@ -2634,10 +3005,14 @@
                 "opcoes": [
                   "--sim"
                 ],
-                "padrao": "False"
+                "padrao": "False",
+                "tipo": null
               }
             ],
-            "subcomandos": {}
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
           },
           "usar": {
             "argumentos": [
@@ -2651,7 +3026,8 @@
                   "--help",
                   "-h"
                 ],
-                "padrao": null
+                "padrao": null,
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -2660,12 +3036,18 @@
                 "nargs": "None",
                 "obrigatorio": true,
                 "opcoes": [],
-                "padrao": "None"
+                "padrao": "None",
+                "tipo": null
               }
             ],
-            "subcomandos": {}
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
           }
-        }
+        },
+        "subcomandos_destino": "acao_perfil",
+        "subcomandos_obrigatorio": true
       },
       "relacionar": {
         "argumentos": [
@@ -2679,7 +3061,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2688,7 +3071,8 @@
             "nargs": "?",
             "obrigatorio": false,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2697,7 +3081,8 @@
             "nargs": "?",
             "obrigatorio": false,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2708,7 +3093,8 @@
             "opcoes": [
               "--coluna"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -2719,7 +3105,8 @@
             "opcoes": [
               "--par"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2730,7 +3117,8 @@
             "opcoes": [
               "--arquivo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -2741,10 +3129,22 @@
             "opcoes": [
               "--desfazer"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [
+          {
+            "destinos": [
+              "arquivo",
+              "par"
+            ],
+            "obrigatorio": false
+          }
+        ],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "relatorio-do-dia": {
         "argumentos": [
@@ -2758,7 +3158,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2769,7 +3170,8 @@
             "opcoes": [
               "--database"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2780,7 +3182,8 @@
             "opcoes": [
               "--data"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2791,7 +3194,8 @@
             "opcoes": [
               "--corpo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2802,7 +3206,8 @@
             "opcoes": [
               "--arquivo-md"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -2813,7 +3218,8 @@
             "opcoes": [
               "--permitir-corpo-vazio"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2824,7 +3230,8 @@
             "opcoes": [
               "--resumo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2835,7 +3242,8 @@
             "opcoes": [
               "--o-que-fiz"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2846,7 +3254,8 @@
             "opcoes": [
               "--bloqueios"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2857,7 +3266,8 @@
             "opcoes": [
               "--proximos-passos"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2868,7 +3278,8 @@
             "opcoes": [
               "--status"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2879,10 +3290,14 @@
             "opcoes": [
               "--area"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "relatorios-do-git": {
         "argumentos": [
@@ -2896,7 +3311,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2907,7 +3323,8 @@
             "opcoes": [
               "--database"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -2918,7 +3335,8 @@
             "opcoes": [
               "--repo"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_AppendAction",
@@ -2929,7 +3347,8 @@
             "opcoes": [
               "--descobrir"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2940,7 +3359,8 @@
             "opcoes": [
               "--desde"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2951,7 +3371,8 @@
             "opcoes": [
               "--ate"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2962,7 +3383,8 @@
             "opcoes": [
               "--autor"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2973,7 +3395,8 @@
             "opcoes": [
               "--area"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -2984,7 +3407,8 @@
             "opcoes": [
               "--status"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -2995,7 +3419,8 @@
             "opcoes": [
               "--sem-estatisticas"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -3006,10 +3431,14 @@
             "opcoes": [
               "--dry-run"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "remover-coluna": {
         "argumentos": [
@@ -3023,7 +3452,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3032,7 +3462,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3041,7 +3472,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -3052,10 +3484,14 @@
             "opcoes": [
               "--sim"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "renomear-coluna": {
         "argumentos": [
@@ -3069,7 +3505,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3078,7 +3515,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3087,7 +3525,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3096,10 +3535,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "renomear-database": {
         "argumentos": [
@@ -3113,7 +3556,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3122,7 +3566,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3131,10 +3576,14 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "reordenar-bloco": {
         "argumentos": [
@@ -3148,7 +3597,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3157,7 +3607,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3166,7 +3617,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3177,7 +3629,8 @@
             "opcoes": [
               "--apos"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -3188,7 +3641,8 @@
             "opcoes": [
               "--inicio"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3199,7 +3653,8 @@
             "opcoes": [
               "--dir-backup"
             ],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -3210,10 +3665,14 @@
             "opcoes": [
               "--forcar-tipos-arriscados"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "restaurar-bloco": {
         "argumentos": [
@@ -3227,7 +3686,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3236,10 +3696,14 @@
             "nargs": "+",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "schema": {
         "argumentos": [
@@ -3253,7 +3717,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3262,7 +3727,8 @@
             "nargs": "None",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -3273,12 +3739,18 @@
             "opcoes": [
               "--editaveis"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       }
-    }
+    },
+    "subcomandos_destino": "comando",
+    "subcomandos_obrigatorio": true
   },
   "perfis": {
     "relativo": "notion-tasks/.notion-workspaces.json"
@@ -3295,7 +3767,8 @@
           "--help",
           "-h"
         ],
-        "padrao": null
+        "padrao": null,
+        "tipo": null
       },
       {
         "acao": "_VersionAction",
@@ -3306,7 +3779,8 @@
         "opcoes": [
           "--version"
         ],
-        "padrao": null
+        "padrao": null,
+        "tipo": null
       },
       {
         "acao": "_StoreTrueAction",
@@ -3317,7 +3791,8 @@
         "opcoes": [
           "--json"
         ],
-        "padrao": "False"
+        "padrao": "False",
+        "tipo": null
       },
       {
         "acao": "_StoreAction",
@@ -3328,9 +3803,11 @@
         "opcoes": [
           "--perfil"
         ],
-        "padrao": "None"
+        "padrao": "None",
+        "tipo": null
       }
     ],
+    "exclusivos": [],
     "subcomandos": {
       "app": {
         "argumentos": [
@@ -3344,9 +3821,11 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           }
         ],
+        "exclusivos": [],
         "subcomandos": {
           "start": {
             "argumentos": [
@@ -3360,12 +3839,18 @@
                   "--help",
                   "-h"
                 ],
-                "padrao": null
+                "padrao": null,
+                "tipo": null
               }
             ],
-            "subcomandos": {}
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
           }
-        }
+        },
+        "subcomandos_destino": "acao_app",
+        "subcomandos_obrigatorio": true
       },
       "atualizar": {
         "argumentos": [
@@ -3379,7 +3864,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -3390,10 +3876,14 @@
             "opcoes": [
               "--dry-run"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "auth": {
         "argumentos": [
@@ -3406,7 +3896,8 @@
             "opcoes": [
               "--help"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3415,10 +3906,14 @@
             "nargs": "...",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "doctor": {
         "argumentos": [
@@ -3432,10 +3927,14 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "mcp": {
         "argumentos": [
@@ -3449,9 +3948,11 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           }
         ],
+        "exclusivos": [],
         "subcomandos": {
           "start": {
             "argumentos": [
@@ -3465,7 +3966,8 @@
                   "--help",
                   "-h"
                 ],
-                "padrao": null
+                "padrao": null,
+                "tipo": null
               },
               {
                 "acao": "_StoreAction",
@@ -3479,12 +3981,18 @@
                 "opcoes": [
                   "--transport"
                 ],
-                "padrao": "'stdio'"
+                "padrao": "'stdio'",
+                "tipo": null
               }
             ],
-            "subcomandos": {}
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
           }
-        }
+        },
+        "subcomandos_destino": "acao_mcp",
+        "subcomandos_obrigatorio": true
       },
       "perfis": {
         "argumentos": [
@@ -3497,7 +4005,8 @@
             "opcoes": [
               "--help"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3506,10 +4015,14 @@
             "nargs": "...",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "tarefas": {
         "argumentos": [
@@ -3522,7 +4035,8 @@
             "opcoes": [
               "--help"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3531,10 +4045,14 @@
             "nargs": "...",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "tasks": {
         "argumentos": [
@@ -3547,7 +4065,8 @@
             "opcoes": [
               "--help"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           },
           {
             "acao": "_StoreAction",
@@ -3556,10 +4075,14 @@
             "nargs": "...",
             "obrigatorio": true,
             "opcoes": [],
-            "padrao": "None"
+            "padrao": "None",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       },
       "update": {
         "argumentos": [
@@ -3573,7 +4096,8 @@
               "--help",
               "-h"
             ],
-            "padrao": null
+            "padrao": null,
+            "tipo": null
           },
           {
             "acao": "_StoreTrueAction",
@@ -3584,11 +4108,17 @@
             "opcoes": [
               "--dry-run"
             ],
-            "padrao": "False"
+            "padrao": "False",
+            "tipo": null
           }
         ],
-        "subcomandos": {}
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
       }
-    }
+    },
+    "subcomandos_destino": "comando",
+    "subcomandos_obrigatorio": true
   }
 }
