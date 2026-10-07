@@ -64,7 +64,6 @@ EXEMPLOS = RAIZ / "examples"
 FRONT = RAIZ / "front"
 FRONT_NODE_MODULES = FRONT / "node_modules"
 FRONT_BUNDLE_INDEX = SERVIDOR / "static" / "frontend" / "index.html"
-QUALITY_SCRIPT = RAIZ / "scripts" / "quality_check.py"
 TOKEN_ENV = "NOTION_TOKEN"
 DATABASE_ENV = "NOTION_DATABASE_ID"
 TOKEN_PREFIXO = "ntn_"
@@ -1603,15 +1602,45 @@ def acao_mapear(console) -> None:
         console.print(f"[red]✗[/red] Falha ao gerar o HTML (código {codigo}).")
 
 
+def _comandos_qualidade() -> list[list[str]]:
+    """Os comandos do gate local de Python, na ordem, com o Python do projeto.
+
+    É o gate do ``CONTRIBUTING.md``: ``ruff check .`` e ``pytest -q``, rodados na raiz do
+    checkout. O ``lint`` e o ``build`` do ``front/`` rodam com ``npm`` dentro dele.
+    """
+
+    python = _executavel_projeto()
+    return [
+        [python, "-m", "ruff", "check", "."],
+        [python, "-m", "pytest", "-q"],
+    ]
+
+
 def acao_qualidade(console) -> None:
-    """Roda o gate local de qualidade: Python + front."""
+    """Roda o gate local de qualidade do Python (``ruff`` e ``pytest``) na raiz do checkout."""
 
     console.rule("[bold]Qualidade")
+    if not MODO_CHECKOUT:
+        console.print(
+            "[yellow]•[/yellow] O gate de qualidade só existe num checkout do código-fonte "
+            "(precisa de pyproject.toml, tests/ e das ferramentas de dev). Nesta instalação "
+            "não há o que rodar."
+        )
+        return
     console.print(
-        "Executando o gate local: Ruff, Pytest, Oxlint e build Vite.\n"
-        "[dim]Se alguma dependência faltar, rode Instalar/Setup e npm install em front/.[/dim]\n"
+        "Executando o gate local: ruff check . e pytest -q.\n"
+        "[dim]Se alguma ferramenta faltar, rode Instalar/Setup (instala o extra dev). Para o "
+        "front, rode npm run lint e npm run build dentro de front/.[/dim]\n"
     )
-    subprocess.run([sys.executable, str(QUALITY_SCRIPT)], cwd=RAIZ, check=False)
+    falhas = 0
+    for comando in _comandos_qualidade():
+        console.print(f"[dim]$ {_texto_comando(comando)}[/dim]")
+        if subprocess.run(comando, cwd=RAIZ, check=False).returncode != 0:
+            falhas += 1
+    if falhas:
+        console.print(f"[red]✗[/red] O gate não passou ({falhas} de 2 etapas falharam).")
+    else:
+        console.print("[green]✓[/green] O gate passou: ruff e pytest sem falhas.")
 
 
 def acao_status(console) -> None:
@@ -1711,7 +1740,7 @@ def _acoes_menu():
             acao_atualizar_github,
         ),
         "mapear": ("🗺  Mapear workspace — gera mapa.json e mapa.html navegável", acao_mapear),
-        "qualidade": ("✅  Qualidade — roda Ruff, Pytest, lint e build do front", acao_qualidade),
+        "qualidade": ("✅  Qualidade — roda Ruff e Pytest (só no checkout)", acao_qualidade),
         "instalar": ("⬇  Instalar / Setup — instala deps e cria o .env", acao_instalar),
         "configurar": ("⚙  Configurar — aponta o token do Notion", acao_configurar),
         "status": ("ℹ  Status — mostra o estado real do ambiente", acao_status),

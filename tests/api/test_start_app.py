@@ -197,21 +197,90 @@ def test_categorias_cobrem_todas_as_acoes_sem_orfas():
     assert nas_categorias | {"status"} == acoes
 
 
-def test_acao_qualidade_roda_script_unificado(monkeypatch):
+def test_comandos_de_qualidade_sao_o_gate_do_projeto():
+    """O item "Qualidade" roda o gate de verdade: ``ruff check .`` e ``pytest -q``.
+
+    Antes ele apontava para ``scripts/quality_check.py``, que não existe no monólito.
+    """
+
+    python = start_app._executavel_projeto()
+
+    assert start_app._comandos_qualidade() == [
+        [python, "-m", "ruff", "check", "."],
+        [python, "-m", "pytest", "-q"],
+    ]
+
+
+def test_o_gate_de_qualidade_existe_e_roda_no_python_do_projeto():
+    """Os comandos montados existem de fato: o Python, o ruff e o pytest respondem."""
+
+    for comando in start_app._comandos_qualidade():
+        assert Path(comando[0]).exists()
+        ferramenta = comando[2]
+        resposta = subprocess.run(
+            [comando[0], "-m", ferramenta, "--version"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert resposta.returncode == 0, resposta.stderr
+
+
+def test_acao_qualidade_roda_o_gate_na_raiz_do_checkout(monkeypatch):
     chamadas = []
-    monkeypatch.setattr(
-        start_app.subprocess,
-        "run",
-        lambda comando, **kwargs: chamadas.append((comando, kwargs)),
-    )
+
+    def rodar(comando, **kwargs):
+        chamadas.append((comando, kwargs))
+        return subprocess.CompletedProcess(comando, 0)
+
+    monkeypatch.setattr(start_app, "MODO_CHECKOUT", True)
+    monkeypatch.setattr(start_app.subprocess, "run", rodar)
     console = Console(file=io.StringIO(), force_terminal=False)
 
     start_app.acao_qualidade(console)
 
-    comando, kwargs = chamadas[0]
-    assert comando == [start_app.sys.executable, str(start_app.QUALITY_SCRIPT)]
-    assert kwargs["cwd"] == start_app.RAIZ
-    assert kwargs["check"] is False
+    assert [comando for comando, _ in chamadas] == start_app._comandos_qualidade()
+    for comando, kwargs in chamadas:
+        assert kwargs["cwd"] == start_app.RAIZ
+        assert kwargs["check"] is False
+        # Nenhum argumento que pareça um caminho pode apontar para um arquivo inexistente.
+        for parte in comando:
+            if os.sep in parte:
+                assert Path(parte).exists(), parte
+
+
+def test_acao_qualidade_mostra_o_resultado_de_cada_etapa(monkeypatch):
+    codigos = iter([1, 0])
+    monkeypatch.setattr(start_app, "MODO_CHECKOUT", True)
+    monkeypatch.setattr(
+        start_app.subprocess,
+        "run",
+        lambda comando, **kwargs: subprocess.CompletedProcess(comando, next(codigos)),
+    )
+    saida = io.StringIO()
+    console = Console(file=saida, force_terminal=False, width=300)
+
+    start_app.acao_qualidade(console)
+
+    texto = saida.getvalue()
+    # O ruff falhou, mas o pytest roda mesmo assim e o resumo diz que o gate não passou.
+    assert "ruff" in texto and "pytest" in texto
+    assert "não passou" in texto
+
+
+def test_acao_qualidade_fora_do_checkout_so_avisa(monkeypatch):
+    chamadas = []
+    monkeypatch.setattr(start_app, "MODO_CHECKOUT", False)
+    monkeypatch.setattr(
+        start_app.subprocess, "run", lambda comando, **kwargs: chamadas.append(comando)
+    )
+    saida = io.StringIO()
+    console = Console(file=saida, force_terminal=False, width=300)
+
+    start_app.acao_qualidade(console)
+
+    assert chamadas == []
+    assert "checkout" in saida.getvalue()
 
 
 def test_instala_extra_servidor_quando_necessario(monkeypatch):
