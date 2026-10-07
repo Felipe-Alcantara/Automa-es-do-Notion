@@ -1,18 +1,16 @@
 # AGENTS.md — Roteamento para agentes
 
-Este é o **mapa de roteamento** de pedidos para módulos. Leia isto **toda vez** que receber um pedido.
+Este é o **mapa de roteamento** de pedidos do **Felixo Notion MCP**: um pacote Python único,
+`felixo-notion-mcp` (import `felixo_notion_mcp`), cujo código vive neste repositório em
+`src/felixo_notion_mcp/`, organizado em camadas (veja [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md)).
+Leia isto **toda vez** que receber um pedido.
 
-## Pré-requisito: bootstrap.py
-
-Antes de qualquer coisa, verifique se `modules/` existe com os três repositórios:
-
-```bash
-python bootstrap.py
-```
-
-Se `modules/` não existe, rode isso. Se existe, `git pull` os módulos. Sem este passo, você não acessa o código dos módulos.
-
-O `bootstrap.py` **reusa clones existentes**: se um módulo já estiver clonado na pasta acima (`../<nome>`), ele cria um link (junction no Windows, symlink no POSIX) em `modules/<nome>` apontando para lá, em vez de duplicar. Ou seja, `modules/<nome>` é sempre o caminho de dev — editar/testar/commitar ali escreve no clone real. Só clona do GitHub o que não existe em lugar nenhum.
+> **Etapa 1 do monólito (07/10/2026).** O hub e os módulos `notion-starter`,
+> `notion-tasks-cli` e `notion-workspace-app` foram reunidos aqui. Não há mais `modules/`, nem
+> repositório de módulo para clonar ou onde commitar: o código é este. Os **pacotes
+> publicados** no PyPI continuam `notion-automacoes` (CLI), `notion-starter` e
+> `notion-workspace-app`, e os binários continuam `notion-automacoes-<alvo>`, até a etapa 4.
+> O executável `notion-tasks` funciona igual na instalação publicada e neste checkout.
 
 ---
 
@@ -32,7 +30,7 @@ notion-tasks criar --titulo "..."
 notion-tasks conteudo <id>
 ```
 
-Não precise de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o guia completo (escrito para IAs).
+Não precisa de checkout nem de módulos locais. O CLI já tem tudo pronto. Ver `--help` para o guia completo (escrito para IAs).
 
 **Regras de operação no Notion (valem para CLI e MCP):**
 
@@ -70,48 +68,47 @@ notion-tasks criar "Título" \             # 4. cria completa numa chamada
 notion-tasks relacionar <nova> <outra> --coluna "Subtarefas relacionadas"
 ```
 
-### MODO DESENVOLVIMENTO — modificar código das ferramentas
+### MODO DESENVOLVIMENTO — modificar o código
 
-O pedido é: *corrigir bug, adicionar comando, mudar frontend, melhorar resilência…*
+O pedido é: *corrigir bug, adicionar comando, mudar frontend, melhorar resiliência…*
 
-**Pré-requisito:** `python bootstrap.py` (primeiro). Sem isso, `modules/` não existe.
+Todo o código está neste repositório. Prepare o ambiente uma vez:
+
+```bash
+uv sync --locked --all-extras   # .venv com as dependências travadas e o pacote em modo editável
+uv run python -m pytest         # a suíte inteira (HTTP mockado: não precisa de token nem de rede)
+uv run ruff check .             # lint
+python start_app.py             # menu: Instalar/Setup, Configurar, Iniciar, Status
+```
+
+Sem `uv`, o menu faz o equivalente: `python start_app.py` → **Instalar/Setup** cria o `.venv` e
+instala o pacote em modo editável. O `start_app.py` abre mesmo num Python onde ainda não há nada
+instalado (só usa a biblioteca padrão).
 
 **Fluxo:**
-1. Use a tabela de roteamento abaixo para encontrar o módulo (`notion-starter`, `notion-tasks-cli`, `notion-workspace-app`).
-2. Edite no arquivo correto, em `modules/<nome>/`.
-3. Teste dentro do módulo: `cd modules/<nome> && python -m pytest`.
-4. Commit e push **dentro do módulo**, não no hub.
+1. Use a tabela de roteamento abaixo para achar a camada e o arquivo.
+2. Edite em `src/felixo_notion_mcp/<camada>/<arquivo>`.
+3. Rode o gate: `uv run ruff check .` e `uv run python -m pytest`.
+4. Se mexeu no `front/`, rode também `npm run lint` e `npm run build` dentro dele.
 
-> **Antes de confiar num teste do `notion-starter`, rode `python check-dev.py`.**
-> Ele diz de onde o `notion_starter` está sendo importado. Se não vier de
-> `modules/notion-starter`, sua edição **não está sendo executada** — nem pela CLI
-> do PATH, nem pela suíte de quem depende dela — e nada avisa: o comando continua
-> funcionando, só que com uma cópia antiga instalada. No desenvolvimento, instale
-> a CLI **primeiro** e o starter **por último**, ambos `--editable`, ou use
-> `python start_app.py → Instalar/Setup`, que já faz nessa ordem. A distribuição
-> publicada usa a dependência versionada do PyPI e não depende de checkout vizinho.
-> Medido em 24/08/2026; o contrato de distribuição está em
-> [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md).
+> **Se você edita e nada muda, rode `felixo-notion-mcp doctor`.** Ele mostra de onde o
+> `felixo_notion_mcp` está sendo importado e se é um checkout editável (a linha termina em
+> `checkout editável`); a mesma informação aparece no Status do `start_app.py`. Se a pasta
+> não for `src/felixo_notion_mcp` deste checkout, a sua edição **não está sendo executada**.
+> O `doctor` só **informa**: diferente do antigo `check-dev.py`, ele não avisa nem falha por isso.
 
-Nunca desenvolva funcionalidade neste hub; este é documentação e roteamento.
+Funcionalidade nova entra aqui, na camada certa. O que a camada `api/` não pode ter é regra de
+negócio: se a borda precisa de uma regra, ela vira um caso de uso em `services/`.
 
 ---
-
-## Catálogo de módulos
-
-| Repositório | Papel | Local após bootstrap |
-| --- | --- | --- |
-| [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) | Biblioteca Python base + camada compartilhada: `NotionClient`, schema, tarefas, conteúdo, inventário, adaptadores e `notion_starter.services` | `modules/notion-starter/` |
-| [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) | CLI para IAs ("MCP via CLI"): borda fina; `integrations/` e `services/` comuns são shims para `notion-starter` | `modules/notion-tasks-cli/` |
-| [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app) | App completo: API Django, SPA React, servidor MCP, launcher `start_app.py` | `modules/notion-workspace-app/` |
 
 ## Roteamento — MODO USO
 
 Para uso global, instale a distribuição pública: `pipx install
 "notion-automacoes[app]"` (`python -m pip install "notion-automacoes[app]"` também
 é válido em um ambiente virtual).
-Para desenvolvimento pelo checkout, o fluxo continua sendo `python bootstrap.py`
-seguido da instalação editável dos módulos.
+Para desenvolvimento pelo checkout, veja o MODO DESENVOLVIMENTO acima
+(`uv sync --locked --all-extras`).
 Requer autenticação: um **perfil ativo** salvo na CLI **ou** `NOTION_TOKEN` (e opcionalmente
 `NOTION_DATABASE_ID`) no ambiente/`.env` — veja a precedência abaixo.
 `notion-tasks --help` traz o guia completo, escrito para ser lido por modelos.
@@ -171,64 +168,83 @@ A CLI gerencia os perfis locais de workspaces/keys com
 | Exportar relatórios diários para DOCX | `notion-tasks exportar-docx --database <id> --de YYYY-MM-DD --ate YYYY-MM-DD --saida <dir>` (também aceita `NOTION_REPORTS_DATABASE_ID`; gera um `.docx` por relatório/dia). A saída reproduz o modelo visual dos relatórios, mas é gerada programaticamente — o acabamento fino pode exigir ajuste manual no Word. |
 | Importar/atualizar repositórios do GitHub numa database (vários perfis de uma vez, com dedup) | `notion-tasks atualizar-github --contas <login/@handle/URL,...>` (upsert por URL, propriedades ricas e README em subpágina). Flags: `--sem-readme` (só propriedades), `--sem-arquivados` (ignora arquivados), `--apenas-mudancas` (pula sem alteração). Guia: [`docs/GITHUB-DATABASE.md`](docs/GITHUB-DATABASE.md) |
 | Trocar de workspace / gerenciar keys salvas | `notion-tasks perfis listar / adicionar / usar / mostrar / remover`; numa única execução, `--perfil <alias>` |
-| Interface gráfica ou servidor MCP | use o `notion-workspace-app` (`python start_app.py`) |
-| **CLI distribuída sem clone** | instale `notion-automacoes[app]`; use `notion-automacoes tasks`, `auth`, `doctor`, `app start` e `mcp start` (versão pública atual: `0.5.0`) |
+| Interface gráfica ou servidor MCP | `python start_app.py` (menu do checkout) ou, numa instalação, `notion-automacoes app start` / `notion-automacoes mcp start` |
+| **CLI distribuída sem clone** | instale `notion-automacoes[app]`; use `notion-automacoes tasks`, `auth`, `doctor`, `app start` e `mcp start` (versão pública atual: `0.5.0`; este checkout constrói `felixo-notion-mcp` `0.6.0.dev0`, que traz também o executável `felixo-notion-mcp`) |
 
 ## Roteamento — MODO DESENVOLVIMENTO
 
-Primeiro `python bootstrap.py` (clona ou atualiza os módulos em `modules/`). Depois localize o alvo:
+As camadas, em uma linha cada (detalhes e dependências em
+[`docs/ARQUITETURA.md`](docs/ARQUITETURA.md)):
 
-| O pedido mexe em… | Repositório | Onde |
-| --- | --- | --- |
-| Cliente HTTP, retries, rate limit, erros da API | notion-starter | `src/notion_starter/client.py` |
-| Schema de databases: comparação (`comparar_schema`) e **leitura legível** (`descrever_database`, `DescricaoDatabase`, `Coluna`, `Relacao`) | notion-starter | `src/notion_starter/schema.py` |
-| Ligar linhas por relação nos dois sentidos (confere a outra ponta antes de gravar) | notion-starter | `src/notion_starter/services/relacoes.py` |
-| Guarda contra escrever bloco solto em página que contém database; preservação de blocos não recriáveis na reescrita | notion-starter | `src/notion_starter/services/conteudo.py` (`databases_da_pagina`, `TIPOS_NAO_RECRIAVEIS`, `EscritaAbaixoDeDatabaseError`) |
-| Modelo de tarefas (`Tarefa`, `TaskList`) | notion-starter | `src/notion_starter/tasks.py` |
-| Conversão Markdown ↔ blocos; builders de propriedade (fatia de texto >2000) | notion-starter | `src/notion_starter/content.py`, `properties.py`, `readers.py` |
-| Ler/editar propriedades de uma página (`obter_pagina`/`atualizar_pagina`) | notion-starter | `src/notion_starter/client.py` |
-| Inventário/varredura do workspace | notion-starter | `src/notion_starter/inventory.py` |
-| Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
-| Subcomandos do CLI, saída JSON, `--help` | notion-tasks-cli | `cli/notion_tasks.py` |
-| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, ingestão, sync GitHub, exportação DOCX, anexos, import retomável) | notion-starter | `src/notion_starter/services/` |
-| Relatório por dia em um database (upsert pela data; anexa em vez de duplicar) — padrão de hora/duração em [`docs/PADRAO-RELATORIOS.md`](docs/PADRAO-RELATORIOS.md) | notion-starter | `src/notion_starter/services/relatorios_diarios.py` |
-| Histórico de um repositório git agrupado por dia (lógica pura, sem rede) | notion-starter | `src/notion_starter/git_historico.py` |
-| Histórico de **vários** repositórios consolidado por dia + varredura que descobre repositórios numa pasta | notion-starter | `src/notion_starter/services/historico_repositorios.py` (`consolidar_dias`, `descobrir_repositorios`, `corpo_markdown`) |
-| Fonte de planilha (.xlsx/.csv) do framework de ingestão | notion-starter | `src/notion_starter/services/ingestao.py` (`FontePlanilha`) |
-| Normalização de números/datas no formato brasileiro | notion-starter | `src/notion_starter/valores_br.py` |
-| Re-parent (mover página/database), File Upload API, schema de coluna por tipo | notion-starter | `src/notion_starter/client.py` (`mover_pagina` usa `POST /pages/{id}/move` e relê o pai; `resolver_data_source`; `listar_modelos`), `properties.py` (`schema_propriedade`, `valor_de_texto`) |
-| Prever colunas criadas/valores perdidos ao mover uma linha entre databases | notion-starter | `src/notion_starter/services/movimentacao.py` (`prever_movimento`, `mover_pagina`, `MovimentoComPerdasError`) |
-| Copiar corpo bloco a bloco (lista branca, sem `null`, aninhamento em etapas, desfaz em falha) | notion-starter | `src/notion_starter/services/copia_corpo.py` |
-| Modelos nativos de database (listar, preencher a partir de manifesto) | notion-starter | `src/notion_starter/services/modelos.py` |
-| Acervo: inventário com datas e caminho, download retomável de corpos, busca por regex no texto | notion-starter | `src/notion_starter/services/inventario_workspace.py`, `corpos.py`, `busca_conteudo.py` |
-| Garantir, renomear e remover coluna de schema | notion-starter | `src/notion_starter/services/schema.py` |
-| Comando da CLI que usa serviço do starter **ainda não publicado** (import dentro do comando, recusa `configuracao` com o starter do PyPI) | notion-tasks-cli | `cli/notion_tasks.py` (`_servico_do_starter`) |
-| Editar propriedades de linha genérica (`editar-linha`, set/append) | notion-tasks-cli | `services/propriedades.py` |
-| Adaptadores GitHub/OpenRouter/Notion | notion-tasks-cli | `integrations/` |
-| Endpoints REST, serializers | notion-workspace-app | `server/api/` |
-| Servidor MCP (ferramentas `notion.*`) | notion-workspace-app | `server/mcp_server.py` |
-| Interface web (kanban, filtros, exploração) | notion-workspace-app | `front/src/` |
-| Launcher TUI | notion-workspace-app | `start_app.py` |
+- `domain/` — regras puras (Markdown ↔ blocos, propriedades, schema, tarefas);
+- `services/` — casos de uso, sem HTTP e sem argparse;
+- `repositories/` — persistência local (Django ORM: estado operacional);
+- `integrations/` — quem fala com fora: Notion, GitHub, OpenRouter;
+- `api/` — as bordas: `cli/`, `mcp/`, `http/` e o menu `launcher.py`;
+- `core/` — configuração, perfis, exceções, logging, constantes e utilitários.
 
-**Consolidação:** `integrations/github.py`, `integrations/openrouter.py` e os `services/`
-compartilhados do CLI/app são shims para `notion-starter`. Corrija a implementação real em
-`modules/notion-starter/src/notion_starter/`. O que ainda é específico do consumidor permanece
-no consumidor (ex.: `services/propriedades.py` do CLI e `integrations/notion.py` de cada borda).
+Localize o alvo (os caminhos de `src/` são o arquivo a editar):
+
+| O pedido mexe em… | Onde |
+| --- | --- |
+| Cliente HTTP, retries, rate limit, erros da API; ler/editar propriedades de página (`obter_pagina`/`atualizar_pagina`); re-parent (`mover_pagina` usa `POST /pages/{id}/move` e relê o pai), File Upload, `resolver_data_source`, `listar_modelos` | `src/felixo_notion_mcp/integrations/notion_client.py` (o único que fala com a API do Notion) |
+| Schema de databases: comparação (`comparar_schema`) e **leitura legível** (`descrever_database`, `DescricaoDatabase`, `Coluna`, `Relacao`) | `src/felixo_notion_mcp/domain/schema.py` |
+| Ligar linhas por relação nos dois sentidos (confere a outra ponta antes de gravar) | `src/felixo_notion_mcp/services/relacoes.py` |
+| Guarda contra escrever bloco solto em página que contém database; preservação de blocos não recriáveis na reescrita | `src/felixo_notion_mcp/services/conteudo.py` (`databases_da_pagina`, `TIPOS_NAO_RECRIAVEIS`); a exceção `EscritaAbaixoDeDatabaseError` mora em `src/felixo_notion_mcp/core/exceptions.py` |
+| Modelo de tarefas (`Tarefa`, `TaskList`) | `src/felixo_notion_mcp/domain/tasks.py` |
+| Conversão Markdown ↔ blocos; builders de propriedade (fatia de texto >2000); schema de coluna por tipo (`schema_propriedade`, `valor_de_texto`) | `src/felixo_notion_mcp/domain/content.py`, `properties.py`, `readers.py` |
+| Inventário/varredura do workspace | `src/felixo_notion_mcp/services/inventory.py` |
+| Saneamento de texto/JSON (surrogates), `fatiar_utf16`, `normalizar_id` | `src/felixo_notion_mcp/core/utils.py` |
+| Normalização de números/datas no formato brasileiro | `src/felixo_notion_mcp/domain/valores_br.py` |
+| Exceções (`NotionSyncError` e derivadas), logging, constantes (versão da API, limites) | `src/felixo_notion_mcp/core/exceptions.py`, `logging.py`, `constants.py` |
+| Leitura do ambiente e do `.env` | `src/felixo_notion_mcp/core/config.py` |
+| Perfis de workspace/keys (`perfis`, `auth`) | `src/felixo_notion_mcp/core/workspaces.py` |
+| Subcomandos do `notion-tasks`, saída JSON, `--help` | `src/felixo_notion_mcp/api/cli/notion_tasks.py` |
+| Fachada `felixo-notion-mcp` (`tasks`, `auth`, `doctor`, `app`, `mcp`, `update`) | `src/felixo_notion_mcp/api/cli/unificada.py` |
+| Envelope de erro da CLI (`codigo`, `proximo_passo`) | `src/felixo_notion_mcp/api/cli/erros.py` |
+| Atualização dos binários nativos, versão embutida | `src/felixo_notion_mcp/api/cli/atualizacao_nativa.py`, `versao.py` |
+| Contrato de linha de comando (retrato do parser) | `src/felixo_notion_mcp/api/cli/retrato.py` e `tests/contrato/retrato_cli.json` |
+| `doctor`: de onde o pacote é importado | `src/felixo_notion_mcp/core/origem.py` (usado por `api/cli/unificada.py` e pelo Status do launcher) |
+| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, ingestão, sync GitHub, exportação DOCX, anexos, import retomável) | `src/felixo_notion_mcp/services/` |
+| Relatório por dia em um database (upsert pela data; anexa em vez de duplicar) — padrão de hora/duração em [`docs/PADRAO-RELATORIOS.md`](docs/PADRAO-RELATORIOS.md) | `src/felixo_notion_mcp/services/relatorios_diarios.py` |
+| Histórico de um repositório git agrupado por dia (lógica pura, sem rede) | `src/felixo_notion_mcp/domain/git_historico.py` |
+| Histórico de **vários** repositórios consolidado por dia + varredura que descobre repositórios numa pasta | `src/felixo_notion_mcp/services/historico_repositorios.py` (`consolidar_dias`, `descobrir_repositorios`, `corpo_markdown`) |
+| Fonte de planilha (.xlsx/.csv) do framework de ingestão; importação retomável | `src/felixo_notion_mcp/services/ingestao.py` (`FontePlanilha`), `importacao.py` |
+| Prever colunas criadas/valores perdidos ao mover uma linha entre databases | `src/felixo_notion_mcp/services/movimentacao.py` (`prever_movimento`, `mover_pagina`, `MovimentoComPerdasError`) |
+| Copiar corpo bloco a bloco (lista branca, sem `null`, aninhamento em etapas, desfaz em falha) | `src/felixo_notion_mcp/services/copia_corpo.py` |
+| Modelos nativos de database (listar, preencher a partir de manifesto) | `src/felixo_notion_mcp/services/modelos.py` |
+| Acervo: inventário com datas e caminho, download retomável de corpos, busca por regex no texto | `src/felixo_notion_mcp/services/inventario_workspace.py`, `corpos.py`, `busca_conteudo.py` |
+| Garantir, renomear e remover coluna de schema | `src/felixo_notion_mcp/services/schema.py` |
+| Comando da CLI que carrega um serviço sob demanda (import dentro do comando; se o serviço falta, a instalação está quebrada e a mensagem diz isso) | `src/felixo_notion_mcp/api/cli/notion_tasks.py` (`_servico_do_starter`) |
+| Editar propriedades de linha genérica (`editar-linha`, set/append) | `src/felixo_notion_mcp/services/propriedades.py` |
+| Adaptadores GitHub/OpenRouter/Notion | `src/felixo_notion_mcp/integrations/github.py`, `openrouter.py`, `notion.py` |
+| Endpoints REST, serializers, rotas; settings, urls e ASGI do Django | `src/felixo_notion_mcp/api/http/rest/`; `src/felixo_notion_mcp/api/http/config/` |
+| Estado operacional local (modelos `Job` e `Lock`, migrações) | `src/felixo_notion_mcp/repositories/operations/` |
+| Servidor MCP (ferramentas `notion.*`) | `src/felixo_notion_mcp/api/mcp/server.py` |
+| Interface web (kanban, filtros, exploração) | `front/src/` (o build vai para `src/felixo_notion_mcp/api/http/static/frontend/`, ignorado pelo git) |
+| Menu de entrada (Iniciar, Instalar/Setup, Configurar, Status) | `start_app.py` (a porta, na raiz) e `src/felixo_notion_mcp/api/launcher.py` (a implementação) |
+| Build do binário nativo, smoke do binário, conferência do wheel | `scripts/empacotamento/` |
+| CI (matriz de sistemas e versões, `pip-audit`, `npm audit`) | `.github/workflows/ci.yml` |
+| Dependências e metadados do pacote | `pyproject.toml` e `uv.lock` (`uv lock` para atualizar); no front, `front/package.json` |
+
+**Sem camada duplicada.** Os módulos antigos tinham `core/`, `integrations/` e `services/`
+próprios, e vários arquivos eram *shims* que só reexportavam o `notion-starter`. Isso acabou:
+existe uma implementação de cada coisa, e é a da tabela acima.
 
 ### Fluxo de trabalho
 
-1. `python bootstrap.py` — garante `modules/` atualizado (`git pull` em cada módulo).
-2. Edite no módulo correto. Cada módulo tem seu próprio `AGENTS.md` com detalhes locais.
-3. Rode os testes **do módulo**: `python -m pytest` dentro dele.
-4. Commite e push **dentro do módulo** (Conventional Commits: `feat:`/`fix:`/`docs:`/`refactor:`/`chore:`).
-5. Se mudou arquitetura, contratos entre módulos ou o roteamento acima, atualize este hub (`AGENTS.md`, `README.md`) e registre a decisão no `IA.md`.
+1. `uv sync --locked --all-extras` — dependências travadas e pacote editável.
+2. Edite na camada certa (tabela acima).
+3. Rode o gate: `uv run ruff check .` e `uv run python -m pytest` (mais `npm run lint` e `npm run build` em `front/` quando mexer nele).
+4. Commite na branch de trabalho (Conventional Commits: `feat:`/`fix:`/`docs:`/`refactor:`/`chore:`), **um tema por commit**: interno (`IA.md`, `AGENTS.md`, `CLAUDE.md`), público (`README.md`, guias) e API (contratos de CLI/MCP/REST) nunca no mesmo commit.
+5. Se mudou arquitetura, contratos ou o roteamento acima, atualize este arquivo, `docs/ARQUITETURA.md` e o `README.md`, e registre a decisão no `IA.md` (append-only).
 
-### Convenções (valem para todos os módulos)
+### Convenções (valem para todo o repositório)
 
-- **Prefira scripts e automações a mudanças manuais** — sempre. Toda vez que precisar manipular dados (no Notion ou em qualquer projeto que use o padrão de qualidade Felixo), use primeiro a CLI `notion-tasks`, os serviços do `notion-starter` ou um script reutilizável; edição manual é exceção e deve ser registrada com o motivo. Por quê: scripts reutilizáveis viram patrimônio — modelos de IA cada vez melhores podem ler, melhorar e estender essas ferramentas, aprimorando o ecossistema naturalmente ao longo do tempo. Uma mudança manual não deixa rastro reutilizável; um script deixa.
+- **Prefira scripts e automações a mudanças manuais** — sempre. Toda vez que precisar manipular dados (no Notion ou em qualquer projeto que use o padrão de qualidade Felixo), use primeiro a CLI `notion-tasks`, os serviços de `src/felixo_notion_mcp/services/` ou um script reutilizável; edição manual é exceção e deve ser registrada com o motivo. Por quê: scripts reutilizáveis viram patrimônio — modelos de IA cada vez melhores podem ler, melhorar e estender essas ferramentas, aprimorando o ecossistema naturalmente ao longo do tempo. Uma mudança manual não deixa rastro reutilizável; um script deixa.
 - Código, docstrings e mensagens de erro **em português**.
-- Fronteiras de camada sagradas: bordas (CLI/API/MCP) não têm regra de negócio; `services` não conhece HTTP; só o `NotionClient` fala com a API do Notion.
+- Fronteiras de camada sagradas: `api/` (CLI/MCP/HTTP) não tem regra de negócio; `domain/` e `services/` não conhecem HTTP; só `integrations/notion_client.py` fala com a API do Notion; `core/` não depende de nenhuma outra camada.
 - Tipagem forte (`TypedDict` para payloads, `dataclass` para resultados); exceções derivam de `NotionSyncError`.
 - Nunca commitar `.env`, tokens ou bancos SQLite.
-- Histórico de decisões de arquitetura: `IA.md` (leia antes de mudanças estruturais).
-- Cada módulo tem seu próprio gate (`ruff check .` + `python -m pytest`; o app também `npm run lint`/`npm run build` em `front/`) e CI no GitHub Actions. As suítes passam 100% em Windows e POSIX.
+- Histórico de decisões de arquitetura: `IA.md` (leia antes de mudanças estruturais); os `IA.md` dos módulos antigos estão em `docs/ia-archive/`.
+- Um gate só: `ruff check .` + `python -m pytest` (mais `npm run lint`/`npm run build` em `front/`), e a CI no GitHub Actions roda em Ubuntu, Windows e macOS com Python 3.10 a 3.13.
