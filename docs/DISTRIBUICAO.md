@@ -1,8 +1,76 @@
 # Distribuição da CLI única
 
-> **Estado em 2026-09-08:** a versão `0.3.0` está publicada no PyPI. Este é o
-> contrato atual para usar, desenvolver e verificar a distribuição sem exigir
-> clone, Git ou Node na máquina de quem usa o produto.
+> **Estado em 2026-10-07 (etapa 1 do monólito):** este repositório agora se constrói como
+> **`felixo-notion-mcp` `0.6.0.dev0`**, mas **nada foi publicado com esse nome**. Os pacotes do
+> PyPI (`notion-automacoes`, `notion-starter`, `notion-workspace-app`) e os binários nativos
+> (`notion-automacoes-<alvo>`) seguem exatamente como estavam até a etapa 4. A seção
+> "Transição para o pacote único" diz o que muda e quando; "Distribuição publicada" e as
+> seguintes, até "Evidências da publicação", continuam sendo o contrato do que está no PyPI e
+> nas Releases.
+
+## Transição para o pacote único
+
+O hub e os três módulos viraram um pacote só
+([spec do monólito](superpowers/specs/2026-10-07-monolito-felixo-notion-mcp-design.md),
+[arquitetura](ARQUITETURA.md)). Até a etapa 4, quem instala continua instalando os pacotes de
+antes. O que está planejado para o corte:
+
+| O que | Hoje (publicado) | Na etapa 4 |
+| --- | --- | --- |
+| CLI | `notion-automacoes` `0.5.0` | `0.6.0` de transição: sem código próprio, depende de `felixo-notion-mcp` e reexpõe `notion-automacoes` e `notion-tasks`, com aviso no stderr |
+| Biblioteca | `notion-starter` `0.4.1` | `0.5.0`, só com o aviso de incorporação; o código continua igual para quem o importa |
+| App | `notion-workspace-app` `0.3.1` | versão final que depende de `felixo-notion-mcp[app]`, com o aviso |
+| Pacote novo | não publicado | `felixo-notion-mcp` `0.6.0`, por Trusted Publishing |
+| Binários nativos | `notion-automacoes-<alvo>`, nas Releases do `notion-tasks-cli` | assets `felixo-notion-mcp-<alvo>` no repositório novo, mais a Release-ponte `v0.5.1` no `notion-tasks-cli` |
+
+A ordem do corte importa: pacote novo e binários, depois os pacotes de transição, depois a
+Release-ponte, e só então o arquivamento dos repositórios antigos. Arquivar antes da
+Release-ponte trancaria os binários antigos na versão atual.
+
+### O que este repositório já é
+
+- Distribuição `felixo-notion-mcp`, import `felixo_notion_mcp`, versão `0.6.0.dev0`.
+- Executáveis: `felixo-notion-mcp` (principal), `notion-tasks` (apelido permanente) e, de
+  transição, `notion-automacoes`, `notion-automacoes-app` e `notion-automacoes-mcp`.
+- Extras: `app` (Django, `questionary`, `rich`), `planilha` (`openpyxl`), `native` (PyInstaller)
+  e `dev`. O extra do modo hospedado (`servidor`) é da etapa 3.
+- O wheel leva a SPA compilada. Para construir e conferir:
+
+```bash
+uv sync --locked --all-extras
+(cd front && npm ci && npm run build)
+uv build
+uv run python -m scripts.empacotamento.conferir_wheel dist/*.whl
+```
+
+- A CI (`.github/workflows/ci.yml`) roda ruff e a suíte em Ubuntu, Windows e macOS com Python
+  3.10 a 3.13, lint e build do front, `npm audit`, `pip-audit` e a conferência do wheel.
+  **Não há workflow de release nem de publicação aqui ainda**: quem publica até a etapa 4 são
+  os repositórios dos módulos.
+
+### O que não muda nesta etapa
+
+- Os nomes de asset `notion-automacoes-<alvo>` e o `REPOSITORIO_GITHUB` do atualizador nativo
+  (que continua apontando para as Releases do `notion-tasks-cli`).
+- O comando `notion-tasks`, as linhas de comando em geral e o arquivo de perfis
+  (`notion-tasks/.notion-workspaces.json` na pasta de configuração do usuário).
+
+### Binário nativo a partir deste repositório
+
+Os scripts do PyInstaller vivem em `scripts/empacotamento/` (`build_native.py`,
+`native_entrypoint.py`, `smoke_native.py`). O build e o smoke foram exercitados **só em Linux
+x64**; Windows e macOS (x64 e arm64) ficam para a CI de release da etapa 4. Para gerar um
+executável de teste local:
+
+```bash
+uv run python -m scripts.empacotamento.build_native --target linux-x64 --version v0.6.0 --output dist/native
+```
+
+## Distribuição publicada
+
+> **Contrato de 2026-09-08**, escrito quando a versão `0.3.0` foi publicada no PyPI (a CLI
+> está hoje na `0.5.0`). Daqui até "Evidências da publicação" está o contrato para usar e
+> verificar a distribuição sem exigir clone, Git ou Node na máquina de quem usa o produto.
 
 ## Instalação do usuário
 
@@ -74,7 +142,8 @@ sequencial dos pacotes, mas é a instalação recomendada para o produto complet
 
 ## Release Python, binários nativos e smoke
 
-Cada módulo tem um workflow `release.yml` que:
+Cada repositório de módulo tem um workflow `release.yml` (neste repositório unificado ele
+ainda não existe; chega na etapa 4) que:
 
 - constrói sdist e wheel;
 - valida metadados com `twine check`;
@@ -93,8 +162,9 @@ empacotamento PyInstaller e assinatura concluírem seus artefatos.
 
 ## Contrato de binários nativos, atualização e rollback
 
-O módulo `notion-tasks-cli` implementa o mecanismo em
-`cli/atualizacao_nativa.py`, sem alterar o pacote Python `0.3.0`. A Release
+O mecanismo nasceu no `notion-tasks-cli` (`cli/atualizacao_nativa.py`) e hoje vive neste
+repositório em `src/felixo_notion_mcp/api/cli/atualizacao_nativa.py`, sem alterar o
+pacote Python `0.3.0`. A Release
 estável consulta a API de Releases do GitHub e só considera o alvo detectado
 na máquina:
 
@@ -189,13 +259,15 @@ assinatura, atualização, rollback e manutenção.
 
 ## Desenvolvimento
 
-Para alterar o código, use o hub e seus clones de desenvolvimento:
+Para alterar o código, use um checkout deste repositório; não há mais módulos para
+clonar:
 
 ```bash
-python bootstrap.py
-python check-dev.py
+uv sync --locked --all-extras
+uv run felixo-notion-mcp doctor
 ```
 
-Depois, edite o módulo correspondente, rode o gate local dele e faça commit/push
-no repositório do módulo. O fluxo detalhado está em [`AGENTS.md`](../AGENTS.md) e
-em [`docs/QUALIDADE.md`](QUALIDADE.md).
+O `doctor` mostra de onde o pacote está sendo importado e se é o checkout editável (só
+informa; não avisa). Depois, edite a camada correspondente em `src/felixo_notion_mcp/`,
+rode o gate e faça commit. O fluxo detalhado está em [`AGENTS.md`](../AGENTS.md) e em
+[`QUALIDADE.md`](QUALIDADE.md).

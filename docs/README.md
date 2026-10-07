@@ -12,7 +12,7 @@
 | Documento | Para quê serve |
 |---|---|
 | [🏛️ ARQUITETURA.md](ARQUITETURA.md) | As camadas do pacote único, a direção das dependências e a tabela origem → destino dos módulos antigos. |
-| [📦 DISTRIBUICAO.md](DISTRIBUICAO.md) | Instalação pública, pacotes `0.3.0`, smoke, Trusted Publishing e limites da distribuição. |
+| [📦 DISTRIBUICAO.md](DISTRIBUICAO.md) | Instalação pública, pacotes publicados, binários nativos, smoke, Trusted Publishing e a transição para o pacote único. |
 | [✅ QUALIDADE.md](QUALIDADE.md) | Gate executável do hub e dos módulos, checklist de documentação e critério de pronto. |
 | [🧱 CONTRATOS.md](CONTRATOS.md) | Contrato dos objetos, rotas REST, erros e fronteiras entre módulos. |
 | [🤖 AGENTES.md](AGENTES.md) | Playbook histórico/operacional de orquestração multi-agente. |
@@ -21,7 +21,7 @@
 | [🔗 MCP.md](MCP.md) | Ferramentas MCP, transportes, confirmação e integração com o Felixo-AI-Core. |
 | [🐙 GITHUB-DATABASE.md](GITHUB-DATABASE.md) | Sincronização idempotente de repositórios do GitHub para o Notion. |
 | [📊 PADRAO-RELATORIOS.md](PADRAO-RELATORIOS.md) | Formato canônico dos relatórios diários e regras de upsert. |
-| [🧩 MODULARIZACAO.md](MODULARIZACAO.md) | Arquitetura multi-repositório implementada e fronteiras de manutenção. |
+| [🧩 MODULARIZACAO.md](MODULARIZACAO.md) | Histórico da arquitetura multi-repositório (substituída pelo monólito em 07/10/2026; veja [ARQUITETURA.md](ARQUITETURA.md)). |
 | [🔌 PORTABILIDADE.md](PORTABILIDADE.md) | Como adaptar para outro domínio, outro provedor ou outra linguagem. Usar como template. |
 | [💼 SAAS.md](SAAS.md) | O que mudaria para virar um produto multiusuário (auth, multi-tenant, cobrança, segurança). |
 | [🏗️ INFRA.md](INFRA.md) | Como o servidor roda local e é hospedado: estrutura de pastas, config por ambiente, SQLite operacional, deploy. |

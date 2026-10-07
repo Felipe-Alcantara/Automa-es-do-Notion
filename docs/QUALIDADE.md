@@ -1,46 +1,26 @@
 # ✅ Qualidade
 
-Este documento é o contrato de qualidade **deste repositório hub**. Ele traduz o
-Felixo System Design (`Padrão de qualidade - Felixo System Design/`, ignorado pelo
-Git) para os checks reais do hub, sem depender de memória de conversa.
+Este documento é o contrato de qualidade **deste repositório**. Ele traduz o
+[Felixo System Design](https://github.com/Felipe-Alcantara/Felixo-System-Design) para os
+checks reais do projeto, sem depender de memória de conversa.
 
-> **O hub não hospeda funcionalidade.** Aqui vivem documentação, roteamento
-> (`AGENTS.md`) e os scripts de workspace (`bootstrap.py`, `check-dev.py`,
-> `sync.py`, `start_app.py`). O código das ferramentas — e o gate de testes/lint
-> dele — mora em cada módulo (`notion-starter`, `notion-tasks-cli`,
-> `notion-workspace-app`), com o próprio `QUALIDADE`/`pytest` de cada repo. Veja o
-> mapa de roteamento no [`AGENTS.md`](../AGENTS.md).
+> **Um repositório, um pacote, um gate.** Desde a etapa 1 do monólito (2026-10-07) o código
+> das ferramentas vive em `src/felixo_notion_mcp/`, e o gate abaixo vale para tudo: biblioteca,
+> CLI, servidor MCP, API Django e SPA. Não há mais gate por módulo. O mapa das camadas está em
+> [`ARQUITETURA.md`](ARQUITETURA.md) e o roteamento por tipo de pedido, no
+> [`AGENTS.md`](../AGENTS.md).
 
-## Gate local do hub
+## Gate local
 
-Antes de encerrar uma mudança no hub, rode somente os testes próprios do hub e a
-verificação do workspace:
+Antes de encerrar uma mudança, rode, na raiz do repositório:
 
 ```bash
-python3 -m pytest tests  # evita coletar as suítes dos módulos em modules/
-python3 check-dev.py    # valida Python, módulos clonados, .env e deps
+uv sync --locked --all-extras    # dependências travadas em uv.lock, pacote em modo editável
+uv run ruff check .              # lint (inclui scripts/ e tests/)
+uv run python -m pytest          # a suíte inteira
 ```
 
-- `start_app.py` é o menu interativo de entrada: instala a CLI de desenvolvimento,
-  sincroniza os módulos, configura o `.env` e opera o Notion — sem decorar comando.
-- `check-dev.py` confere o ambiente de desenvolvimento (Python 3.10+, `modules/`
-  clonado, `.env`, `pytest`/`requests`).
-- `sync.py` roda `bootstrap.py` + `check-dev.py` em sequência para atualizar tudo.
-
-Nenhum check do hub exige token real do Notion, GitHub ou OpenRouter.
-
-## Gate por módulo
-
-Ao **desenvolver** (editar código de uma ferramenta), o gate é o do módulo, dentro
-de `modules/<nome>/`:
-
-```bash
-cd modules/<nome>
-python -m ruff check .
-python -m pytest
-```
-
-No `notion-workspace-app`, acrescente:
+Se a mudança tocou o `front/`, acrescente:
 
 ```bash
 cd front
@@ -49,44 +29,72 @@ npm run lint
 npm run build
 ```
 
-Aplique a correção nos dois consumidores quando mexer na camada duplicada
-(`core/`, `integrations/`, `services/` existem em `notion-tasks-cli` e em
-`notion-workspace-app/server/` — ver "Dívida conhecida" no `AGENTS.md`).
+- `python start_app.py` é o menu interativo de entrada: instala o pacote em modo editável,
+  configura o `.env` e os perfis, sobe o app e o servidor MCP e mostra o Status — sem decorar
+  comando. O Status roda o mesmo diagnóstico do `doctor`.
+- `uv run felixo-notion-mcp doctor` confere Python, dependências, perfis, rede, portas e **de
+  onde o pacote está sendo importado** (a linha termina em `checkout editável` quando você está
+  rodando o seu código). Ele só **informa**: o antigo `check-dev.py` foi aposentado e o `doctor`
+  não avisa nem falha quando o pacote vem de outro lugar.
+- Os testes mockam todo o HTTP: nenhum check exige token real do Notion, GitHub ou OpenRouter.
+
+## CI
+
+O workflow [`ci.yml`](../.github/workflows/ci.yml) roda a cada push no `main` e em todo PR:
+
+- `ruff check .` e `pytest` em **Ubuntu, Windows e macOS × Python 3.10, 3.11, 3.12 e 3.13**,
+  com `uv sync --locked`;
+- `npm run lint`, `npm run build` e `npm audit --audit-level=high` no `front/`;
+- construção do wheel e **conferência do conteúdo** (`scripts/empacotamento/conferir_wheel.py`:
+  o bundle da SPA e os assets que o `index.html` cita precisam estar dentro);
+- `pip-audit` sobre o lock inteiro, em três passos (Python 3.13 e 3.10 no Linux, mais os pins
+  que só existem em Windows e macOS).
+
+Limites que dependem de um sistema específico ficam registrados em [`IA.md`](../IA.md). Hoje, o
+build do binário nativo só foi exercitado em Linux x64.
 
 ## Critério de Pronto
 
 Uma mudança só está pronta quando:
 
-- O gate aplicável passou: `pytest` do hub e `check-dev.py` para mudanças no hub;
-  `ruff` + `pytest` do módulo e, no app, lint/build do front — ou a
+- O gate passou (`ruff` + `pytest`, e `lint` + `build` do front quando ele mudou) — ou a
   impossibilidade foi registrada com motivo objetivo.
-- Comportamento novo ou bug corrigido tem teste quando aplicável (no módulo).
-- Documentação viva foi atualizada quando comandos, contratos, arquitetura, UX ou
-  o **roteamento** mudam (`README.md`, `AGENTS.md`, `docs/`).
-- O `IA.md` preserva o histórico: decisões novas entram como registros datados, sem
-  apagar a linha de raciocínio anterior.
-- Scripts e ferramentas reutilizáveis foram priorizados antes de edição manual;
-  exceções foram registradas objetivamente.
-- Documentação pública não promete estado futuro já resolvido: instalação,
-  versão, links, entry points e limitações conferem com o pacote publicado.
-- Links relativos apontam para arquivos existentes; referências a outro módulo
-  usam o repositório correspondente, nunca um caminho fantasma do antigo monorepo.
+- Comportamento novo ou bug corrigido tem teste quando aplicável.
+- Documentação viva foi atualizada quando comandos, contratos, arquitetura, UX ou o
+  **roteamento** mudam (`README.md`, `AGENTS.md`, `docs/ARQUITETURA.md`, `docs/`).
+- O `IA.md` preserva o histórico: decisões novas entram como registros datados, sem apagar a
+  linha de raciocínio anterior.
+- Scripts e ferramentas reutilizáveis foram priorizados antes de edição manual; exceções foram
+  registradas objetivamente.
+- Documentação pública não promete estado futuro já resolvido: instalação, versão, links,
+  entry points e limitações conferem com o que está publicado (hoje, os pacotes antigos; veja
+  [`DISTRIBUICAO.md`](DISTRIBUICAO.md)).
+- Links relativos apontam para arquivos existentes; nenhum documento manda clonar módulo, entrar
+  em `modules/` ou rodar scripts que foram aposentados.
 - Segredos, IDs reais e artefatos locais continuam fora do Git.
-- As fronteiras de camada seguem intactas: bordas (CLI/API/MCP) não têm regra de
-  negócio; `services/` não conhece HTTP; só o `NotionClient` fala com a API.
+- As fronteiras de camada seguem intactas: `api/` (CLI, MCP, HTTP) não tem regra de negócio;
+  `domain/` e `services/` não conhecem HTTP; só `integrations/notion_client.py` fala com a API
+  do Notion; `core/` não depende de nenhuma outra camada.
+- O contrato da CLI segue preso: o teste de `tests/contrato/` compara o parser com o retrato do
+  que a CLI aceitava. Falha ali é regressão, não motivo para regravar o retrato.
 
 ## Git
 
-- Trabalhe direto no `main` por padrão.
-- Crie branch apenas para feature grande, refatoração significativa ou alto risco.
-- Faça commits pequenos e coesos no formato `tipo: descricao` (`feat`/`fix`/`docs`/
-  `refactor`/`chore`).
-- Atualize a documentação viva no mesmo commit da mudança.
-- Commits e push de código vão **no repositório do módulo**, não no hub.
+- Refatoração estrutural de alto risco ou feature grande ganha **branch** (uma por etapa do
+  plano, apagada depois do merge); ajuste pequeno pode ir direto ao `main` de quem mantém.
+- Faça commits pequenos e coesos no formato `tipo: descrição` (`feat`/`fix`/`docs`/`refactor`/
+  `chore`).
+- **Um tema por commit.** Interno (`IA.md`, `AGENTS.md`), público (`README.md`, guias) e API
+  (contratos de CLI, MCP e REST) não se misturam no mesmo commit.
+- Atualize a documentação viva junto da mudança (no mesmo PR), em commits separados por tema.
 
 ## Referências
 
 - [`AGENTS.md`](../AGENTS.md) — roteiro operacional para agentes e mantenedores.
+- [`ARQUITETURA.md`](ARQUITETURA.md) — as camadas e de onde veio cada arquivo.
 - [`IA.md`](../IA.md) — memória técnica e decisões do projeto.
-- `Padrão de qualidade - Felixo System Design/` — referência local ignorada pelo Git.
-- [Guia de distribuição](DISTRIBUICAO.md) — contrato público e evidências da release `0.3.0`.
+- [`CONTRIBUTING.md`](../CONTRIBUTING.md) — como contribuir.
+- [Guia de distribuição](DISTRIBUICAO.md) — pacotes publicados, binários e a transição para o
+  pacote único.
+- [Felixo System Design](https://github.com/Felipe-Alcantara/Felixo-System-Design) — o padrão
+  de qualidade de origem.
