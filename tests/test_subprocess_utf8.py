@@ -38,7 +38,7 @@ def _pede_texto(chamada: ast.Call) -> bool:
 
 
 def _decodificacao_segura(chamada: ast.Call) -> bool:
-    """``encoding="utf-8"`` ou ``errors="replace"``: a leitura não levanta ``UnicodeDecodeError``."""
+    """``encoding="utf-8"`` ou ``errors="replace"``: a leitura não levanta erro de decodificação."""
 
     for palavra in chamada.keywords:
         valor = palavra.value
