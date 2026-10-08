@@ -44,6 +44,8 @@ TEMPO_ESPERA_PROCESSO = 120
 MAXIMO_DOWNLOAD = 250 * 1024 * 1024
 INTERVALO_ESPERA_PROCESSO = 0.1
 TTL_CACHE_VERIFICACAO = 24 * 60 * 60
+# No Windows o mtime do arquivo pode ficar à frente de time.time() (granularidades diferentes).
+TOLERANCIA_RELOGIO_CACHE = 2.0
 
 ARGUMENTO_APLICAR = "--__aplicar-atualizacao-nativa"
 ARQUIVO_CACHE = "verificacao-atualizacao.json"
@@ -691,12 +693,14 @@ def caminho_cache() -> Path:
 
 
 def _cache_fresco(caminho: Path, agora: float | None = None) -> bool:
+    """Diz se o cache vale; tolera mtime levemente adiantado (granularidade do Windows)."""
+
     try:
         momento = time.time() if agora is None else agora
         idade = momento - caminho.stat().st_mtime
     except OSError:
         return False
-    return 0 <= idade < TTL_CACHE_VERIFICACAO
+    return -TOLERANCIA_RELOGIO_CACHE <= idade < TTL_CACHE_VERIFICACAO
 
 
 def _gravar_cache(caminho: Path, status: str) -> None:

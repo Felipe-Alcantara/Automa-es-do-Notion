@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import os
+import time
 from pathlib import Path
 
 import pytest
@@ -347,6 +348,8 @@ def test_relancamento_que_falha_vira_erro_legivel(tmp_path):
 def test_auto_update_respeita_cache(tmp_path):
     cache = tmp_path / "cache.json"
     cache.write_text("{}", encoding="utf-8")
+    agora = time.time()
+    os.utime(cache, (agora - 1, agora - 1))
     resultado = updater.atualizar_automaticamente(
         "0.3.0",
         cache=cache,
@@ -354,3 +357,21 @@ def test_auto_update_respeita_cache(tmp_path):
     )
 
     assert resultado["status"] == "verificacao_em_cache"
+
+
+@pytest.mark.parametrize(
+    ("deslocamento", "esperado"),
+    [
+        (-0.5, True),  # mtime 0,5 s no futuro: relógio de arquivo adiantado (Windows)
+        (-3600.0, False),  # mtime 1 h no futuro: não é cache confiável
+        (1.0, True),  # 1 s no passado
+        (updater.TTL_CACHE_VERIFICACAO + 1, False),  # mais velho que o TTL
+    ],
+)
+def test_cache_fresco_tolera_relogio_de_arquivo_adiantado(tmp_path, deslocamento, esperado):
+    cache = tmp_path / "cache.json"
+    cache.write_text("{}", encoding="utf-8")
+    agora = 1_800_000_000.0
+    os.utime(cache, (agora - deslocamento, agora - deslocamento))
+
+    assert updater._cache_fresco(cache, agora=agora) is esperado
