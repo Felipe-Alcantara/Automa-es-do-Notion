@@ -83,3 +83,57 @@ def test_substituir_ignora_existentes(arquivo):
 def test_arquivo_inexistente_levanta(tmp_path):
     with pytest.raises(ValueError, match="não encontrado"):
         anexar_arquivo("pag1", tmp_path / "nada.bin", cliente=ClienteFake())
+
+
+def test_mime_nao_depende_do_registro_do_sistema(arquivo, monkeypatch):
+    """No Windows o registro costuma não conhecer ``.docx``: a tabela própria decide."""
+
+    monkeypatch.setattr("mimetypes.guess_type", lambda *_a, **_k: (None, None))
+    cliente = ClienteFake()
+    anexar_arquivo("pag1", arquivo, cliente=cliente)
+
+    assert cliente.uploads[0][1] == (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+
+
+def test_mime_desconhecido_cai_em_octet_stream(tmp_path, monkeypatch):
+    monkeypatch.setattr("mimetypes.guess_type", lambda *_a, **_k: (None, None))
+    desconhecido = tmp_path / "dados.zzz"
+    desconhecido.write_bytes(b"x")
+    cliente = ClienteFake()
+    anexar_arquivo("pag1", desconhecido, cliente=cliente)
+
+    assert cliente.uploads[0][1] == "application/octet-stream"
+
+
+def test_mime_da_tabela_vence_o_registro_do_sistema(arquivo, monkeypatch):
+    monkeypatch.setattr("mimetypes.guess_type", lambda *_a, **_k: ("application/zip", None))
+    cliente = ClienteFake()
+    anexar_arquivo("pag1", arquivo, cliente=cliente)
+
+    assert "wordprocessingml" in cliente.uploads[0][1]
+
+
+@pytest.mark.parametrize(
+    ("nome", "esperado"),
+    [
+        ("a.PDF", "application/pdf"),
+        ("a.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+        ("a.pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
+        ("a.csv", "text/csv"),
+        ("a.md", "text/markdown"),
+        ("a.webp", "image/webp"),
+        ("a.svg", "image/svg+xml"),
+        ("a.mp4", "video/mp4"),
+        ("a.zip", "application/zip"),
+    ],
+)
+def test_tabela_de_mime_cobre_extensoes_comuns(tmp_path, monkeypatch, nome, esperado):
+    monkeypatch.setattr("mimetypes.guess_type", lambda *_a, **_k: (None, None))
+    caminho = tmp_path / nome
+    caminho.write_bytes(b"x")
+    cliente = ClienteFake()
+    anexar_arquivo("pag1", caminho, cliente=cliente)
+
+    assert cliente.uploads[0][1] == esperado

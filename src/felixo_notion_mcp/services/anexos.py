@@ -15,6 +15,41 @@ from typing import Any
 from felixo_notion_mcp.domain import properties
 from felixo_notion_mcp.integrations.notion_client import NotionClient
 
+_MIME_PADRAO = "application/octet-stream"
+
+# O ``mimetypes`` consulta o registro do sistema operacional, e runners/instalações
+# Windows costumam não conhecer os formatos modernos (``.docx`` vira octet-stream).
+# Esta tabela torna a detecção igual em qualquer sistema; ``mimetypes`` só entra
+# como reserva para o que ela não cobre.
+MIME_POR_EXTENSAO: dict[str, str] = {
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ".pdf": "application/pdf",
+    ".csv": "text/csv",
+    ".md": "text/markdown",
+    ".txt": "text/plain",
+    ".json": "application/json",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".gif": "image/gif",
+    ".webp": "image/webp",
+    ".svg": "image/svg+xml",
+    ".mp3": "audio/mpeg",
+    ".mp4": "video/mp4",
+    ".zip": "application/zip",
+}
+
+
+def descobrir_content_type(nome: str) -> str:
+    """Decide o MIME pela extensão: tabela própria, depois ``mimetypes``, depois octet-stream."""
+
+    extensao = Path(nome).suffix.lower()
+    if extensao in MIME_POR_EXTENSAO:
+        return MIME_POR_EXTENSAO[extensao]
+    return mimetypes.guess_type(nome)[0] or _MIME_PADRAO
+
 
 def anexar_arquivo(
     page_id: str,
@@ -45,7 +80,7 @@ def anexar_arquivo(
     if not arquivo.is_file():
         raise ValueError(f"Arquivo não encontrado: {arquivo}")
 
-    content_type = mimetypes.guess_type(arquivo.name)[0] or "application/octet-stream"
+    content_type = descobrir_content_type(arquivo.name)
     upload_id = cliente.enviar_arquivo(arquivo.read_bytes(), arquivo.name, content_type)
     valor = properties.arquivo_enviado(upload_id, arquivo.name)
 
