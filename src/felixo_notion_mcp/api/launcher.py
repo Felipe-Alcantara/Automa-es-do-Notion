@@ -461,6 +461,8 @@ def _versao_node(executavel: Path) -> str | None:
             check=False,
             capture_output=True,
             text=True,
+            # Erro localizado do node pode ter byte fora da codepage; nunca derruba o menu.
+            errors="replace",
             timeout=3,
         )
     except (OSError, subprocess.TimeoutExpired):

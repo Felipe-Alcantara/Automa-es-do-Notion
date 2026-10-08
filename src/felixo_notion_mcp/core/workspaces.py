@@ -481,7 +481,11 @@ def _restringir_windows(alvo: Path) -> None:
         f"{_SID_ADMINISTRADORES}:F",
     ]
     try:
-        resultado = subprocess.run(comando, capture_output=True, text=True, check=False)
+        # O icacls fala a codepage OEM do console, não UTF-8: a saída é só para o aviso, então
+        # ``errors="replace"`` basta. A decodificação estrita derrubaria o salvar do perfil.
+        resultado = subprocess.run(
+            comando, capture_output=True, text=True, errors="replace", check=False
+        )
     except OSError as erro:
         print(
             f"Aviso: nao foi possivel restringir a permissao de {alvo} "
@@ -490,7 +494,7 @@ def _restringir_windows(alvo: Path) -> None:
         )
         return
     if resultado.returncode != 0:
-        detalhe = resultado.stderr.strip() or resultado.stdout.strip()
+        detalhe = (resultado.stderr or "").strip() or (resultado.stdout or "").strip()
         print(
             f"Aviso: icacls falhou ao restringir {alvo} (codigo {resultado.returncode}): {detalhe}",
             file=sys.stderr,

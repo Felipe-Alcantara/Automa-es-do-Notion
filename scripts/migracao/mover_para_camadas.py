@@ -181,7 +181,12 @@ def planejar(
 
 def _git(raiz: Path, *argumentos: str) -> None:
     resultado = subprocess.run(
-        ["git", *argumentos], cwd=raiz, capture_output=True, text=True, check=False
+        ["git", *argumentos],
+        cwd=raiz,
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
     )
     if resultado.returncode != 0:
         detalhe = (resultado.stderr or resultado.stdout).strip()

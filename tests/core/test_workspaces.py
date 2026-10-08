@@ -299,7 +299,7 @@ def test_restringir_no_windows_usa_icacls_sem_heranca(monkeypatch, tmp_path):
     alvo.write_text("{}", encoding="utf-8")
     chamadas: list[list[str]] = []
 
-    def _run_falso(comando, capture_output, text, check):
+    def _run_falso(comando, **_kwargs):
         chamadas.append(comando)
         return subprocess.CompletedProcess(comando, returncode=0, stdout="", stderr="")
 
@@ -329,7 +329,7 @@ def test_restringir_no_windows_avisa_em_stderr_se_icacls_falhar(monkeypatch, tmp
     alvo = tmp_path / "s.json"
     alvo.write_text("{}", encoding="utf-8")
 
-    def _run_falso(comando, capture_output, text, check):
+    def _run_falso(comando, **_kwargs):
         return subprocess.CompletedProcess(
             comando, returncode=5, stdout="", stderr="Acesso negado."
         )
@@ -362,3 +362,61 @@ def test_restringir_no_windows_sem_username_avisa_e_nao_chama_icacls(monkeypatch
 
     assert chamadas == []
     assert "Aviso" in capsys.readouterr().err
+
+
+def _run_que_decodifica_como_o_windows(saida: bytes, erro: bytes, codigo: int = 5):
+    """Dublê de ``subprocess.run`` que decodifica como o real: cp1252 se nao ha ``encoding``.
+
+    O ``icacls`` fala a codepage OEM (cp850); na decodificacao estrita da cp1252 bytes como
+    0x81 e 0x8D sao indefinidos e o ``run`` levanta ``UnicodeDecodeError``.
+    """
+
+    def _run(comando, **kwargs):
+        encoding = kwargs.get("encoding") or "cp1252"
+        errors = kwargs.get("errors") or "strict"
+        return subprocess.CompletedProcess(
+            comando,
+            returncode=codigo,
+            stdout=saida.decode(encoding, errors),
+            stderr=erro.decode(encoding, errors),
+        )
+
+    return _run
+
+
+def _como_windows(monkeypatch, run):
+    monkeypatch.setattr(workspaces.os, "name", "nt")
+    monkeypatch.setattr(
+        workspaces.os.environ,
+        "get",
+        lambda chave, default=None: {"USERNAME": "flavia"}.get(chave, default),
+    )
+    monkeypatch.setattr(workspaces.subprocess, "run", run)
+
+
+def test_restringir_no_windows_aguenta_saida_oem_do_icacls(monkeypatch, tmp_path, capsys):
+    """Mensagem localizada do icacls (cp850: ``\x81`` = u-trema) nao derruba o salvar perfil."""
+
+    alvo = tmp_path / "s.json"
+    alvo.write_text("{}", encoding="utf-8")
+    oem = "Acesso negado: \u00fc \u00ec".encode("cp850")
+    _como_windows(monkeypatch, _run_que_decodifica_como_o_windows(b"", oem))
+
+    workspaces._restringir(alvo, 0o600)
+
+    assert "Aviso" in capsys.readouterr().err
+
+
+def test_restringir_no_windows_aguenta_stdout_e_stderr_none(monkeypatch, tmp_path, capsys):
+    alvo = tmp_path / "s.json"
+    alvo.write_text("{}", encoding="utf-8")
+    _como_windows(
+        monkeypatch,
+        lambda comando, **_k: subprocess.CompletedProcess(
+            comando, returncode=5, stdout=None, stderr=None
+        ),
+    )
+
+    workspaces._restringir(alvo, 0o600)
+
+    assert "icacls falhou" in capsys.readouterr().err
