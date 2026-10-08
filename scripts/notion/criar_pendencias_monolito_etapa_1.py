@@ -25,7 +25,7 @@ from typing import Any
 
 PERFIL = "home-pessoal"
 DATABASE_ID = "30296e2d-cd39-4cf3-8bbd-3fb2f53c0195"
-PROJETO_AUTOMACOES = "39f91f95-497e-8100-8d80-e97b027c75d6"
+PROJETO_AUTOMACOES = "38e91f95-497e-8165-a222-d9a5c1bf6467"  # Felipe-Alcantara/Felixo-Notion-MCP
 AREA_PROJETOS = "1fe91f95-497e-802d-b069-dfc0f91d0634"
 REPOSITORIO = "Felixo-Notion-MCP"
 
