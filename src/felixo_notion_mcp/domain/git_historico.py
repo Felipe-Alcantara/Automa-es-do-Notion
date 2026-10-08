@@ -99,7 +99,9 @@ def _executar_git(repositorio: Path, argumentos: list[str]) -> str:
         resultado = subprocess.run(
             ["git", "-C", str(repositorio), *argumentos],
             capture_output=True,
-            text=True,
+            # Saída em UTF-8 (mensagens e caminhos com acento); a codepage do Windows não serve.
+            encoding="utf-8",
+            errors="replace",
             check=True,
             timeout=_TIMEOUT_SEGUNDOS,
         )

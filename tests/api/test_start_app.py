@@ -221,8 +221,10 @@ def test_o_gate_de_qualidade_existe_e_roda_no_python_do_projeto():
         ferramenta = comando[2]
         resposta = subprocess.run(
             [comando[0], "-m", ferramenta, "--version"],
+            env={**os.environ, **UTF8_NO_FILHO},
             capture_output=True,
-            text=True,
+            encoding="utf-8",
+            errors="replace",
             check=False,
         )
         assert resposta.returncode == 0, resposta.stderr
@@ -780,9 +782,14 @@ def test_main_rejeita_acao_desconhecida():
 RAIZ_DO_CHECKOUT = Path(__file__).resolve().parents[2]
 
 
+# O filho escreve UTF-8 e o pai decodifica UTF-8; sem isto, no Windows o pai usaria a
+# codepage da localidade (cp1252) e a saída com acento derrubaria o teste.
+UTF8_NO_FILHO = {"PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
+
+
 def _ambiente_com_src() -> dict[str, str]:
     """Ambiente de um filho que só enxerga o pacote pelo `src/` (sem `pip install`)."""
-    ambiente = dict(os.environ)
+    ambiente = {**os.environ, **UTF8_NO_FILHO}
     ambiente["PYTHONPATH"] = str(RAIZ_DO_CHECKOUT / "src")
     ambiente["DJANGO_DEBUG"] = "1"
     return ambiente
@@ -1106,7 +1113,8 @@ def test_launcher_abre_por_python_m_sem_esconder_a_stdlib():
     resultado = subprocess.run(
         [sys.executable, "-m", start_app.MODULO_LAUNCHER, "--help"],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         env=_ambiente_com_src(),
         cwd=RAIZ_DO_CHECKOUT,
         timeout=60,
@@ -1121,7 +1129,8 @@ def test_cli_abre_pelo_modulo_que_o_menu_usa():
     resultado = subprocess.run(
         [sys.executable, "-m", start_app.MODULO_CLI, "--help"],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         env=_ambiente_com_src(),
         cwd=RAIZ_DO_CHECKOUT,
         timeout=60,
@@ -1136,7 +1145,8 @@ def test_servidor_mcp_abre_pelo_caminho_que_o_menu_usa():
     resultado = subprocess.run(
         [sys.executable, str(start_app.MCP_SERVER_PY), "--help"],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         env=_ambiente_com_src(),
         cwd=start_app.SERVIDOR,
         timeout=60,
@@ -1154,7 +1164,8 @@ def test_manage_py_roda_pelo_caminho_que_o_menu_usa(tmp_path):
     resultado = subprocess.run(
         [sys.executable, str(start_app.MANAGE_PY), "check"],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         env=ambiente,
         cwd=start_app.SERVIDOR,
         timeout=60,
@@ -1185,7 +1196,8 @@ def test_launcher_e_config_abrem_sem_nenhuma_dependencia_de_terceiros():
     resultado = subprocess.run(
         [sys.executable, "-c", codigo],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         env=_ambiente_com_src(),
         cwd=RAIZ_DO_CHECKOUT,
         timeout=60,

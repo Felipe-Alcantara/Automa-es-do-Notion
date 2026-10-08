@@ -144,13 +144,19 @@ def test_endereco_do_store_nao_depende_de_onde_o_pacote_esta_instalado():
     )
     # O processo filho não herda o ``pythonpath`` do pytest: ``src`` entra pelo ambiente,
     # senão o teste só passaria com o pacote instalado em modo editável.
-    ambiente = {**os.environ, "PYTHONPATH": str(RAIZ / "src")}
+    ambiente = {
+        **os.environ,
+        "PYTHONPATH": str(RAIZ / "src"),
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUTF8": "1",
+    }
     linhas = subprocess.run(
         [sys.executable, "-c", codigo],
         cwd=RAIZ,
         env=ambiente,
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         check=True,
     ).stdout.splitlines()
     assert len(linhas) == 2

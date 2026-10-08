@@ -12,6 +12,7 @@ nascem na mesma chamada ``notion-tasks criar``; as relações são idempotentes.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -45,7 +46,10 @@ def executar(*argumentos: str) -> dict[str, Any]:
         ["notion-tasks", "--json", "--perfil", PERFIL, *argumentos],
         check=False,
         capture_output=True,
-        text=True,
+        # A CLI responde JSON em UTF-8; sem isto, no Windows o pai leria em cp1252.
+        encoding="utf-8",
+        errors="replace",
+        env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"},
     )
     if resultado.returncode != 0:
         raise RuntimeError(resultado.stderr.strip() or resultado.stdout.strip())

@@ -6,6 +6,7 @@ lxml custavam ~100 ms de abertura mesmo em quem nunca exporta DOCX.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -19,7 +20,9 @@ def _rodar(codigo: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [sys.executable, "-c", f"import sys; sys.path.insert(0, {str(SRC)!r}); {codigo}"],
         capture_output=True,
-        text=True,
+        env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"},
+        encoding="utf-8",
+        errors="replace",
         timeout=120,
     )
 

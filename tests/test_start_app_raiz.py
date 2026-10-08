@@ -29,7 +29,10 @@ def _carregar():
 def _ambiente_sem_pythonpath() -> dict[str, str]:
     """Ambiente do filho sem nada que ajude a achar o pacote."""
 
-    return {chave: valor for chave, valor in os.environ.items() if chave != "PYTHONPATH"}
+    ambiente = {chave: valor for chave, valor in os.environ.items() if chave != "PYTHONPATH"}
+    # O filho escreve UTF-8 e o pai o decodifica como UTF-8 (no Windows o padrão seria cp1252).
+    ambiente.update(PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
+    return ambiente
 
 
 def test_start_app_raiz_acha_src_sem_instalacao(monkeypatch):
@@ -122,7 +125,8 @@ def test_start_app_raiz_chega_ao_launcher_sem_nenhum_terceiro(tmp_path):
         cwd=tmp_path,
         env=_ambiente_sem_pythonpath(),
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=60,
         check=False,
     )
@@ -139,7 +143,8 @@ def test_start_app_raiz_roda_como_script_num_python_sem_site_packages(tmp_path):
         cwd=tmp_path,
         env=_ambiente_sem_pythonpath(),
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=60,
         check=False,
     )

@@ -51,9 +51,17 @@ def executar(executavel: Path, *argumentos: str) -> str:
         resultado = subprocess.run(
             [str(executavel), *argumentos],
             capture_output=True,
-            text=True,
+            # O binário escreve UTF-8 (acentos da CLI em português); sem isto, no Windows o
+            # pai decodificaria com a codepage da localidade (cp1252) e a saída quebraria.
+            encoding="utf-8",
+            errors="replace",
             check=False,
-            env={**os.environ, **ambiente_isolado(Path(pasta))},
+            env={
+                **os.environ,
+                "PYTHONIOENCODING": "utf-8",
+                "PYTHONUTF8": "1",
+                **ambiente_isolado(Path(pasta)),
+            },
         )
     if resultado.returncode:
         raise RuntimeError(

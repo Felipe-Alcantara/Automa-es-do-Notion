@@ -3260,7 +3260,12 @@ def test_abrir_a_cli_nao_carrega_python_docx():
     # ``tests/api/cli/<este arquivo>``: a raiz do repositório está três pastas acima.
     raiz = Path(__file__).resolve().parents[3]
     # O processo novo não herda o ``pythonpath`` do pytest; ``src`` entra pelo ambiente.
-    ambiente = {**os.environ, "PYTHONPATH": str(raiz / "src")}
+    ambiente = {
+        **os.environ,
+        "PYTHONPATH": str(raiz / "src"),
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUTF8": "1",
+    }
     codigo = (
         "import sys; import felixo_notion_mcp.api.cli.notion_tasks; "
         "carregados = [m for m in ('docx', 'lxml') if m in sys.modules]; "
@@ -3271,7 +3276,8 @@ def test_abrir_a_cli_nao_carrega_python_docx():
         cwd=raiz,
         env=ambiente,
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=120,
         check=True,
     )

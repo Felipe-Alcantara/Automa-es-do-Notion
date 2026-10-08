@@ -215,7 +215,9 @@ def _estatisticas(
         saida = subprocess.run(
             ["git", "-C", str(repositorio), *argumentos],
             capture_output=True,
-            text=True,
+            # Saída em UTF-8 (mensagens e caminhos com acento); a codepage do Windows não serve.
+            encoding="utf-8",
+            errors="replace",
             check=True,
             timeout=_TIMEOUT_SEGUNDOS,
         ).stdout

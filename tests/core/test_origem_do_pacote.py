@@ -111,9 +111,15 @@ def test_origem_usa_so_a_biblioteca_padrao():
     resultado = subprocess.run(
         [sys.executable, "-c", codigo],
         cwd=raiz,
-        env={**os.environ, "PYTHONPATH": str(raiz / "src")},
+        env={
+            **os.environ,
+            "PYTHONPATH": str(raiz / "src"),
+            "PYTHONIOENCODING": "utf-8",
+            "PYTHONUTF8": "1",
+        },
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=60,
         check=False,
     )

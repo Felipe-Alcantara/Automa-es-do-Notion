@@ -71,10 +71,12 @@ def _rodar(codigo: str) -> subprocess.CompletedProcess[str]:
     """Roda ``codigo`` num Python novo que só enxerga o pacote pelo ``src/``."""
     ambiente = dict(os.environ)
     ambiente["PYTHONPATH"] = str(RAIZ / "src")
+    ambiente.update(PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
     return subprocess.run(
         [sys.executable, "-c", codigo],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         env=ambiente,
         cwd=RAIZ,
         timeout=60,
