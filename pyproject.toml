@@ -1,0 +1,105 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "felixo-notion-mcp"
+version = "0.6.0.dev0"
+description = "Automações do Notion em um único pacote: biblioteca, CLI, servidor MCP e app."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Felipe Alcantara" }]
+keywords = ["notion", "notion-api", "cli", "mcp", "ai", "automation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "python-docx>=1.1",
+    "requests>=2.25",
+    "mcp>=1.28,<2",
+    "typing_extensions>=4.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+app = [
+    "Django>=5.0",
+    "questionary>=2.0",
+    "rich>=13.0",
+]
+planilha = [
+    "openpyxl>=3.1",
+]
+native = [
+    "pyinstaller>=6,<7",
+]
+dev = [
+    "pytest>=7.0",
+    "responses>=0.23",
+    "ruff>=0.4",
+    "openpyxl>=3.1",
+    "pip-audit>=2.7",
+]
+
+[project.scripts]
+felixo-notion-mcp = "felixo_notion_mcp.api.cli.unificada:main"
+notion-tasks = "felixo_notion_mcp.api.cli.notion_tasks:main"
+notion-automacoes = "felixo_notion_mcp.api.cli.unificada:main"
+notion-automacoes-app = "felixo_notion_mcp.api.launcher:main"
+notion-automacoes-mcp = "felixo_notion_mcp.api.mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/Felipe-Alcantara/Felixo-Notion-MCP"
+Repository = "https://github.com/Felipe-Alcantara/Felixo-Notion-MCP"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/felixo_notion_mcp"]
+# O bundle da SPA sai de `npm run build` e fica fora do git; o wheel e o sdist precisam levá-lo.
+artifacts = ["src/felixo_notion_mcp/api/http/static/frontend/**"]
+
+[tool.hatch.build.targets.sdist]
+# Lista explícita: sem ela o sdist leva tudo que o controle de versão não ignora, inclusive os
+# arquivos de trabalho de agentes (`.superpowers/`, `.claude/`, `.agents/`, `.codex/`). O que
+# não está aqui não entra. `front/node_modules` já fica de fora pelo `.gitignore`.
+include = [
+    "/src",
+    "/tests",
+    "/front",
+    "/scripts",
+    "/examples",
+    "/docs",
+    "/README.md",
+    "/LICENSE",
+    "/CONTRIBUTING.md",
+    "/.env.example",
+    "/pyproject.toml",
+    "/uv.lock",
+    "/start_app.py",
+]
+artifacts = ["src/felixo_notion_mcp/api/http/static/frontend/**"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# A raiz entra no pythonpath para que `scripts.*` seja importável nos testes.
+pythonpath = ["src", "."]
+addopts = "--import-mode=importlib"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+# `tests` fora da lista: `tests/core`, `tests/services` etc. seriam lidos como pacotes
+# de primeira parte chamados `core`, `services`..., e o isort reordenaria `from core import`.
+src = ["src"]
+extend-exclude = ["**/migrations/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

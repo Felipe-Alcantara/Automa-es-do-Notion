@@ -1,0 +1,4124 @@
+{
+  "notion_tasks": {
+    "argumentos": [
+      {
+        "acao": "_HelpAction",
+        "destino": "help",
+        "escolhas": null,
+        "nargs": "0",
+        "obrigatorio": false,
+        "opcoes": [
+          "--help",
+          "-h"
+        ],
+        "padrao": null,
+        "tipo": null
+      },
+      {
+        "acao": "_StoreTrueAction",
+        "destino": "json",
+        "escolhas": null,
+        "nargs": "0",
+        "obrigatorio": false,
+        "opcoes": [
+          "--json"
+        ],
+        "padrao": "False",
+        "tipo": null
+      },
+      {
+        "acao": "_StoreAction",
+        "destino": "perfil",
+        "escolhas": null,
+        "nargs": "None",
+        "obrigatorio": false,
+        "opcoes": [
+          "--perfil"
+        ],
+        "padrao": "None",
+        "tipo": null
+      }
+    ],
+    "exclusivos": [],
+    "subcomandos": {
+      "anexar-arquivo": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "caminho",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "propriedade",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--propriedade"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "substituir",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--substituir"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "apagar-bloco": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "block_ids",
+            "escolhas": null,
+            "nargs": "+",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "sim",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--sim"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "forcar_tipos_arriscados",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--forcar-tipos-arriscados"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "atualizar-github": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "contas",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--contas"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--database"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "sem_readme",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--sem-readme"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "sem_arquivados",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--sem-arquivados"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "apenas_mudancas",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--apenas-mudancas"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "baixar-corpos": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "inventario",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "destino",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [
+              "--destino"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "ignorar_caminho",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--ignorar-caminho"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "ignorar_database",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--ignorar-database"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "somente_database",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--somente-database"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "priorizar",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--priorizar"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "limite",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--limite"
+            ],
+            "padrao": "None",
+            "tipo": "int"
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "trabalhadores",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--trabalhadores"
+            ],
+            "padrao": "3",
+            "tipo": "int"
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "incluir_arquivados",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--incluir-arquivados"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "progresso_a_cada",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--progresso-a-cada"
+            ],
+            "padrao": "25",
+            "tipo": "int"
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "blocos": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "metadados",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--metadados"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "completo",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--completo"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "recursivo",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--recursivo"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "contendo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--contendo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "buscar": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "query",
+            "escolhas": null,
+            "nargs": "?",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "buscar-conteudo": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "pasta",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "expressao",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "contexto",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--contexto"
+            ],
+            "padrao": "90",
+            "tipo": "int"
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "max_trechos",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--max-trechos"
+            ],
+            "padrao": "4",
+            "tipo": "int"
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "limite",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--limite"
+            ],
+            "padrao": "None",
+            "tipo": "int"
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "com_acentos",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--com-acentos"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "diferenciar_caixa",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--diferenciar-caixa"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "clonar-database": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "titulo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--titulo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "pagina",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--pagina"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "com_linhas",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--com-linhas"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "relacoes",
+            "escolhas": [
+              "auto-novo",
+              "texto"
+            ],
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--relacoes"
+            ],
+            "padrao": "'auto-novo'",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "clonar-estrutura": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "pagina_referencia_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "pagina_destino_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "concluir": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "task_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "status",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "conteudo": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "copiar-corpo": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "origem_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "destino_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "so_se_vazio",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--so-se-vazio"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "dry_run",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dry-run"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "conferir",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--conferir"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "mesmo_com_database",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--mesmo-com-database"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "criar": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "nome",
+            "escolhas": null,
+            "nargs": "?",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--database"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "status",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--status"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "prazo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--prazo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "duracao",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--duracao"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "area",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--area"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "set",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--set"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "conteudo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--conteudo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "arquivo_md",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--arquivo-md"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "arquivo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--arquivo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "strict",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--strict"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "dry_run",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dry-run"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "progresso_a_cada",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--progresso-a-cada"
+            ],
+            "padrao": "10",
+            "tipo": "int"
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "criar-database": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "pagina_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "titulo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "prop",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--prop"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "inline",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--inline"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "icone",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--icone"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "descricao",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--descricao"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "prefixo_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--prefixo-id"
+            ],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "criar-subpagina": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "pagina_pai_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "titulo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "conteudo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--conteudo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "arquivo_md",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--arquivo-md"
+            ],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "database-atual": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "databases": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "query",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--query"
+            ],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "editar": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "task_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "nome",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--nome"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "status",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--status"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "prazo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--prazo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "duracao",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--duracao"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "area",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--area"
+            ],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "editar-bloco": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "block_id",
+            "escolhas": null,
+            "nargs": "?",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "conteudo",
+            "escolhas": null,
+            "nargs": "?",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "arquivo_md",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--arquivo-md"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "trocar",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--trocar"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "por",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--por"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "todas",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--todas"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "aceitar_perda_de_formatacao",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--aceitar-perda-de-formatacao"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "arquivo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--arquivo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "progresso_a_cada",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--progresso-a-cada"
+            ],
+            "padrao": "10",
+            "tipo": "int"
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "editar-linha": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_id",
+            "escolhas": null,
+            "nargs": "?",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "set",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--set"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "append",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--append"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "arquivo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--arquivo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "strict",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--strict"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "dry_run",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dry-run"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "progresso_a_cada",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--progresso-a-cada"
+            ],
+            "padrao": "10",
+            "tipo": "int"
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "escolher-database": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "escrever": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "conteudo",
+            "escolhas": null,
+            "nargs": "?",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "arquivo_md",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--arquivo-md"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "apos",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--apos"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "inicio",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--inicio"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "substituir",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--substituir"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "mesmo_com_database",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--mesmo-com-database"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "apagar_tudo",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--apagar-tudo"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [
+          {
+            "destinos": [
+              "apos",
+              "inicio"
+            ],
+            "obrigatorio": false
+          }
+        ],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "exemplo": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "n",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--n"
+            ],
+            "padrao": "3",
+            "tipo": "int"
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "exportar-docx": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--database"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "de",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [
+              "--de"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "ate",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [
+              "--ate"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "saida",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [
+              "--saida"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "campo_data",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--campo-data"
+            ],
+            "padrao": "'Data'",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "garantir-coluna": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "nome_coluna",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "tipo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "relacionar_com",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--relacionar-com"
+            ],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "guia": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "importar-planilha": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "caminho",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "aba",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--aba"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "coluna_titulo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--coluna-titulo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "tipo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--tipo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "renomear",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--renomear"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "chave",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--chave"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "dry_run",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dry-run"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "inspecionar-estrutura": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "pagina_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "profundidade",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--profundidade"
+            ],
+            "padrao": "3",
+            "tipo": "int"
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "inventario": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "saida",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [
+              "--saida"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "filtro",
+            "escolhas": [
+              "database",
+              "page"
+            ],
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--filtro"
+            ],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "ler": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "task_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "ler-bloco": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "block_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "limpar": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "sim",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--sim"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "apagar_tudo",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--apagar-tudo"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "linhas": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "completo",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--completo"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "listar": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "status",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--status"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "duracao",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--duracao"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "area",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--area"
+            ],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "mapear": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "query",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--query"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_size",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--page-size"
+            ],
+            "padrao": "100",
+            "tipo": "int"
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "limite_duplicatas",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--limite-duplicatas"
+            ],
+            "padrao": "10",
+            "tipo": "int"
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "modelos": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {
+          "listar": {
+            "argumentos": [
+              {
+                "acao": "_HelpAction",
+                "destino": "help",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--help",
+                  "-h"
+                ],
+                "padrao": null,
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "database_id",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": true,
+                "opcoes": [],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "fonte",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--fonte"
+                ],
+                "padrao": "None",
+                "tipo": null
+              }
+            ],
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
+          },
+          "preencher": {
+            "argumentos": [
+              {
+                "acao": "_HelpAction",
+                "destino": "help",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--help",
+                  "-h"
+                ],
+                "padrao": null,
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "database_id",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": true,
+                "opcoes": [],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "fonte",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--fonte"
+                ],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "manifesto",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": true,
+                "opcoes": [
+                  "--manifesto"
+                ],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreTrueAction",
+                "destino": "dry_run",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--dry-run"
+                ],
+                "padrao": "False",
+                "tipo": null
+              }
+            ],
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
+          }
+        },
+        "subcomandos_destino": "acao_modelos",
+        "subcomandos_obrigatorio": true
+      },
+      "montar-estrutura-projeto": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "pagina_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "mover": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "task_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "status",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "mover-database": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "novo_pai_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "mover-pagina": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "novo_pai_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "tipo_pai",
+            "escolhas": [
+              "data_source_id",
+              "database_id",
+              "page_id"
+            ],
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--tipo-pai"
+            ],
+            "padrao": "'page_id'",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "dry_run",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dry-run"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "aceitar_perdas",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--aceitar-perdas"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "normalizar-nomes": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "dry_run",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dry-run"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "opcoes": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "perfis": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {
+          "adicionar": {
+            "argumentos": [
+              {
+                "acao": "_HelpAction",
+                "destino": "help",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--help",
+                  "-h"
+                ],
+                "padrao": null,
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "alias",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": true,
+                "opcoes": [],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "token",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": true,
+                "opcoes": [
+                  "--token"
+                ],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "database",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--database"
+                ],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "nome",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--nome"
+                ],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "descricao",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--descricao"
+                ],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreTrueAction",
+                "destino": "ativar",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--ativar"
+                ],
+                "padrao": "False",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreTrueAction",
+                "destino": "sobrescrever",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--sobrescrever"
+                ],
+                "padrao": "False",
+                "tipo": null
+              }
+            ],
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
+          },
+          "listar": {
+            "argumentos": [
+              {
+                "acao": "_HelpAction",
+                "destino": "help",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--help",
+                  "-h"
+                ],
+                "padrao": null,
+                "tipo": null
+              }
+            ],
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
+          },
+          "mostrar": {
+            "argumentos": [
+              {
+                "acao": "_HelpAction",
+                "destino": "help",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--help",
+                  "-h"
+                ],
+                "padrao": null,
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "alias",
+                "escolhas": null,
+                "nargs": "?",
+                "obrigatorio": false,
+                "opcoes": [],
+                "padrao": "None",
+                "tipo": null
+              }
+            ],
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
+          },
+          "remover": {
+            "argumentos": [
+              {
+                "acao": "_HelpAction",
+                "destino": "help",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--help",
+                  "-h"
+                ],
+                "padrao": null,
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "alias",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": true,
+                "opcoes": [],
+                "padrao": "None",
+                "tipo": null
+              },
+              {
+                "acao": "_StoreTrueAction",
+                "destino": "sim",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--sim"
+                ],
+                "padrao": "False",
+                "tipo": null
+              }
+            ],
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
+          },
+          "usar": {
+            "argumentos": [
+              {
+                "acao": "_HelpAction",
+                "destino": "help",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--help",
+                  "-h"
+                ],
+                "padrao": null,
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "alias",
+                "escolhas": null,
+                "nargs": "None",
+                "obrigatorio": true,
+                "opcoes": [],
+                "padrao": "None",
+                "tipo": null
+              }
+            ],
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
+          }
+        },
+        "subcomandos_destino": "acao_perfil",
+        "subcomandos_obrigatorio": true
+      },
+      "relacionar": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_a",
+            "escolhas": null,
+            "nargs": "?",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "page_b",
+            "escolhas": null,
+            "nargs": "?",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "coluna",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [
+              "--coluna"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "par",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--par"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "arquivo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--arquivo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "desfazer",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--desfazer"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [
+          {
+            "destinos": [
+              "arquivo",
+              "par"
+            ],
+            "obrigatorio": false
+          }
+        ],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "relatorio-do-dia": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [
+              "--database"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "data",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--data"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "corpo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--corpo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "arquivo_md",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--arquivo-md"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "permitir_corpo_vazio",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--permitir-corpo-vazio"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "resumo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--resumo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "o_que_fiz",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--o-que-fiz"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "bloqueios",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--bloqueios"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "proximos_passos",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--proximos-passos"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "status",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--status"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "area",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--area"
+            ],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "relatorios-do-git": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [
+              "--database"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "repo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--repo"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_AppendAction",
+            "destino": "descobrir",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--descobrir"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "desde",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--desde"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "ate",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--ate"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "autor",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--autor"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "area",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--area"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "status",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--status"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "sem_estatisticas",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--sem-estatisticas"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "dry_run",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dry-run"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "remover-coluna": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "coluna",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "sim",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--sim"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "renomear-coluna": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "nome_atual",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "novo_nome",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "renomear-database": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "novo_titulo",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "reordenar-bloco": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "pagina_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "bloco_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "apos",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--apos"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "inicio",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--inicio"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "dir_backup",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dir-backup"
+            ],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "forcar_tipos_arriscados",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--forcar-tipos-arriscados"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "restaurar-bloco": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "block_ids",
+            "escolhas": null,
+            "nargs": "+",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "schema": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "database_id",
+            "escolhas": null,
+            "nargs": "None",
+            "obrigatorio": true,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "editaveis",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--editaveis"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      }
+    },
+    "subcomandos_destino": "comando",
+    "subcomandos_obrigatorio": true
+  },
+  "perfis": {
+    "relativo": "notion-tasks/.notion-workspaces.json"
+  },
+  "unificada": {
+    "argumentos": [
+      {
+        "acao": "_HelpAction",
+        "destino": "help",
+        "escolhas": null,
+        "nargs": "0",
+        "obrigatorio": false,
+        "opcoes": [
+          "--help",
+          "-h"
+        ],
+        "padrao": null,
+        "tipo": null
+      },
+      {
+        "acao": "_VersionAction",
+        "destino": "version",
+        "escolhas": null,
+        "nargs": "0",
+        "obrigatorio": false,
+        "opcoes": [
+          "--version"
+        ],
+        "padrao": null,
+        "tipo": null
+      },
+      {
+        "acao": "_StoreTrueAction",
+        "destino": "json",
+        "escolhas": null,
+        "nargs": "0",
+        "obrigatorio": false,
+        "opcoes": [
+          "--json"
+        ],
+        "padrao": "False",
+        "tipo": null
+      },
+      {
+        "acao": "_StoreAction",
+        "destino": "perfil",
+        "escolhas": null,
+        "nargs": "None",
+        "obrigatorio": false,
+        "opcoes": [
+          "--perfil"
+        ],
+        "padrao": "None",
+        "tipo": null
+      }
+    ],
+    "exclusivos": [],
+    "subcomandos": {
+      "app": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {
+          "start": {
+            "argumentos": [
+              {
+                "acao": "_HelpAction",
+                "destino": "help",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--help",
+                  "-h"
+                ],
+                "padrao": null,
+                "tipo": null
+              }
+            ],
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
+          }
+        },
+        "subcomandos_destino": "acao_app",
+        "subcomandos_obrigatorio": true
+      },
+      "atualizar": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "dry_run",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dry-run"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "auth": {
+        "argumentos": [
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "ajuda",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "argumentos",
+            "escolhas": null,
+            "nargs": "...",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "doctor": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "mcp": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {
+          "start": {
+            "argumentos": [
+              {
+                "acao": "_HelpAction",
+                "destino": "help",
+                "escolhas": null,
+                "nargs": "0",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--help",
+                  "-h"
+                ],
+                "padrao": null,
+                "tipo": null
+              },
+              {
+                "acao": "_StoreAction",
+                "destino": "transport",
+                "escolhas": [
+                  "stdio",
+                  "streamable-http"
+                ],
+                "nargs": "None",
+                "obrigatorio": false,
+                "opcoes": [
+                  "--transport"
+                ],
+                "padrao": "'stdio'",
+                "tipo": null
+              }
+            ],
+            "exclusivos": [],
+            "subcomandos": {},
+            "subcomandos_destino": null,
+            "subcomandos_obrigatorio": false
+          }
+        },
+        "subcomandos_destino": "acao_mcp",
+        "subcomandos_obrigatorio": true
+      },
+      "perfis": {
+        "argumentos": [
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "ajuda",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "argumentos",
+            "escolhas": null,
+            "nargs": "...",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "tarefas": {
+        "argumentos": [
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "ajuda",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "argumentos",
+            "escolhas": null,
+            "nargs": "...",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "tasks": {
+        "argumentos": [
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "ajuda",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help"
+            ],
+            "padrao": "False",
+            "tipo": null
+          },
+          {
+            "acao": "_StoreAction",
+            "destino": "argumentos",
+            "escolhas": null,
+            "nargs": "...",
+            "obrigatorio": false,
+            "opcoes": [],
+            "padrao": "None",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      },
+      "update": {
+        "argumentos": [
+          {
+            "acao": "_HelpAction",
+            "destino": "help",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--help",
+              "-h"
+            ],
+            "padrao": null,
+            "tipo": null
+          },
+          {
+            "acao": "_StoreTrueAction",
+            "destino": "dry_run",
+            "escolhas": null,
+            "nargs": "0",
+            "obrigatorio": false,
+            "opcoes": [
+              "--dry-run"
+            ],
+            "padrao": "False",
+            "tipo": null
+          }
+        ],
+        "exclusivos": [],
+        "subcomandos": {},
+        "subcomandos_destino": null,
+        "subcomandos_obrigatorio": false
+      }
+    },
+    "subcomandos_destino": "comando",
+    "subcomandos_obrigatorio": true
+  }
+}

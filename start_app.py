@@ -1,387 +1,75 @@
 #!/usr/bin/env python3
-"""Menu de desenvolvimento do hub Automações do Notion — a porta de entrada única.
+"""Porta de entrada única do Felixo Notion MCP: abre o menu do projeto.
 
-Rode ``python start_app.py`` para abrir um menu interativo onde você prepara os
-módulos de desenvolvimento, configura o token do Notion, vê o estado do ambiente
-e opera o Notion pela CLI. Para uso sem checkout, instale
-``notion-automacoes[app]`` conforme ``docs/DISTRIBUICAO.md``.
+Rode ``python start_app.py`` na raiz do checkout para abrir um menu interativo,
+colorido e descritivo, onde você instala as dependências, configura o token do
+Notion, sobe o app local e o servidor MCP e vê o estado do ambiente. Não é preciso
+decorar comando nenhum.
 
-Este repositório é o **hub** do ecossistema: ele roteia pedidos de *uso* (via a
-CLI ``notion-automacoes``/``notion-tasks``) e de *desenvolvimento* (os módulos em ``modules/``). O menu
-reflete essas duas frentes, seguindo o contrato de menu de entrada do Felixo
-System Design: interativo, colorido e descritivo, com no mínimo Iniciar/Rodar,
-Instalar/Setup, Configurar e Status/Sair. Cross-platform (Windows, Linux, macOS),
-sem segredo no script — o token vive em ``.env`` ignorado pelo git.
+O menu segue o contrato de menu de entrada do Felixo System Design, com no mínimo:
+
+- Iniciar/Rodar: app local (API e SPA), servidor MCP e a CLI ``notion-tasks``;
+- Instalar/Setup: instala o pacote em modo editável no Python que roda o menu;
+- Configurar: o token do Notion e o database de tarefas, guardados em ``.env``
+  (ignorado pelo git) e nunca no script; os perfis de workspace se gerenciam à parte, com
+  ``felixo-notion-mcp auth`` (ou ``notion-tasks perfis``);
+- Status/Sair: o estado do ambiente, incluindo de onde o pacote é importado (a mesma
+  informação do ``doctor``), e a saída.
+
+Este arquivo é só a porta: ele acha ``src/`` no checkout e chama o launcher que vive no
+pacote (``felixo_notion_mcp.api.launcher``). Por isso usa apenas a biblioteca padrão e
+roda num Python onde ainda não há nada instalado, em Windows, Linux e macOS. Quem
+instalou o pacote a partir do checkout (``pip install -e ".[app]"``) abre o mesmo menu com
+``notion-automacoes-app``. O nome ``felixo-notion-mcp`` ainda não está publicado no PyPI.
 """
 
 from __future__ import annotations
 
 import importlib.util
-import subprocess
 import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent
-ENV_FILE = RAIZ / ".env"
-BOOTSTRAP = RAIZ / "bootstrap.py"
-CHECK_DEV = RAIZ / "check-dev.py"
-MODULES_DIR = RAIZ / "modules"
-
-# Pacote público que expõe a CLI; o módulo abaixo também é usado no modo editável
-# para rodá-la de qualquer diretório (``python -m cli.notion_tasks``).
-CLI_PACOTE = "notion-automacoes"
-CLI_MODULO = "cli.notion_tasks"
-STARTER_DIR = MODULES_DIR / "notion-starter"
-CLI_DIR = MODULES_DIR / "notion-tasks-cli"
-
-# Variáveis que o menu ajuda a preencher no .env. GITHUB_CONTAS alimenta o
-# comando `atualizar-github` (sincroniza a database GITHUB do Notion).
-VARS_ENV = {
-    "NOTION_TOKEN": "Credencial da integração do Notion (começa com ntn_).",
-    "NOTION_DATABASE_ID": "ID do database padrão de tarefas.",
-    "GITHUB_CONTAS": "Contas do GitHub (CSV) para o comando atualizar-github.",
-}
-
-# As deps de TUI são do próprio menu; o passo de Instalar/Setup garante que
-# existem. Antes disso, caímos num fallback em texto puro para nunca quebrar.
-_DEPS_TUI = ("questionary", "rich")
+PACOTE = "felixo_notion_mcp"
 
 
-# --------------------------------------------------------------------------- #
-# Infraestrutura: TUI, subprocessos e leitura/escrita de .env                 #
-# --------------------------------------------------------------------------- #
-def _tui_disponivel() -> bool:
-    """Indica se as bibliotecas do menu interativo estão instaladas."""
+def _garantir_src_no_path(raiz: Path) -> bool:
+    """Põe ``<raiz>/src`` no ``sys.path`` quando o pacote ainda não é importável.
 
-    return all(importlib.util.find_spec(dep) is not None for dep in _DEPS_TUI)
+    Num checkout recém-clonado, sem ``pip install -e``, o pacote só existe em
+    ``src/``. Se o Python já o enxerga (instalação ou modo editável), o caminho não
+    é tocado, para o menu nunca carregar uma segunda cópia do código.
 
+    Devolve ``True`` quando inseriu o caminho.
+    """
 
-def _instalar_deps_tui() -> bool:
-    """Instala as dependências de TUI do menu. Retorna sucesso."""
-
-    print(f"Instalando dependências do menu ({', '.join(_DEPS_TUI)})...")
-    codigo = subprocess.call([sys.executable, "-m", "pip", "install", *_DEPS_TUI])
-    if codigo != 0:
-        print(
-            "Não consegui instalar as dependências do menu. Rode manualmente:\n"
-            f"  {sys.executable} -m pip install {' '.join(_DEPS_TUI)}"
-        )
+    if importlib.util.find_spec(PACOTE) is not None:
         return False
+    src = raiz / "src"
+    if not src.is_dir() or str(src) in sys.path:
+        return False
+    sys.path.insert(0, str(src))
     return True
 
 
-def _rodar(comando: list[str], *, descricao: str = "") -> int:
-    """Executa um comando mostrando o que roda e devolve o exit code."""
+def main(argv: list[str] | None = None) -> None:
+    """Abre o menu do launcher, repassando os argumentos da linha de comando."""
 
-    if descricao:
-        print(f"\n{descricao}")
-    print(f"$ {' '.join(comando)}\n")
+    _garantir_src_no_path(RAIZ)
     try:
-        return subprocess.call(comando)
-    except FileNotFoundError as exc:
-        print(f"[ERRO] Comando não encontrado: {exc}")
-        return 127
-
-
-def _cli_instalada() -> bool:
-    """A CLI distribuída e seu alias estão importáveis neste Python?"""
-
-    return importlib.util.find_spec(CLI_MODULO) is not None
-
-
-def _instalar_cli_dos_modulos() -> int:
-    """Instala a biblioteca e a CLI a partir dos working copies locais.
-
-    O modo editável mantém o executável sincronizado com ``modules/`` e evita
-    que uma cópia antiga em ``site-packages`` seja usada silenciosamente.
-
-    **A ordem importa no desenvolvimento.** O CLI e o starter são instalados em
-    modo editável, com o starter por último, para garantir que
-    ``modules/notion-starter`` seja a cópia executada. A distribuição pública,
-    por outro lado, resolve a dependência versionada no PyPI e não depende deste
-    checkout. Medido em 24/08/2026 num venv limpo.
-    """
-
-    faltantes = [str(p) for p in (STARTER_DIR, CLI_DIR) if not p.exists()]
-    if faltantes:
-        print("Módulos ausentes; execute o bootstrap antes da instalação:")
-        print(f"  {sys.executable} {BOOTSTRAP}")
-        print("Ausentes: " + ", ".join(faltantes))
-        return 1
-
-    for modulo in (CLI_DIR, STARTER_DIR):  # starter por último: ver docstring
-        codigo = _rodar(
-            [sys.executable, "-m", "pip", "install", "--editable", str(modulo)],
-            descricao=f"Instalando {modulo.name} a partir de modules/…",
-        )
-        if codigo != 0:
-            return codigo
-    return 0
-
-
-def _cmd_cli(*args: str) -> list[str]:
-    """Monta a invocação portátil da CLI (funciona de qualquer diretório)."""
-
-    return [sys.executable, "-m", CLI_MODULO, *args]
-
-
-def _ler_env() -> dict[str, str]:
-    """Lê pares CHAVE=valor do .env (sem expandir, sem dependências externas)."""
-
-    valores: dict[str, str] = {}
-    if not ENV_FILE.exists():
-        return valores
-    for linha in ENV_FILE.read_text(encoding="utf-8").splitlines():
-        limpa = linha.strip()
-        if not limpa or limpa.startswith("#") or "=" not in limpa:
-            continue
-        chave, _, valor = limpa.partition("=")
-        valores[chave.strip()] = valor.strip().strip('"').strip("'")
-    return valores
-
-
-def _gravar_env(nome: str, valor: str) -> None:
-    """Grava/atualiza uma variável no .env, preservando as demais linhas."""
-
-    linhas: list[str] = []
-    if ENV_FILE.exists():
-        linhas = ENV_FILE.read_text(encoding="utf-8").splitlines()
-
-    prefixo = f"{nome}="
-    substituida = False
-    for i, linha in enumerate(linhas):
-        if linha.strip().startswith(prefixo):
-            linhas[i] = f"{nome}={valor}"
-            substituida = True
-            break
-    if not substituida:
-        linhas.append(f"{nome}={valor}")
-    ENV_FILE.write_text("\n".join(linhas) + "\n", encoding="utf-8")
-
-
-# --------------------------------------------------------------------------- #
-# Ações do menu                                                               #
-# --------------------------------------------------------------------------- #
-def acao_usar(console) -> None:
-    """Iniciar/Rodar (desenvolvimento): operar o Notion pela CLI."""
-
-    import questionary
-
-    if not _cli_instalada():
-        console.print(
-            "[yellow]A CLI notion-tasks ainda não está instalada.[/yellow] "
-            "Use a opção [bold]Instalar / Setup[/bold] primeiro."
-        )
-        return
-
-    comandos = [
-        ("guia", "Guia completo dos comandos (para IA e humanos)", []),
-        ("listar", "Listar tarefas do database configurado", []),
-        ("opcoes", "Ver status/durações/áreas válidas", []),
-        ("mapear", "Resumir o inventário do workspace", []),
-        ("atualizar-github", "Sincronizar a database GITHUB (repos + README)", ["--contas"]),
-    ]
-    escolhas = [
-        questionary.Choice(f"{nome} — {desc}", value=(nome, extra))
-        for nome, desc, extra in comandos
-    ]
-    escolhas.append(questionary.Choice("Outro comando (digitar) …", value=("__livre__", [])))
-    escolhas.append(questionary.Choice("← Voltar", value=None))
-
-    escolha = questionary.select("O que você quer fazer no Notion?", choices=escolhas).ask()
-    if not escolha:
-        return
-    nome, extra = escolha
-
-    if nome == "__livre__":
-        bruto = questionary.text("Argumentos da CLI (ex.: buscar \"reunião\"):").ask()
-        if not bruto:
-            return
-        import shlex
-
-        _rodar(_cmd_cli(*shlex.split(bruto)), descricao="Executando comando…")
-        return
-
-    args = [nome]
-    if "--contas" in extra:
-        padrao = _ler_env().get("GITHUB_CONTAS", "")
-        contas = questionary.text(
-            "Contas do GitHub (CSV):", default=padrao
-        ).ask()
-        if contas:
-            args += ["--contas", contas]
-    _rodar(_cmd_cli(*args), descricao=f"Executando: notion-tasks {nome}")
-
-
-def acao_desenvolver(console) -> None:
-    """Iniciar/Rodar (dev): sincronizar os módulos e validar o workspace."""
-
-    codigo = _rodar(
-        [sys.executable, str(BOOTSTRAP)],
-        descricao="[1/2] Sincronizando módulos (bootstrap.py)…",
-    )
-    if codigo != 0:
-        console.print("[red]Falha no bootstrap.[/red] Veja a saída acima.")
-        return
-    _rodar(
-        [sys.executable, str(CHECK_DEV)],
-        descricao="[2/2] Validando o workspace (check-dev.py)…",
-    )
-
-
-def acao_instalar(console) -> None:
-    """Instalar / Setup: CLI, deps do menu e módulos de desenvolvimento."""
-
-    import questionary
-
-    opcoes = questionary.checkbox(
-        "O que instalar/preparar?",
-        choices=[
-            questionary.Choice(
-                f"CLI ({CLI_PACOTE}; alias notion-tasks)", value="cli", checked=not _cli_instalada()
-            ),
-            questionary.Choice("Dependências do menu (rich, questionary)", value="tui"),
-            questionary.Choice("Módulos de desenvolvimento (bootstrap.py)", value="modulos"),
-        ],
-    ).ask()
-    if not opcoes:
-        return
-
-    if "modulos" in opcoes:
-        _rodar([sys.executable, str(BOOTSTRAP)], descricao="Clonando/atualizando módulos…")
-    if "cli" in opcoes:
-        if not STARTER_DIR.exists() or not CLI_DIR.exists():
-            _rodar(
-                [sys.executable, str(BOOTSTRAP)],
-                descricao="Módulos necessários ausentes; preparando modules/…",
-            )
-        _instalar_cli_dos_modulos()
-    if "tui" in opcoes:
-        _instalar_deps_tui()
-
-
-def acao_configurar(console) -> None:
-    """Configurar: preencher o .env sem editar arquivo na mão."""
-
-    import questionary
-    from rich.panel import Panel
-
-    atuais = _ler_env()
-    escolha = questionary.select(
-        "Qual variável configurar?",
-        choices=[
-            questionary.Choice(
-                f"{nome} — {'definida' if atuais.get(nome) else 'vazia'}", value=nome
-            )
-            for nome in VARS_ENV
-        ]
-        + [questionary.Choice("← Voltar", value=None)],
-    ).ask()
-    if not escolha:
-        return
-
-    console.print(Panel(VARS_ENV[escolha], title=escolha, border_style="cyan"))
-    secreto = escolha == "NOTION_TOKEN"
-    prompt = questionary.password if secreto else questionary.text
-    valor = prompt(f"Novo valor para {escolha}:").ask()
-    if not valor:
-        console.print("[dim]Nada alterado.[/dim]")
-        return
-    _gravar_env(escolha, valor.strip())
-    console.print(f"[green]✓[/green] {escolha} gravado em .env")
-
-
-def acao_status(console) -> None:
-    """Status / Sair: estado real do ambiente (sem chutar)."""
-
-    from rich.table import Table
-
-    tabela = Table(title="Status do hub", show_header=True, header_style="bold")
-    tabela.add_column("Item")
-    tabela.add_column("Estado")
-
-    def marca(ok: bool) -> str:
-        return "[green]OK[/green]" if ok else "[red]falta[/red]"
-
-    tabela.add_row("CLI notion-automacoes instalada", marca(_cli_instalada()))
-    tabela.add_row("Módulos clonados (modules/)", marca(MODULES_DIR.exists()))
-    tabela.add_row(".env presente", marca(ENV_FILE.exists()))
-
-    env = _ler_env()
-    for nome in VARS_ENV:
-        tabela.add_row(f"  {nome}", marca(bool(env.get(nome))))
-    console.print(tabela)
-
-    if CHECK_DEV.exists():
-        console.print("\n[dim]Detalhe do workspace (check-dev.py):[/dim]")
-        _rodar([sys.executable, str(CHECK_DEV)])
-
-
-# --------------------------------------------------------------------------- #
-# Loop principal                                                              #
-# --------------------------------------------------------------------------- #
-def _menu(console) -> None:
-    import questionary
-
-    acoes = {
-        "usar": ("🚀  Usar o Notion (CLI) — operar tarefas, buscar, atualizar GITHUB", acao_usar),
-        "dev": ("🛠️   Desenvolver — sincronizar módulos e validar o workspace", acao_desenvolver),
-        "instalar": ("📦  Instalar / Setup — CLI, deps do menu, módulos", acao_instalar),
-        "configurar": ("⚙️   Configurar — token do Notion, database, contas GitHub", acao_configurar),
-        "status": ("📊  Status — estado real do ambiente", acao_status),
-    }
-
-    while True:
-        console.print()
-        escolha = questionary.select(
-            "Automações do Notion — o que você quer fazer?",
-            choices=[questionary.Choice(rotulo, value=chave) for chave, (rotulo, _) in acoes.items()]
-            + [questionary.Choice("❌  Sair", value=None)],
-        ).ask()
-        if not escolha:
-            console.print("[dim]Até logo![/dim]")
-            return
-        try:
-            acoes[escolha][1](console)
-        except KeyboardInterrupt:
-            console.print("\n[dim]Ação cancelada.[/dim]")
-        except Exception as exc:  # noqa: BLE001 — o menu nunca deve quebrar
-            console.print(f"[red]Erro na ação:[/red] {exc}")
-
-
-def main() -> int:
-    print("=" * 60)
-    print(" Automações do Notion — menu de entrada do hub")
-    print("=" * 60)
-
-    if not _tui_disponivel():
-        print(
-            "\nO menu interativo usa as bibliotecas: "
-            f"{', '.join(_DEPS_TUI)}.\n"
-        )
-        try:
-            resposta = input("Instalar agora? [S/n] ").strip().lower()
-        except (EOFError, KeyboardInterrupt):
-            resposta = "n"
-        if resposta in ("", "s", "sim", "y", "yes"):
-            if not _instalar_deps_tui():
-                return 1
-        else:
-            print(
-                "Sem as dependências não dá para abrir o menu. "
-                f"Instale com:\n  {sys.executable} -m pip install {' '.join(_DEPS_TUI)}"
-            )
-            return 1
-
-    from rich.console import Console
-
-    console = Console()
-    try:
-        _menu(console)
-    except KeyboardInterrupt:
-        console.print("\n[dim]Saindo…[/dim]")
-    return 0
+        from felixo_notion_mcp.api import launcher
+    except ModuleNotFoundError as erro:
+        if erro.name not in (PACOTE, f"{PACOTE}.api"):
+            raise
+        raise SystemExit(
+            f"Não achei o pacote {PACOTE} (esperado em {RAIZ / 'src'}).\n"
+            "Rode este arquivo de dentro do checkout do código-fonte (a pasta com src/ e\n"
+            "pyproject.toml). A distribuição ainda não está publicada no PyPI (a publicação\n"
+            "é de uma etapa posterior); instale a partir do checkout com:\n"
+            '  uv sync --all-extras   ou   pip install -e ".[app]"'
+        ) from None
+    launcher.main(sys.argv[1:] if argv is None else argv)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

@@ -7,15 +7,15 @@
 > **MCP e CLI são irmãos.** Ambos são **bordas finas sobre os mesmos `services/`** —
 > nenhum reimplementa regra de negócio. O **MCP** serve os agentes do Felixo-AI-Core;
 > a **CLI** ([Ciclo 2](AGENTES.md#-ciclo-2--agentes-do-front-rico-cli-e-multi-tabela),
-> pasta `cli/` do repositório `notion-tasks-cli`) serve uso direto por linha de
+> pasta `src/felixo_notion_mcp/api/cli/`) serve uso direto por linha de
 > comando e uma IA local. Quem mexer numa
 > operação deve garantir que a regra continue nos `services`, para as duas bordas
 > herdarem o mesmo comportamento.
 
-> **Estado em 2026-09-04:** o servidor MCP faz parte do pacote publicado
-> `notion-workspace-app` e pode ser iniciado pela fachada
-> `notion-automacoes mcp start`. As instruções com `server/mcp_server.py` são o
-> caminho equivalente para desenvolvimento pelo checkout.
+> **Estado em 2026-10-07:** o servidor MCP vive em
+> `src/felixo_notion_mcp/api/mcp/server.py`, no pacote único do repositório. Na
+> instalação publicada (pacote `notion-workspace-app`) ele é iniciado pela fachada
+> `notion-automacoes mcp start`; no checkout, por `felixo-notion-mcp mcp start`.
 
 ---
 
@@ -69,8 +69,8 @@ só os databases configurados. Assim a IA pesquisa, lê notas, escreve e edita
 conteúdo, e — com confirmação — apaga blocos.
 
 Cada ferramenta é um invólucro fino sobre os casos de uso de
-`server/services/tarefas.py`, `server/services/projetos.py` e
-`server/services/conteudo.py` — não reimplementa regra de negócio. Entradas
+`services/tarefas.py`, `services/projetos.py` e `services/conteudo.py` (em
+`src/felixo_notion_mcp/`) — não reimplementa regra de negócio. Entradas
 textuais obrigatórias são validadas na borda MCP e erros internos/upstream são
 sanitizados.
 
@@ -105,8 +105,8 @@ responsabilidade do host: o catálogo do Felixo-AI-Core deve registrar toda ferr
 
 ### CLI irmã
 
-A CLI do Ciclo 2 fica em `cli/` e usa os mesmos casos de uso de
-`server/services/tarefas.py`. Ela é útil quando uma IA local ou script quer uma
+A CLI do Ciclo 2 fica em `src/felixo_notion_mcp/api/cli/` e usa os mesmos casos de uso de
+`src/felixo_notion_mcp/services/tarefas.py`. Ela é útil quando uma IA local ou script quer uma
 saída JSON estável sem subir servidor MCP:
 
 ```bash
@@ -133,9 +133,8 @@ Em erro:
 
 ```bash
 pipx install "notion-automacoes[app]"  # uso público
-# ou, no checkout do app:
-cd modules/notion-workspace-app
-python -m pip install -e ".[dev]"
+# ou, pelo checkout deste repositório:
+uv sync --locked --all-extras
 ```
 
 ### Variáveis de ambiente
@@ -153,18 +152,19 @@ O servidor MCP lê do ambiente (ou do `.env` na raiz):
 # Instalação pública: stdio (padrão — o Felixo-AI-Core spawna assim)
 notion-automacoes mcp start
 
-# Checkout do app:
-cd modules/notion-workspace-app
-python3 server/mcp_server.py
+# Checkout deste repositório:
+uv run felixo-notion-mcp mcp start
+# ou direto pelo módulo do servidor:
+uv run python -m felixo_notion_mcp.api.mcp.server
 
 # Streamable HTTP para debug local (endpoint http://127.0.0.1:8000/mcp)
-python3 server/mcp_server.py --transport streamable-http
+uv run python -m felixo_notion_mcp.api.mcp.server --transport streamable-http
 ```
 
 Ou pelo menu interativo:
 
 ```bash
-python3 modules/notion-workspace-app/start_app.py
+python start_app.py
 # → "Subir servidor MCP"
 ```
 
@@ -274,7 +274,7 @@ servidor pode ser validado diretamente por `stdio` ou Streamable HTTP.
 ## Testes
 
 ```bash
-python3 -m pytest tests/test_mcp_server.py tests/test_services_projetos.py tests/test_cli_notion_tasks.py -v
+uv run python -m pytest tests/api/mcp/test_mcp_server.py tests/services/test_services_projetos.py tests/api/cli/test_cli_notion_tasks.py -v
 ```
 
 Os testes cobrem:

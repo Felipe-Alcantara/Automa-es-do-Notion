@@ -1,0 +1,234 @@
+"""Caso de uso: garantir que uma coluna exista num database já criado.
+
+Nenhuma ferramenta do ecossistema atualiza o schema de um database existente
+de forma genérica — `criar-database` só define colunas na criação;
+`editar-linha`/`importar-planilha` só escrevem em colunas que já existem. Este
+módulo generaliza o padrão já usado internamente por
+:func:`~felixo_notion_mcp.services.inventario_github.garantir_coluna_hash` (que
+adiciona só a coluna de hash do README) para qualquer coluna, em qualquer
+database.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from felixo_notion_mcp import NotionClient
+
+
+def _cliente_padrao() -> NotionClient:
+    """Resolve o :class:`NotionClient` da configuração do servidor (import tardio)."""
+
+    from felixo_notion_mcp.integrations.notion import criar_cliente
+
+    return criar_cliente()
+
+
+def _definicao_para_data_source(
+    definicao: dict[str, object], *, cliente: NotionClient
+) -> dict[str, Any]:
+    """Adapta uma definição de coluna ao modelo de *data sources* do Notion.
+
+    No modelo novo (``2025-09-03``) uma coluna ``relation`` aponta para um
+    ``data_source_id``, não para o ``database_id`` do modelo clássico. Esta
+    função resolve a primeira fonte do database alvo e faz a troca; qualquer
+    outro tipo de coluna passa intacto.
+    """
+
+    relacao = definicao.get("relation")
+    if not isinstance(relacao, dict):
+        return dict(definicao)
+
+    database_alvo = str(relacao.get("database_id") or "")
+    if not database_alvo:
+        return dict(definicao)
+
+    fontes_alvo = cliente.listar_data_sources(database_alvo)
+    if not fontes_alvo:
+        return dict(definicao)
+
+    relacao_convertida = {
+        chave: valor for chave, valor in relacao.items() if chave != "database_id"
+    }
+    relacao_convertida["data_source_id"] = str(fontes_alvo[0].get("id") or "")
+    return {**definicao, "relation": relacao_convertida}
+
+
+def garantir_coluna(
+    database_id: str,
+    nome_coluna: str,
+    definicao: dict[str, object],
+    *,
+    cliente: NotionClient | None = None,
+) -> bool:
+    """Garante que ``nome_coluna`` exista no schema do database, sem apagar nada.
+
+    Usa o *data source* (modelo novo do Notion) quando o database expõe um;
+    cai para o endpoint clássico de database caso contrário — mesma estratégia
+    de :func:`~felixo_notion_mcp.services.inventario_github.garantir_coluna_hash`.
+    Não mexe em nada se a coluna já existe (idempotente).
+
+    Args:
+        database_id: ID do database a alterar.
+        nome_coluna: Nome da propriedade/coluna a garantir.
+        definicao: Definição de schema da API do Notion para o tipo desejado
+            (ex.: ``{"select": {}}``, ``{"rich_text": {}}``).
+        cliente: Cliente Notion opcional (injeção para testes).
+
+    Returns:
+        ``True`` se a coluna foi criada agora, ``False`` se já existia.
+
+    Raises:
+        ValueError: Se ``database_id`` ou ``nome_coluna`` forem vazios.
+    """
+
+    database_id = (database_id or "").strip()
+    nome_coluna = (nome_coluna or "").strip()
+    if not database_id:
+        raise ValueError("database_id é obrigatório.")
+    if not nome_coluna:
+        raise ValueError("nome_coluna é obrigatório.")
+
+    cli = cliente or _cliente_padrao()
+
+    fontes = cli.listar_data_sources(database_id)
+    if fontes:
+        data_source_id = str(fontes[0].get("id") or "")
+        fonte = cli.get_data_source(data_source_id)
+        if nome_coluna in fonte.get("properties", {}):
+            return False
+        adaptada = _definicao_para_data_source(definicao, cliente=cli)
+        cli.atualizar_data_source(data_source_id, propriedades={nome_coluna: adaptada})
+        return True
+
+    database = cli.get_database(database_id)
+    if nome_coluna in database.get("properties", {}):
+        return False
+    cli.atualizar_database(database_id, propriedades={nome_coluna: definicao})
+    return True
+
+
+def renomear_coluna(
+    database_id: str,
+    nome_atual: str,
+    novo_nome: str,
+    *,
+    cliente: NotionClient | None = None,
+) -> dict[str, Any]:
+    """Renomeia uma propriedade já existente no schema, sem mexer nas linhas.
+
+    Cobre a lacuna que sobra depois de :func:`garantir_coluna`: o Notion cria
+    sozinho a coluna espelho de toda relação nova com um nome genérico (ex.:
+    ``"Related to <database> (<coluna>)"``), e não havia como corrigir isso
+    sem sair da ferramenta. Usa o *data source* (modelo novo do Notion) quando
+    o database expõe um; cai para o endpoint clássico de database caso
+    contrário — mesma estratégia de :func:`garantir_coluna`.
+
+    Args:
+        database_id: ID do database a alterar.
+        nome_atual: Nome exato da propriedade a renomear (sensível a maiúsculas).
+        novo_nome: Novo nome da propriedade.
+        cliente: Cliente Notion opcional (injeção para testes).
+
+    Returns:
+        O objeto atualizado (*data source* ou database, conforme o caminho usado).
+
+    Raises:
+        ValueError: Se ``database_id``/``nome_atual``/``novo_nome`` forem
+            vazios, se ``nome_atual`` não existir no schema, ou se
+            ``novo_nome`` colidir com outra coluna já existente.
+    """
+
+    database_id = (database_id or "").strip()
+    nome_atual = (nome_atual or "").strip()
+    novo_nome = (novo_nome or "").strip()
+    if not database_id:
+        raise ValueError("database_id é obrigatório.")
+    if not nome_atual:
+        raise ValueError("nome_atual é obrigatório.")
+    if not novo_nome:
+        raise ValueError("novo_nome é obrigatório.")
+
+    cli = cliente or _cliente_padrao()
+
+    def _validar(propriedades: dict[str, object]) -> None:
+        if nome_atual not in propriedades:
+            raise ValueError(f"Coluna {nome_atual!r} não existe no schema.")
+        if novo_nome != nome_atual and novo_nome in propriedades:
+            raise ValueError(f"Já existe uma coluna chamada {novo_nome!r}.")
+
+    fontes = cli.listar_data_sources(database_id)
+    if fontes:
+        data_source_id = str(fontes[0].get("id") or "")
+        fonte = cli.get_data_source(data_source_id)
+        _validar(fonte.get("properties", {}))
+        return cli.atualizar_data_source(
+            data_source_id, propriedades={nome_atual: {"name": novo_nome}}
+        )
+
+    database = cli.get_database(database_id)
+    _validar(database.get("properties", {}))
+    return cli.atualizar_database(
+        database_id, propriedades={nome_atual: {"name": novo_nome}}
+    )
+
+
+def remover_coluna(
+    database_id: str,
+    nome_coluna: str,
+    *,
+    cliente: NotionClient | None = None,
+) -> dict[str, Any]:
+    """Remove uma coluna do schema — os valores dela somem de todas as linhas.
+
+    Destrutivo: quem expõe (CLI/MCP) deve pedir confirmação explícita. Serve,
+    por exemplo, para desfazer as colunas que o Notion **acrescenta** ao schema
+    do destino quando uma linha é movida entre databases (medido em
+    2026-09-27; ver :mod:`felixo_notion_mcp.services.movimentacao`). A coluna de
+    título não pode ser removida. Usa o *data source* quando o database expõe
+    um (``{nome: null}`` no PATCH); cai para o endpoint clássico caso contrário.
+
+    Args:
+        database_id: ID do database.
+        nome_coluna: Nome exato da coluna (sensível a maiúsculas).
+        cliente: Cliente Notion opcional (injeção para testes).
+
+    Returns:
+        ``{"database_id", "coluna", "tipo"}`` da coluna removida.
+
+    Raises:
+        ValueError: IDs vazios, coluna inexistente (com as disponíveis) ou
+            coluna de título.
+    """
+
+    database_id = (database_id or "").strip()
+    nome_coluna = (nome_coluna or "").strip()
+    if not database_id:
+        raise ValueError("database_id é obrigatório.")
+    if not nome_coluna:
+        raise ValueError("nome_coluna é obrigatório.")
+
+    cli = cliente or _cliente_padrao()
+
+    def _tipo(propriedades: dict[str, Any]) -> str:
+        definicao = propriedades.get(nome_coluna)
+        if not isinstance(definicao, dict):
+            disponiveis = ", ".join(sorted(propriedades)) or "(nenhuma)"
+            raise ValueError(
+                f"Coluna {nome_coluna!r} não existe no schema. Disponíveis: {disponiveis}"
+            )
+        tipo = str(definicao.get("type") or "")
+        if tipo == "title":
+            raise ValueError(f"A coluna de título ({nome_coluna!r}) não pode ser removida.")
+        return tipo
+
+    remocao: dict[str, Any] = {nome_coluna: None}
+    fontes = cli.listar_data_sources(database_id)
+    if fontes:
+        data_source_id = str(fontes[0].get("id") or "")
+        tipo = _tipo(cli.get_data_source(data_source_id).get("properties", {}))
+        cli.atualizar_data_source(data_source_id, propriedades=remocao)
+    else:
+        tipo = _tipo(cli.get_database(database_id).get("properties", {}))
+        cli.atualizar_database(database_id, propriedades=remocao)
+    return {"database_id": database_id, "coluna": nome_coluna, "tipo": tipo}

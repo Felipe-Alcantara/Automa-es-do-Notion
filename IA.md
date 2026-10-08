@@ -13,6 +13,14 @@
 > `integrations/` + `services/` → repo `notion-tasks-cli`; `server/` + `front/` +
 > `start_app.py` → repo `notion-workspace-app`.
 
+> ⚠️ **NOTA DE ESTRUTURA (2026-10-07)**: a separação acima foi desfeita. Os três
+> módulos voltaram para este repositório como um **pacote único**,
+> `felixo-notion-mcp` (import `felixo_notion_mcp`), organizado em camadas em
+> `src/felixo_notion_mcp/`. Quando uma entrada datada abaixo citar `notion_starter`,
+> `cli/`, `server/` ou `modules/`, o caminho de hoje está na tabela origem → destino
+> de [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md). O registro completo da mudança é a
+> entrada "Etapa 1 do monolito", no fim deste arquivo.
+
 ---
 
 ## 📊 ESTADO ATUAL (RESUMO VIVO)
@@ -24,29 +32,40 @@
   protegido nas seções datadas abaixo e nos archives.
 -->
 
-Última atualização: [2026-09-08]
+Última atualização: [2026-10-07]
 
-- **Fase**: ecossistema modularizado e estável, com a distribuição única
-  `notion-automacoes` publicada em `0.3.0`. O hub concentra
-  documentação, roteamento (`AGENTS.md`) e scripts de workspace; o código vive
-  nos módulos `notion-starter`, `notion-tasks-cli` e `notion-workspace-app`.
-- **Gate do hub**: `python3 -m pytest tests` + `python3 check-dev.py` (nenhum
-  check exige token real). Gate de código é o de cada módulo (`ruff` + `pytest`).
-- **Qualidade dos módulos**: READMEs no design system e contratos `QUALIDADE.md`;
-  gates verdes nesta entrega (starter 355, CLI 245, app 279; front com
-  `oxlint` e build Vite aprovados).
-- **Distribuição**: wheel/sdist dos três módulos validados; o app leva a SPA
-  compilada, a CLI mantém `notion-tasks`, não há dependência Git em
-  `Requires-Dist` e o mecanismo nativo está documentado, aguardando artefatos
-  PyInstaller assinados.
+- **Fase**: etapa 1 do monolito concluída na branch `refactor/monolito`, à espera do
+  merge no `main`. O hub e os três módulos (`notion-starter`, `notion-tasks-cli`,
+  `notion-workspace-app`) viraram um pacote só, `felixo-notion-mcp` `0.6.0.dev0`, em
+  camadas `domain`, `services`, `repositories`, `integrations`, `api` e `core`. Não há
+  mais `modules/`: o código vive em `src/felixo_notion_mcp/`. As etapas 2 a 4 (paridade
+  MCP, modo hospedado, migração dos consumidores e distribuição) seguem a spec de
+  `docs/superpowers/specs/2026-10-07-monolito-felixo-notion-mcp-design.md`.
+- **Gate**: `uv sync --locked --all-extras`, `uv run ruff check .` e
+  `uv run python -m pytest` (1677 passed, 1 skipped por desenho); no `front/`,
+  `npm run lint` e `npm run build`. A CI roda em Ubuntu, Windows e macOS com Python
+  3.10 a 3.13, mais `pip-audit` e `npm audit`. Nenhum check exige token real.
+- **Ferramentas aposentadas**: `bootstrap.py`, `check-dev.py`, `sync.py` e `SYNC.md`
+  saíram. A pergunta do `check-dev.py` ("o código que roda é o que eu edito?") virou
+  `felixo-notion-mcp doctor` e a linha de origem do Status do `start_app.py`; os dois
+  só informam, não avisam como o `check-dev.py` fazia.
+- **Roteamento de agentes**: `AGENTS.md` e `CLAUDE.md` roteiam por camada
+  (`src/felixo_notion_mcp/<camada>/<arquivo>`). O mapa de camadas e a tabela origem →
+  destino estão em `docs/ARQUITETURA.md`.
+- **Distribuição**: os pacotes publicados continuam `notion-automacoes` `0.5.0`,
+  `notion-starter` e `notion-workspace-app`, e os binários continuam
+  `notion-automacoes-<alvo>`; nada disso muda até a etapa 4. O binário nativo foi
+  construído e testado só em Linux x64 (entrada de 2026-10-07 sobre o empacotamento).
 - **Histórico**: registros de junho/2026 (era monorepo) arquivados em
-  [`docs/ia-archive/IA-ARCHIVE-2026-06.md`](docs/ia-archive/IA-ARCHIVE-2026-06.md).
-- **Estado legal**: os três pacotes e o hub identificam `Felipe Alcantara` como
-  titular; colaboradores não alteram essa titularidade. Trusted Publishing foi
-  validado pelos workflows de release.
-- **Próximos passos**: melhorias de produto continuam abertas à comunidade;
-  concluir empacotamento/assinatura e validar os binários nativos nos quatro
-  alvos antes de publicar a primeira Release nativa.
+  [`docs/ia-archive/IA-ARCHIVE-2026-06.md`](docs/ia-archive/IA-ARCHIVE-2026-06.md); os
+  `IA.md` dos três módulos, na íntegra, em
+  [`docs/ia-archive/`](docs/ia-archive/) (`IA-notion-starter.md`,
+  `IA-notion-tasks-cli.md`, `IA-notion-workspace-app.md`).
+- **Estado legal**: o pacote e o repositório identificam `Felipe Alcantara` como
+  titular; colaboradores não alteram essa titularidade.
+- **Próximos passos**: a CI em Windows e macOS roda pela primeira vez no push e no PR
+  da etapa 1 (tarefa 11); depois vem a etapa 2 (`feat/paridade-mcp`). Melhorias de
+  produto continuam abertas à comunidade.
 
 [2026-08-21] O setup do hub passou a instalar `notion-starter` antes de
 `notion-tasks-cli`, ambos em modo editável a partir de `modules/`. Isso evita
@@ -1043,3 +1062,237 @@ antigo vivo. A correção ficou no `notion-tasks-cli` (`cli/atualizacao_nativa.p
 com o estado da aceitação física (Windows e Linux validados; macOS, assinatura e VM limpa pendentes). A
 correção só vale para binários publicados a partir da próxima Release; a `v0.5.0` ainda falha uma vez ao se
 atualizar.
+
+## [2026-10-07] Empacotamento nativo aponta para o pacote único (build Linux validado)
+
+O build PyInstaller (`scripts/empacotamento/build_native.py`) passou a apontar para `felixo_notion_mcp`:
+metadata de `felixo-notion-mcp`, `--collect-submodules felixo_notion_mcp` e o arquivo de versão
+`felixo-notion-mcp-version.txt` em `felixo_notion_mcp/api/cli/` dentro do bundle (onde `versao.py` o lê). O nome
+do arquivo tem uma fonte só, em `versao.py`. A raiz do repositório que o build usa como diretório de trabalho
+subiu de `parents[1]` para `parents[2]`, porque o script saiu de `scripts/` para `scripts/empacotamento/`. Nomes
+de asset (`notion-automacoes-<alvo>`) e `REPOSITORIO_GITHUB` não mudaram.
+
+Medido num build real em Linux x64 (Python 3.13, PyInstaller 6): `--version` responde `0.6.0` (vem do arquivo
+embutido, não da metadata, que diz `0.6.0.dev0`), `auth listar` e `--json doctor` rodam sem traceback, e o
+`doctor` descreve o pacote como `binário nativo`, nunca como checkout. Sem `--collect-submodules`, o serviço
+carregado por `importlib.import_module` (`buscar-conteudo`) some do binário (27 MB contra 48 MB) e o `doctor`
+continua verde; por isso o smoke agora também roda `buscar-conteudo` e confere a origem do pacote.
+
+**Limite:** só o Linux x64 foi construído e testado nesta etapa. Windows e macOS (x64 e arm64) ficam com a CI de
+release da etapa 4, que é quem vai rodar este mesmo build e este mesmo smoke nos três sistemas.
+
+## [2026-10-07] Etapa 1 do monolito: hub e três módulos viram um pacote só
+
+**Decisão.** O ecossistema já foi um monorepo até 02/07/2026 e foi separado de propósito (`docs/MODULARIZACAO.md`).
+A separação custou três pacotes com faixas de versão casadas, `bootstrap.py`, `check-dev.py` e o bug das "três
+cópias do starter" (entrada de 24/08/2026). A spec
+`docs/superpowers/specs/2026-10-07-monolito-felixo-notion-mcp-design.md` (seção 8) divide a volta em quatro
+etapas; esta é a **etapa 1**: só reorganizar, sem mudar comportamento. As etapas 2 a 4 (registro único de
+operações e paridade do MCP; modo hospedado; migração do AI Core e do Editor mais a distribuição) ficam para
+outras branches, cada uma com plano e gate próprios.
+
+**O que foi feito** (branch `refactor/monolito`, base `23d9ebb`, tarefas 1 a 10 do plano da etapa):
+
+- Os três módulos entraram com o **histórico preservado** (`git filter-repo --to-subdirectory-filter` e merge
+  com `--allow-unrelated-histories`), e `git log --follow` e `git blame` continuam funcionando.
+- O código foi movido por **script** para as camadas `domain`, `services`, `repositories`, `integrations`,
+  `api/{cli,mcp,http}` e `core`, em `src/felixo_notion_mcp/`. A tabela de movimentos
+  (`scripts/migracao/mapa_modulos.py`) é a fonte única; os imports foram reescritos pelo mesmo mapa
+  (`scripts/migracao/reescrever_imports.py`), não à mão. O resumo origem → destino está em
+  `docs/ARQUITETURA.md`.
+- Um pacote só, `felixo-notion-mcp` `0.6.0.dev0`, com `uv.lock`, um `start_app.py` na raiz (que abre sem nada
+  instalado) e CI em matriz (Ubuntu, Windows, macOS × Python 3.10 a 3.13, `pip-audit`, `npm audit`, conferência
+  do conteúdo do wheel).
+- `bootstrap.py`, `check-dev.py`, `sync.py` e `SYNC.md` saíram. `AGENTS.md` e `CLAUDE.md` passaram a rotear
+  por camada.
+
+**Imports e contagens.** SHAs importados (`main` de cada repositório, em 07/10/2026): `notion-starter`
+`42da753`, `notion-tasks-cli` `73ffcd9`, `notion-workspace-app` `0e958ba`; merges `881b531`, `f9f9473` e
+`2177b4d`.
+
+| Suíte | Antes (linha de base) | Depois |
+| --- | --- | --- |
+| `notion-starter` | 678 passed | movida inteira |
+| `notion-tasks-cli` | 370 passed | movida inteira, menos 2 testes de faixa do starter, trocados pelo contrato novo do `pyproject` |
+| `notion-workspace-app` | 256 passed, 2 skipped | movida inteira |
+| hub | 3 passed (`test_check_dev.py`) | saíram junto com o `check-dev.py` |
+| **Pacote único** | **1307 passed (soma) + 2 skipped** | **1677 passed, 1 skipped** |
+
+O skip que sobra é por desenho: `tests/scripts/test_migracao.py` pula quando `_importado/` já não tem arquivos
+rastreados (a migração terminou). A diferença para cima vem de testes novos: retrato da CLI, scripts de
+migração, `doctor` e origem do pacote, `start_app.py` da raiz, conferência do wheel e smoke do binário (1676 no
+fim da tarefa 9; a tarefa 10 acrescentou 1, o da mensagem do extra de planilha). Nenhuma suíte migrada perdeu
+teste além dos 5 acima, que saíram de propósito.
+
+**Decisões do controlador durante a etapa (Rulings).**
+
+1. **Sobras ignoradas só no checkout principal.** O afastamento de `cli/ front/ server/ src/` ignorados não se
+   aplica ao worktree (checkout limpo); roda no checkout principal antes de ele receber o merge, porque é ali
+   que essas pastas colidiriam com o layout novo.
+2. **`apenas_mapear` na tabela de movimentos.** Shims de 21 linhas e duplicatas do app saem por `git rm`, mas
+   os nomes antigos deles entram no mapa apontando para o módulo real; sem isso os `from services.tarefas
+   import` da CLI e do app não seriam reescritos.
+3. **A execução vai até a tarefa 10 e a revisão final.** Push, PR, merge e renomeação do repositório
+   (tarefa 11) são efeitos externos e pedem confirmação do mantenedor (ver o item 13).
+4. **Imports relativos viram absolutos.** O plano dizia que relativos não mudam, mas 25 imports relativos em 9
+   arquivos do starter quebram quando os arquivos vão para pacotes diferentes; o reescritor passou a
+   convertê-los pelo mapa (script em vez de edição manual repetida).
+5. **Guardas de string no reescritor.** Extensões de arquivo e de site, e nomes de uma palavra comuns, não são
+   trocados fora de um nome pontuado maior; sem isso `api.notion.com` e `RAIZ / "mcp_server.py"` virariam
+   caminhos de módulo quebrados. Ficaram 30 avisos, 4 corrigidos à mão.
+6. **Ruff com `src = ["src"]`.** Com `tests/core` presente, o isort tratava `core` como pacote de primeira
+   parte e reordenava imports de `scripts/`; a raiz `tests` saiu da lista.
+7. **O logger passa de `notion_starter` para `felixo_notion_mcp`**, acompanhando o nome do pacote, porque o
+   pacote antigo deixa de existir no monolito. Quem configurava o logger pelo nome antigo precisa trocar.
+8. **`_servico_do_starter` fica como está.** A função (import dinâmico de serviço que podia faltar no starter do
+   PyPI) já aponta para `felixo_notion_mcp.services`; simplificar as 8 chamadas é refatoração da etapa 2. Na
+   tarefa 10 só as mensagens mudaram: num pacote único, serviço ausente significa instalação quebrada.
+9. **Versão embutida e `--add-data` do binário na tarefa 9.** O caminho `_MEIPASS/"cli"` de `versao.py` e o
+   `--add-data` do build ficaram para a tarefa dona do empacotamento nativo.
+10. **Commits de movimento mistos ficam.** `ba61283` e `0d2e2de` misturam arquivamento de `IA.md` e remoção de
+    READMEs de módulo com o movimento do código; separar exigiria reescrever o histórico da branch. A partir
+    da tarefa 6, documentação e código vão em commits separados.
+11. **`felixo_notion_mcp/__init__.py` exporta por `__getattr__` preguiçoso (PEP 562).** O launcher precisa
+    abrir sem dependência instalada e a tarefa 7 o chama no mesmo processo; mantém `__all__` e todo nome
+    público. O custo é que um erro de import só aparece no primeiro uso do nome (coberto por teste que
+    importa todos os nomes de `__all__`).
+12. **Três achados da CI corrigidos.** `permissions: contents: read` e `persist-credentials: false`; segundo
+    passo do `pip-audit` avaliando os marcadores do Python 3.10; `conferir_wheel` exige `static/js/app.js` e
+    todo asset que o `index.html` da SPA cita. O plano previa aceitar como lacuna os pins que só existem em
+    Windows e macOS (`pywin32`, `pefile`, `macholib`, `colorama`, `tzdata`); como o `uv export` não tem opção
+    de plataforma, a CI os extrai do mesmo arquivo e os audita por nome e versão num terceiro passo.
+13. **A tarefa 11 foi autorizada pelo mantenedor** (instrução de 07/10: etapa completa, push, PR, CI, merge e
+    apagar a branch). A renomeação do repositório ainda recebe um clique de confirmação imediatamente antes,
+    porque afeta remotes de outros agentes e o canvas. O mantenedor também decidiu parar ao fim da etapa 1
+    para avaliar antes de começar as etapas 2 a 4.
+14. **A marca "Automações do Notion" fica na interface até a etapa 4.** O banner do menu
+    (`api/launcher.py`), o `templates/tarefas.html` e a descrição do `pyproject.toml` seguem com o nome
+    antigo, porque é a etapa 4 que troca a identidade pública publicada (nome da distribuição no PyPI,
+    binários e Releases). O custo, se isso estiver errado, é ter telas locais com o nome antigo por uma etapa.
+
+**Bugs achados e corrigidos na etapa.**
+
+- **Token ausente virava "Erro interno".** A fábrica do cliente passou a levantar a `ImproperlyConfigured`
+  própria da biblioteca (`RuntimeError`), mas a view capturava só a do Django; sem token, a resposta era "Erro
+  interno inesperado" em vez da orientação para iniciar o app. A view captura as duas, com teste que usa a rota
+  real sem token (`ed147b3`).
+- **`REPO_RAIZ` congelado apontava para fora da pasta privada.** No binário (PyInstaller), `parents[3]` saía
+  de `_MEIPASS` para a pasta que a contém (no Linux, a temporária do sistema, gravável por qualquer usuário),
+  e um `.env` plantado ali seria carregado a cada execução; congelado, a raiz é a própria `_MEIPASS`
+  (`2d3ee4c`).
+- **O launcher não abria sem dependências.** Importar o pacote carregava `requests` pelo `__init__`,
+  `_pacote_instalado()` era sempre verdadeiro e o `execv` trocava para um `.venv` sem checar se ele importava
+  o pacote (`b8b5f5c`; Ruling 11).
+- **O smoke do binário disparava o auto-update.** `tasks buscar-conteudo` não estava na lista de comandos
+  isentos e chamaria a Release real, gravaria cache e poderia trocar o binário em teste; o smoke agora isola a
+  variável de update e a pasta do usuário (`71d04ef`).
+- **O retrato da CLI mudava entre versões do Python.** O argparse deriva `required` de posicionais por versão
+  (até 3.12, `REMAINDER` e `*` saem obrigatórios; na 3.13, não), o que quebraria o teste de contrato na CI; o
+  posicional é obrigatório se, e só se, o `nargs` não admite zero argumentos, e o JSON ficou idêntico em
+  3.10, 3.11, 3.12 e 3.13 (`4d35afe`).
+- **O launcher instalaria por nome uma distribuição que ninguém registrou.** Fora do checkout,
+  `_comando_pip_projeto` montava `pip install felixo-notion-mcp[app]` e o Iniciar tudo o rodava sem perguntar;
+  quem registrasse o nome no PyPI ganharia execução de código em quem instalou do código-fonte. Agora fora do
+  checkout nada roda `pip`, o Iniciar tudo pergunta antes, e as mensagens apontam o checkout (`e457c02`).
+- **O `update` ainda imprimia a receita por nome.** Achado pela revisão do item anterior:
+  `_gerenciador_atualizacao` montava `pip install --upgrade`, `pipx upgrade` e `uv tool upgrade` a partir de
+  `DISTRIBUICAO` em qualquer ambiente (o `.venv` do checkout inclusive), e `felixo-notion-mcp update` os
+  imprimia. Nada era executado, mas era a mesma receita, e a varredura de mensagens não via o nome que vinha da
+  constante. Fora do binário nativo, `update` descreve o ambiente e imprime a receita do checkout (`git pull` e
+  `uv sync --all-extras`) ou, fora dele, que a distribuição ainda não está publicada e como instalar do
+  código-fonte; no JSON `comando` é `null` e a receita vem em `instrucao`, com `executado` sempre `false`. A
+  varredura passou a ler o AST e pega o comando montado a partir de `DISTRIBUICAO`. A asserção
+  `pipx upgrade felixo-notion-mcp` de `test_cli_unificada.py` (citada em "Mudanças de propósito" abaixo) saiu
+  por isso; os comandos por gerenciador voltam na etapa 4, quando o nome estiver publicado (`2c6e1a0`).
+- **A instalação comum lia e gravava o `.env` e o banco uma pasta acima.** Numa instalação (wheel, pipx), a
+  raiz de `core/config.py` caía em `<venv>/lib/pythonX.Y` em vez de `site-packages`, onde a CLI e o app antigos
+  os guardavam; um `pipx upgrade` reaproveita o venv, e um token salvo pelo menu instalado sumia em silêncio.
+  A raiz agora é a do checkout só se há `pyproject.toml` ali, e `site-packages` numa instalação (`8de2a28`).
+- **A suíte podia mover um store de perfis real e carregava o `.env` real do checkout.** `_migrar_legado` usa
+  `shutil.move`, e a fixture de isolamento não zerava `ARQUIVOS_LEGADOS`: um store antigo com tokens iria para
+  uma pasta temporária do pytest, apagada no fim (reproduzido com um arquivo falso). Além disso, `notion_tasks`
+  e o servidor MCP carregam o `.env` ao serem importados, na coleta, e o checkout principal tem um de verdade.
+  O `conftest.py` zera os endereços legados e troca `carregar_env_file` antes da coleta por uma versão que
+  pula o `.env` padrão (`e3e9b53`).
+- **Também corrigidos:** teste de import preguiçoso com `parents[1]` que apontava para um `src` inexistente e
+  era mascarado pela instalação editável (`a0c9cc9`); raiz do build nativo (`parents[1]` virou `parents[2]`
+  ao sair para `scripts/empacotamento/`); wheel que passaria servindo página em branco por faltar o bundle da
+  SPA (`conferir_wheel`); `npm audit` com três altas no `front/` (`d62a4e6`).
+
+**Mudanças de propósito que parecem regressão.**
+
+- **Asserções que mudaram de propósito:** os dois testes de faixa do `notion-starter` de `test_pyproject.py`
+  viraram o contrato novo (nome `felixo-notion-mcp`, nenhuma dependência de `notion-starter`,
+  `notion-workspace-app` ou `notion-automacoes`, e os executáveis apontando para funções que existem);
+  em `test_cli_unificada.py`, `pipx upgrade notion-automacoes` virou `pipx upgrade felixo-notion-mcp`,
+  `"notion-automacoes[app]"` virou `"felixo-notion-mcp[app]"` e `--version` prende o literal
+  `notion-automacoes 0.6.0.dev0`; `test_versao_starter.py` compara `felixo_notion_mcp.__version__` com o
+  `pyproject` (o pacote nasce em `0.6.0.dev0`); no launcher, o comando que reabre o menu é
+  `-m felixo_notion_mcp.api.launcher` (rodar o arquivo por caminho quebra a biblioteca padrão) e o extra de
+  instalação é `.[app]`, já que `[server]` deixou de existir.
+- **Logger renomeado** de `notion_starter` para `felixo_notion_mcp` (Ruling 7): é mudança de comportamento
+  para quem configurava o logger por nome. Nenhum código ou teste do repositório dependia do nome antigo.
+- **Mensagens de execução** que ainda citavam `notion-starter` (instalação do extra de planilha, relatório
+  DOCX, serviço ausente da CLI) passaram a citar `felixo-notion-mcp`, porque os textos antigos tratavam de
+  uma distribuição que deixou de ser dependência. O serviço ausente agora diz "instalação quebrada" e
+  aponta para o `doctor`. Nenhum teste dependia do texto antigo; quatro ganharam asserções que o prendem
+  (`test_cli_copiar_corpo`, `test_cli_remover_coluna`, `test_relatorios_docx_import_preguicoso` e o novo
+  caso do extra de planilha em `test_fonte_planilha`). As docstrings que citavam `notion_starter.*` como
+  módulo atual passaram a citar o módulo real, pelo mapa da migração; as menções históricas deliberadas
+  ("herdada do `notion_starter`", "tempo em que a CLI e o `notion-starter` tinham versões separadas")
+  ficaram. Os apelidos locais `starter_properties` e `starter_schema` em `notion_tasks.py` e `server.py`
+  seguem como estão (nome de variável, não texto).
+
+**Refinamentos sobre a spec.**
+
+- **`scripts/empacotamento/` em vez de `packaging/`** (spec 2.2). Uma pasta `packaging/` na raiz do
+  `sys.path` esconderia a biblioteca `packaging`, da qual pip, hatch e pytest dependem. O Dockerfile do modo
+  hospedado (etapa 3) fica na raiz, como o guia de deploy no Railway pede.
+- **`sync.py` aposentado em vez de movido** (spec 2.3.3 mandava mover). Ele só sincronizava os módulos, que
+  deixaram de existir; `criar_tarefas_investigadas_*.py` foi para `scripts/notion/`.
+- **Sobras não colidentes mantidas** (spec 2.3.7). Só as pastas ignoradas que colidem com o layout novo
+  (`cli/`, `front/`, `server/`, `src/`) são afastadas; `operacional.sqlite3`, `.notion-backups/` e `Arquivos/`
+  continuam onde estão, ignoradas pelo git e sem colidir com nada.
+- **`api/operations/` não nasce nesta etapa.** O app Django `operations` (modelos `Job` e `Lock`) foi para
+  `repositories/operations/` com rótulo e tabelas preservados; o registro único de operações da spec 3.2 é da
+  etapa 2.
+- **Extra `[server]` virou `[app]`**; o modo hospedado (`[servidor]`) é da etapa 3. `core/origem.py` é novo e
+  atende o `doctor` e o Status do menu.
+- **A baseline do starter é 678, não 677:** o `IA.md` de 27/09 registrava 677 e a medição de 07/10 deu 678.
+- **Itens do menu antigo do hub que saíram.** O `start_app.py` do hub tinha o "Usar" (guia, listar, opções e
+  comando livre da CLI) e um editor de variáveis de ambiente (`GITHUB_CONTAS` e parecidas). Não foram
+  portados: quem os usava passa a rodar a própria CLI (`felixo-notion-mcp` ou `notion-tasks`, com `guia`,
+  `listar`, `opcoes` e `--help`) e a editar o `.env`, que tem o modelo em `.env.example`.
+- **Estreitamento da spec 2.3.2 aceito na etapa 1.** A spec pedia "Configurar (perfis/chaves)" e "Status (o
+  doctor)". O Configurar do menu define só o token do Notion e o database de tarefas (os perfis são da CLI:
+  `felixo-notion-mcp auth` ou `notion-tasks perfis`), e o Status mostra o estado do ambiente e de onde o pacote
+  é importado, sem rodar o `doctor` inteiro, que fica na CLI. A documentação (`README.md`, `start_app.py`,
+  `docs/QUALIDADE.md`, `AGENTS.md`) descreve o menu assim.
+
+**Limites e o que não mudou.**
+
+- O binário nativo foi **construído e testado só em Linux x64** (Python 3.13, PyInstaller 6). Windows e macOS
+  (x64 e arm64) passam pela CI de testes pela primeira vez na tarefa 11, e o build e o smoke nativos nesses
+  sistemas ficam para a CI de release da etapa 4. Detalhes do build real na entrada "Empacotamento nativo
+  aponta para o pacote único" (commit `0811ea1`), logo acima.
+- Os **pacotes publicados no PyPI não mudam** até a etapa 4: `notion-automacoes` `0.5.0`, `notion-starter` e
+  `notion-workspace-app` seguem como estão, e os assets dos binários continuam `notion-automacoes-<alvo>`.
+  `REPOSITORIO_GITHUB` do atualizador nativo também não mudou.
+- Código sem uso até a etapa 2: `_servico_do_starter` e as 8 chamadas (Ruling 8). Dívida herdada, para a
+  revisão final: `domain/tasks.py` importa `integrations.notion_client` (domínio dependendo de integração); o
+  teste de arquitetura da spec 3.1 é da etapa 2.
+- Pendência aberta: `mcp start` no binário nativo usa `sys.executable -m`, padrão herdado do código antigo que
+  não funciona em PyInstaller onefile; não foi verificado em build.
+- **O nome `felixo-notion-mcp` no PyPI precisa ser reivindicado cedo.** Um *pending publisher* do Trusted
+  Publishing **não reserva** o nome: quem registrar `felixo-notion-mcp` antes da etapa 4 passa a ser o dono dele
+  (em 07/10/2026 a consulta ao PyPI ainda dava 404). Enquanto isso, nada no código instala a distribuição por
+  nome: o launcher só instala em modo editável dentro de um checkout, e as mensagens apontam o extra e o
+  checkout (`uv sync --all-extras` ou `pip install -e ".[app]"`). A publicação da `0.6.0` da etapa 4 depende de
+  o nome ser do projeto.
+- Guias antigos de `docs/` que não estavam no escopo desta tarefa (`CONTRATOS.md`, `PLANO.md`, `AGENTES.md`,
+  `INTEGRACOES.md` e parecidos) ainda citam `server/`, `cli/` e `notion_starter` do tempo dos módulos; o
+  caminho de hoje está na tabela origem → destino de `docs/ARQUITETURA.md`. Atualizá-los fica para uma
+  tarefa própria. Já foram corrigidos `INFRA.md` e `MCP.md`, que mandavam entrar em `modules/`.
+
+**Como validar:** `uv sync --locked --all-extras`, `uv run ruff check .`, `uv run python -m pytest`, e
+`uv run felixo-notion-mcp doctor` para ver de onde o pacote está sendo importado.

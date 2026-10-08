@@ -1,15 +1,16 @@
-# 🧩 Automações do Notion
+# 🧩 Felixo Notion MCP
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Notion API](https://img.shields.io/badge/Notion-API-000000?style=for-the-badge&logo=notion&logoColor=white)
+![MCP](https://img.shields.io/badge/MCP-Server-6C47FF?style=for-the-badge)
 [![PyPI](https://img.shields.io/pypi/v/notion-automacoes?style=for-the-badge&label=PyPI)](https://pypi.org/project/notion-automacoes/)
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-**Hub do ecossistema de automações do Notion — arquitetura, documentação e roteamento dos módulos que nasceram aqui.**
+**Notion para pessoas e para IAs: biblioteca, CLI, servidor MCP e app local num único pacote Python.**
 
-[🚀 Como Usar](#-uso--cli-para-operar-o-notion) • [🛠️ Desenvolvimento](#️-desenvolvimento--editar-os-módulos) • [🤖 Para IAs](#-para-ias--agentes-de-ia-como-desenvolvedoras) • [📐 Arquitetura](#-arquitetura-do-ecossistema)
+[🚀 Como Usar](#-como-usar) • [🧰 Comandos](#-comandos-principais) • [🏛️ Arquitetura](docs/ARQUITETURA.md) • [🤖 Para IAs](#-para-ias) • [🤝 Contribuições](#-contribuições)
 
 </div>
 
@@ -17,93 +18,141 @@
 
 ## 📋 Índice
 
-- [⚡ Primeiro passo obrigatório](#-primeiro-passo-obrigatório)
+- [⭐ **O menu de entrada**](#-o-menu-de-entrada) ⭐ **DESTAQUE**
+- [📋 Sobre o Projeto](#-sobre-o-projeto)
 - [📁 Estrutura do Projeto](#-estrutura-do-projeto)
-- [🚀 Uso — CLI para operar o Notion](#-uso--cli-para-operar-o-notion)
-- [🛠️ Desenvolvimento — editar os módulos](#️-desenvolvimento--editar-os-módulos)
-- [🤖 Para IAs — agentes como desenvolvedoras](#-para-ias--agentes-de-ia-como-desenvolvedoras)
-- [📐 Arquitetura do ecossistema](#-arquitetura-do-ecossistema)
+- [🧰 Ferramentas Disponíveis](#-ferramentas-disponíveis)
+- [🚀 Como Usar](#-como-usar)
+- [📚 Guia Rápido](#-guia-rápido)
+- [🔧 Funcionalidades Técnicas](#-funcionalidades-técnicas)
+- [⚠️ Limitações](#️-limitações)
+- [🛡️ Segurança](#️-segurança)
+- [📖 Documentação](#-documentação)
 - [🌌 Ecossistema Felixo](#-ecossistema-felixo)
-- [📚 Documentação](#-documentação)
-- [📄 Licença](#-licença)
+- [📝 Licença](#-licença)
 - [👤 Autor](#-autor)
+- [🤝 Contribuições](#-contribuições)
 
 ---
 
-## ⚡ Primeiro passo obrigatório
+## ⭐ O menu de entrada
 
-### Forma mais simples — o menu de entrada
+> **🚀 UM COMANDO, SEM DECORAR NADA**
+>
+> ```bash
+> python start_app.py
+> ```
 
-Não quer decorar comando? Rode o menu interativo e escolha o que fazer (instalar a CLI, configurar o token, sincronizar os módulos, ver status ou operar o Notion):
+### 💡 Por que começar por ele?
 
-```bash
-python start_app.py
-```
+- **🎯 Tudo num lugar**: instalar, configurar o token, subir o app web, subir o servidor MCP e ver o estado do ambiente.
+- **🧭 Descritivo**: cada opção do menu explica o que vai fazer antes de fazer.
+- **🪶 Abre sem nada instalado**: o `start_app.py` usa só a biblioteca padrão do Python, então funciona num clone recém-baixado, em Windows, macOS e Linux.
+- **🩺 Status honesto**: a opção Status mostra o estado real do ambiente e também de onde o pacote é importado (a mesma informação do `felixo-notion-mcp doctor`).
 
-No menu você tem: **Instalar/Setup**, **Configurar**, **Usar o Notion (CLI)**, **Desenvolver** e **Status/Sair**. É a porta de entrada única do hub.
+Menu: **Usar o app** (app web local) • **Para IA e integrações** (CLI, GitHub, servidor MCP, mapa) • **Configurar e instalar** (token e database de tarefas, dependências, API, qualidade) • **Status** • **Sair**. O **Configurar** define só o token do Notion e o database de tarefas, guardados no `.env`; os perfis de workspace se gerenciam à parte, com `felixo-notion-mcp auth` (ou `notion-tasks perfis`).
 
-### Ou direto pelos scripts
+Tecnologias da interface: terminal colorido com `rich` e `questionary`.
 
-Se você está começando aqui — seja para **usar** as ferramentas (CLI) ou **desenvolver** (editar o código) — rode isto primeiro:
+---
 
-```bash
-python bootstrap.py
-```
+## 📋 Sobre o Projeto
 
-Isso prepara os 3 módulos do ecossistema em `modules/` (gitignorado, só local seu). Sem este passo, os módulos não existem.
+O **Felixo Notion MCP** é um **monólito modular** em Python, centrado num **servidor MCP**: ele deixa uma IA (Claude Code, Cursor, scripts) ler, criar e editar páginas, databases e tarefas do **Notion** com segurança. A mesma base de código também entrega a **CLI `notion-tasks`**, pensada para IAs e pessoas (o "MCP via CLI"), um **app web local** (API Django e SPA React com kanban, filtros e exploração) e uma **biblioteca** importável, com cliente resiliente para a API do Notion, schema, tarefas, conteúdo em Markdown e inventário.
 
-> **Reusa clones que você já tem.** Se um módulo já estiver clonado **na pasta acima** deste repositório (ex.: `../notion-tasks-cli`), o `bootstrap.py` cria um **link** para reusar o mesmo working copy em vez de duplicar — assim você desenvolve num só lugar. Só clona do GitHub o que ainda não existe. O link usa junction no Windows (não precisa de administrador) e symlink no Linux/macOS.
+Ele nasceu como quatro repositórios: a biblioteca `notion-starter`, a CLI `notion-tasks-cli`, o app `notion-workspace-app` e um hub de documentação. Manter três pacotes com versões casadas custava caro, então o plano é reuni-los num produto só, em quatro etapas. **Esta é a etapa 1: a reestruturação.** O código mudou de lugar, não de comportamento.
 
-### Depois: sincronizar regularmente
+### ✨ **NOVO: um repositório, um pacote**
 
-Quando os módulos tiverem atualizações no GitHub, rode:
-
-```bash
-python sync.py
-```
-
-Ou, se configurou o alias (veja [SYNC.md](SYNC.md)):
-
-```bash
-sync
-```
-
-Isso executa `git pull` em cada módulo e valida que tudo está OK.
+- ✅ Os três módulos e o hub viraram **um pacote**, `felixo-notion-mcp` (import `felixo_notion_mcp`), com o histórico git preservado.
+- ✅ O código está em **camadas** (`domain`, `services`, `repositories`, `integrations`, `api`, `core`), descritas em [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
+- ✅ **Dependências travadas** em `uv.lock` e **CI em matriz** (Ubuntu, Windows e macOS × Python 3.10 a 3.13), com `pip-audit` e `npm audit`.
+- ✅ `felixo-notion-mcp doctor` mostra **de onde o pacote está sendo importado**, no lugar do antigo `check-dev.py`.
+- ✅ **Nada muda para quem usa**: as mesmas linhas de comando, o mesmo apelido `notion-tasks` e o mesmo arquivo de perfis.
 
 ---
 
 ## 📁 Estrutura do Projeto
 
-Este repositório é **só o hub**: documentação, roteamento e as ferramentas de bootstrap. O código das ferramentas vive nos módulos, clonados sob demanda em `modules/` (gitignorado).
-
-```
-Automações do Notion/
+```text
+Felixo-Notion-MCP/
 │
-├── 📁 docs/                # Arquitetura, contratos, MCP, modularização, escala
-├── 📁 modules/             # Módulos clonados por bootstrap.py (local, gitignorado)
+├── 📁 src/felixo_notion_mcp/    # o pacote
+│   ├── 📁 domain/               # regras puras: propriedades, schema, Markdown ↔ blocos, tarefas
+│   ├── 📁 services/             # casos de uso (tarefas, conteúdo, relações, relatórios, GitHub…)
+│   ├── 📁 repositories/         # persistência local (Django ORM): estado operacional
+│   ├── 📁 integrations/         # cliente HTTP do Notion, GitHub e OpenRouter
+│   ├── 📁 api/                  # bordas: cli/, mcp/, http/ (Django) e o menu launcher.py
+│   └── 📁 core/                 # configuração, perfis, exceções, logging, utilitários
 │
-├── AGENTS.md               # Roteamento de pedidos para o módulo/arquivo certo
-├── CLAUDE.md               # Contexto automático para Claude Code
-├── IA.md                   # Linha do tempo de decisões de arquitetura
-├── README.md               # Este arquivo
-├── SYNC.md                 # Como configurar o alias `sync`
+├── 📁 front/                    # fonte da SPA React (o build entra no wheel)
+├── 📁 tests/                    # espelha as camadas, mais o contrato da CLI
+├── 📁 scripts/                  # empacotamento nativo, migração e scripts reutilizáveis
+├── 📁 examples/                 # exemplos de uso da biblioteca
+├── 📁 docs/                     # arquitetura, distribuição, contratos, MCP, qualidade…
 │
-├── start_app.py            # Menu de entrada interativo (instalar, configurar, usar, dev)
-├── bootstrap.py            # Clona os 3 módulos em modules/
-├── sync.py                 # git pull em cada módulo
-├── check-dev.py            # Verifica se o workspace de dev está pronto
+├── start_app.py                 # menu interativo de entrada
+├── pyproject.toml · uv.lock     # metadados do pacote e dependências travadas
+├── AGENTS.md · CLAUDE.md        # roteamento e contexto para agentes de IA
+├── IA.md                        # linha do tempo de decisões
+├── CONTRIBUTING.md              # como contribuir
+├── .env.example                 # modelo de variáveis de ambiente (sem valores)
+├── README.md                    # este arquivo
 └── LICENSE
 ```
 
 ---
 
-## 🚀 Uso — CLI para operar o Notion
+## 🧰 Ferramentas Disponíveis
 
-### Instalação distribuída (sem clone)
+### 💻 CLI para IAs e pessoas (`src/felixo_notion_mcp/api/cli/`)
 
-O caminho de usuário é a distribuição pública `notion-automacoes`, com o alias
-legado `notion-tasks` preservado. A versão atual é `0.5.0` e os três pacotes já
-estão publicados no PyPI. O produto completo pode ser instalado com uma linha:
+**`notion-tasks`** (apelido permanente) e **`felixo-notion-mcp`**
+- Cria, edita, move e conclui tarefas; lê e escreve o conteúdo das páginas em Markdown; mapeia o workspace; clona estruturas; importa planilhas; exporta relatórios para DOCX; sincroniza repositórios do GitHub.
+- O `--help` é um guia escrito para IAs, e os erros em `--json` vêm num envelope único (`codigo`, `mensagem`, `proximo_passo`).
+- Exemplo: `notion-tasks conteudo <id>` → propriedades e corpo da página, avisando quando ela contém um database.
+
+📖 [Ver o roteamento e as regras de operação](AGENTS.md)
+
+---
+
+### 🔌 Servidor MCP (`src/felixo_notion_mcp/api/mcp/`)
+
+**`server.py`**
+- Expõe as capacidades de Notion como ferramentas MCP (transporte stdio, e Streamable HTTP para depuração local).
+- Operações destrutivas sinalizam `destructiveHint` para o cliente pedir confirmação.
+- Exemplo: `felixo-notion-mcp mcp start` → servidor pronto para o Claude Code ou o Cursor.
+
+📖 [Ver ferramentas, transportes e integração](docs/MCP.md)
+
+---
+
+### 🌐 App web local (`src/felixo_notion_mcp/api/http/` e `front/`)
+
+**API Django + SPA React**
+- Kanban, lista e grade de tarefas, filtros e exploração de qualquer database.
+- A SPA já vem compilada no wheel; Node e npm só são necessários no checkout de desenvolvimento.
+- Exemplo: `felixo-notion-mcp app start` → API e SPA em `127.0.0.1`.
+
+📖 [Ver os contratos REST](docs/CONTRATOS.md) • [infraestrutura](docs/INFRA.md)
+
+---
+
+### 📚 Biblioteca (`domain/`, `services/`, `integrations/`)
+
+**`NotionClient`, `TaskList`, conversão Markdown ↔ blocos**
+- Cliente com retries, rate limit e paginação; builders e leitores de propriedade; comparação de schema.
+- Exemplo: `markdown_para_blocos("# Título")` → blocos prontos para a API.
+
+📖 [Ver o mapa das camadas](docs/ARQUITETURA.md) • [exemplos](examples/)
+
+---
+
+## 🚀 Como Usar
+
+### Opção 1: instalar o pacote publicado (mais simples) 📦
+
+Para só **usar** o Notion, sem clone, Git ou Node:
 
 ```bash
 pipx install "notion-automacoes[app]"
@@ -112,70 +161,38 @@ notion-automacoes --version
 notion-automacoes doctor
 ```
 
-Esse caminho não baixa Git, não exige clone/Node/npm e serve a SPA a partir do
-wheel Python. Consulte [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md) para o
-contrato de release, os links dos pacotes, o smoke multiplataforma e o limite
-explícito do primeiro release (sem binários nativos).
+> **Em transição.** Os pacotes publicados no PyPI hoje são `notion-automacoes` (CLI), `notion-starter` e `notion-workspace-app`. O pacote `felixo-notion-mcp` é construído a partir deste repositório e será publicado na etapa 4. Os comandos `notion-tasks` são os mesmos nos dois. Os detalhes estão em [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md).
 
-Pacotes publicados:
+### Opção 2: pelo checkout (para mexer no código) 🛠️
 
-| Pacote | Papel | Link |
-| --- | --- | --- |
-| `notion-automacoes==0.5.0` | CLI única, perfis e fachada para app/MCP | [PyPI](https://pypi.org/project/notion-automacoes/) |
-| `notion-starter==0.4.0` | Biblioteca base e serviços compartilhados | [PyPI](https://pypi.org/project/notion-starter/) |
-| `notion-workspace-app==0.3.1` | API Django, SPA, launcher e servidor MCP | [PyPI](https://pypi.org/project/notion-workspace-app/) |
-| `notion-automacoes[app]` | Instalação recomendada do produto completo | [guia de distribuição](docs/DISTRIBUICAO.md) |
-
-Para usar somente a CLI, sem a interface local, instale `pipx install
-notion-automacoes`. Para atualizar uma instalação gerenciada pela ferramenta,
-execute `notion-automacoes update` e siga o comando exibido.
-
-### Instalação (uma vez)
-
-Para desenvolvimento, ou para garantir que a CLI use exatamente o código presente em `modules/` (e não
-uma cópia antiga do `site-packages`), use o menu de entrada e escolha
-**Instalar/Setup → CLI notion-automacoes (alias notion-tasks)**. O setup prepara os módulos e instala,
-na ordem correta, `notion-starter` e `notion-tasks-cli` em modo editável com o
-mesmo Python que executa o menu:
+#### Instalação
 
 ```bash
+# Clone o repositório
+git clone https://github.com/Felipe-Alcantara/Felixo-Notion-MCP.git
+cd Felixo-Notion-MCP
+
+# O caminho mais curto: o menu instala e configura por você
 python start_app.py
+
+# Ou manualmente, com as dependências travadas
+uv sync --locked --all-extras
 ```
 
-Isso funciona em Windows, macOS e Linux. Para uma instalação manual equivalente:
+#### Executando
 
 ```bash
-python bootstrap.py
-python -m pip install --editable modules/notion-tasks-cli
-python -m pip install --editable modules/notion-starter   # por último, de propósito
-python -m cli.notion_tasks --help
-python check-dev.py            # confirma de onde o notion_starter está vindo
+uv run felixo-notion-mcp doctor      # diagnóstico: Python, dependências, perfis, rede, origem do pacote
+uv run notion-tasks --help           # o guia completo da CLI
+uv run python -m pytest              # a suíte (HTTP mockado: não precisa de token nem de rede)
+uv run ruff check .                  # lint
 ```
 
-Use sempre `python -m pip` (não um `pip` de outro Python). A instalação
-editável é intencional: atualizações feitas nos módulos ficam disponíveis para
-`notion-tasks` sem reinstalar outra cópia.
-
-> No caminho de desenvolvimento, a ordem continua importante: instale a CLI e
-> o starter em modo editável, com o starter por último, e rode `check-dev.py`.
-> A distribuição publicada usa a dependência versionada do PyPI e não depende de
-> checkout vizinho.
->
-> O comando distribuído não usa esta ordem nem instala cópia de checkout: ele
-> resolve `notion-starter` por versão no PyPI. A ordem acima é apenas o fluxo de
-> desenvolvimento local e deve ser validada com `check-dev.py`.
->
-> A partir do `notion-tasks-cli` 0.2.1, os perfis salvos (`.notion-workspaces.json`)
-> ficam na **pasta de configuração do usuário** (`~/.config/notion-tasks/` ou
-> `%APPDATA%\notion-tasks\`), e não mais ao lado do pacote instalado — então trocar o
-> modo de instalação não mexe mais neles. Quem tinha perfis salvos antes disso não
-> precisa fazer nada: a CLI migra o arquivo na primeira execução e avisa.
-
-Configure o token:
+### Configurar o token
 
 ```bash
-export NOTION_TOKEN=ntn_...
-export NOTION_DATABASE_ID=...
+export NOTION_TOKEN=ntn_...          # ou copie .env.example para .env
+export NOTION_DATABASE_ID=...        # opcional: o database de tarefas padrão
 ```
 
 Ou salve workspaces como **perfis** (recomendado para quem alterna entre workspaces):
@@ -187,13 +204,11 @@ notion-tasks perfis listar              # mostra os perfis sem expor tokens
 notion-tasks --perfil <alias> <comando> # usa outro perfil só nesta execução
 ```
 
-> **Atenção à precedência** (da maior para a menor): `--perfil <alias>` → **perfil ativo** →
-> `NOTION_TOKEN` do ambiente/`.env`. Quando há um perfil ativo, o token dele **vence
-> silenciosamente** a variável de ambiente — exportar outro `NOTION_TOKEN` não muda nada.
-> Se um link válido devolve "Recurso não encontrado", confira primeiro o perfil ativo com
-> `notion-tasks perfis listar` — você pode estar consultando outro workspace.
+> **Atenção à precedência** (da maior para a menor): `--perfil <alias>` → **perfil ativo** → `NOTION_TOKEN` do ambiente ou do `.env`. Com um perfil ativo, o token dele **vence silenciosamente** a variável de ambiente. Se um link válido devolve "Recurso não encontrado", confira primeiro o perfil ativo com `notion-tasks perfis listar` — você pode estar consultando outro workspace.
 
-### Comandos principais
+Os perfis ficam na **pasta de configuração do usuário** (`~/.config/notion-tasks/` ou `%APPDATA%\notion-tasks\`), não ao lado do pacote, então trocar o modo de instalação não os afeta.
+
+### 🧰 Comandos principais
 
 ```bash
 # 1. SEMPRE comece lendo o que o link é
@@ -227,119 +242,75 @@ notion-tasks restaurar-bloco <id>          # desfaz uma exclusão
 # Relatórios diários (saída programática: acabamento fino pode pedir ajuste manual no Word)
 notion-tasks exportar-docx --database <id> --de 2026-07-01 --ate 2026-07-06 --saida ./exports
 
+# Servidor MCP e app local
+felixo-notion-mcp mcp start      # servidor MCP (stdio)
+felixo-notion-mcp app start      # API e SPA locais
+
 # Guia completo
 notion-tasks --help
 ```
 
-O `--help` é um guia escrito para IAs — qualquer modelo consegue ler, entender e operar este CLI.
+---
+
+## 📚 Guia Rápido
+
+### Para Iniciantes
+1. Rode `python start_app.py`.
+2. Escolha **Instalar/Setup** e depois **Configurar** para salvar o token do Notion.
+3. Escolha **Iniciar** para abrir o app web, ou **Status** para conferir o ambiente.
+
+### 🤖 Para IAs
+1. Leia [`AGENTS.md`](AGENTS.md): ele roteia cada pedido (usar o Notion ou desenvolver as ferramentas) e traz as regras de operação.
+2. Ao receber um link do Notion, rode `notion-tasks conteudo <id>` **antes de escrever qualquer coisa**.
+3. [`CLAUDE.md`](CLAUDE.md) é o contexto carregado automaticamente pelo Claude Code.
+
+### Para Desenvolvedores
+1. `uv sync --locked --all-extras` e `uv run python -m pytest`.
+2. Ache o arquivo certo na tabela de [`AGENTS.md`](AGENTS.md) ou no mapa de [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
+3. Leia o [`CONTRIBUTING.md`](CONTRIBUTING.md) antes de abrir o PR.
 
 ---
 
-## 🛠️ Desenvolvimento — editar os módulos
+## 🔧 Funcionalidades Técnicas
 
-Estrutura após `python bootstrap.py`:
-
-```
-modules/
-├── notion-starter/          # Biblioteca Python base
-├── notion-tasks-cli/        # CLI para IAs (+ camada de serviços)
-└── notion-workspace-app/    # App Django + React + MCP
-```
-
-### Fluxo de trabalho
-
-1. Rode `python bootstrap.py` (já fez? pule para 2).
-2. Edite no módulo correto (ver tabela de roteamento abaixo).
-3. Teste dentro do módulo: `cd modules/<nome> && python -m pytest`.
-4. Commit e push **dentro do módulo**, nunca no hub.
-
-### Roteamento: "o que preciso mexer vive em qual módulo?"
-
-| O pedido é… | Repositório | Arquivo de interesse |
-| --- | --- | --- |
-| Parar de chamar a API do Notion; melhorar resilência; cliente HTTP | [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) | `src/notion_starter/client.py` |
-| Schema, leitura/comparação de database | notion-starter | `src/notion_starter/schema.py` |
-| Modelo `Tarefa` e `TaskList` | notion-starter | `src/notion_starter/tasks.py` |
-| Conversão Markdown ↔ blocos; builders de propriedade (fatia >2000) | notion-starter | `src/notion_starter/content.py`, `properties.py` |
-| Ler/editar propriedades de página (`obter_pagina`/`atualizar_pagina`) | notion-starter | `src/notion_starter/client.py` |
-| Saneamento de texto/JSON (surrogates), `fatiar_utf16` | notion-starter | `src/notion_starter/utils.py` |
-| Subcomando do CLI, saída JSON, `--help` | [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) | `cli/notion_tasks.py` |
-| Regra de negócio compartilhada (tarefas, clonagem, conteúdo, GitHub, exportação DOCX) | notion-starter | `src/notion_starter/services/` |
-| Editar propriedades de linha genérica (`editar-linha`) | notion-tasks-cli | `services/propriedades.py` |
-| Endpoints REST, serializers, API Django | [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app) | `server/api/` |
-| Servidor MCP (ferramentas `notion.*`) | notion-workspace-app | `server/mcp_server.py` |
-| Interface web (kanban, filtros, exploração) | notion-workspace-app | `front/src/` |
-| Launcher TUI (`start_app.py`) | notion-workspace-app | `start_app.py` |
-
-**Consolidação:** os adaptadores GitHub/OpenRouter e os `services` compartilhados vivem em
-`notion-starter`; os módulos consumidores mantêm shims compatíveis. Código específico de borda
-continua nos consumidores.
-
-### Exemplo: adicionar um comando ao CLI
-
-```bash
-cd modules/notion-tasks-cli
-# edite cli/notion_tasks.py
-python -m pytest -q
-git add cli/notion_tasks.py
-git commit -m "feat: novo comando"
-git push
-```
-
-Você commitou no repo correto (`notion-tasks-cli`), não no hub.
+- **Camadas com direção única**: `api` → `services` → `integrations` → `domain` → `core`. A borda não tem regra de negócio, `domain` e `services` não conhecem HTTP, e só `integrations/notion_client.py` fala com a API do Notion.
+- **Contrato da CLI preso por teste**: o retrato do parser (`tests/contrato/retrato_cli.json`) garante que o que a CLI aceitava continua aceito.
+- **Envelope de erro único** na CLI: `{"ok": false, "erro": {"codigo", "mensagem", "proximo_passo", ...}}`.
+- **Importação sob demanda**: `import felixo_notion_mcp` não carrega `requests`; por isso o menu abre num Python sem dependências.
+- **Dependências travadas** em `uv.lock`, com auditoria (`pip-audit`, `npm audit`) e conferência do conteúdo do wheel na CI.
 
 ---
 
-## 🤖 Para IAs — agentes de IA como desenvolvedoras
+## ⚠️ Limitações
 
-Este hub foi desenhado para agentes operarem:
-
-- **[AGENTS.md](AGENTS.md)** — roteamento completo de pedidos para módulos + fluxo de trabalho.
-- **[CLAUDE.md](CLAUDE.md)** — contexto automático carregado pelo Claude Code.
-- **[bootstrap.py](bootstrap.py)** — clona os módulos; scripts iniciais podem rodar isto automaticamente.
-
-Se você é um agente:
-
-1. Leia `AGENTS.md` ao receber um pedido (roteia para o módulo certo).
-2. Rode `python bootstrap.py` se `modules/` não existir.
-3. Edite, teste e commite no módulo, não aqui.
-4. Este hub é documentação; não desenvolva funcionalidade aqui.
+- **Distribuição em transição**: o pacote `felixo-notion-mcp` ainda não está no PyPI; os pacotes publicados continuam `notion-automacoes`, `notion-starter` e `notion-workspace-app`.
+- **Binário nativo**: o build com PyInstaller foi construído e testado só em **Linux x64**. Windows e macOS rodam a suíte na CI, mas o build e o smoke do binário nesses sistemas ainda não foram exercitados.
+- **MCP local**: o servidor roda na sua máquina (stdio). O modo hospedado, com contas e OAuth, ainda não existe.
+- **DOCX**: a exportação de relatórios reproduz o modelo visual de forma programática; o acabamento fino pode exigir ajuste manual no Word.
 
 ---
 
-## 📐 Arquitetura do ecossistema
+## 🛡️ Segurança
 
-```
-┌─────────────────────────────────────────┐
-│ notion-starter — biblioteca base        │
-│ cliente, schema, tarefas, services      │
-└────────────────────┬────────────────────┘
-                     │
-             ┌───────┴────────┐
-             │                │
-   ┌─────────▼─────────┐ ┌────▼────────────────┐
-   │ notion-automacoes  │ │ notion-workspace-   │
-   │ fachada + alias    │ │ app                 │
-   │ notion-tasks       │ │ Django + React + MCP│
-   └────────────────────┘ └─────────────────────┘
-```
+⚠️ **IMPORTANTE:** o token do Notion dá acesso ao seu workspace. Trate-o como uma senha.
 
-### Módulos
+- O token **nunca é impresso** pela CLI, e os perfis ficam na pasta de configuração do seu usuário, fora do repositório.
+- O `.env` é ignorado pelo git; o repositório só traz o `.env.example`, sem valores.
+- Operações destrutivas pedem confirmação explícita (`--sim`), e os backups de bloco ficam na pasta de estado do usuário, nunca no diretório atual.
+- Compartilhe com a integração do Notion só as páginas e os databases que ela precisa enxergar.
 
-| Repositório | O que é | Depende de |
-| --- | --- | --- |
-| [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) | Biblioteca Python para a API oficial do Notion: cliente resiliente, schema, tarefas, conteúdo, inventário, exemplos | — |
-| [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) | CLI pensado para IAs — um "MCP via CLI" que permite a qualquer modelo criar, editar e manipular qualquer workspace do Notion pelo terminal | notion-starter |
-| [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app) | Aplicação local completa: API Django, SPA React (kanban, filtros, exploração), servidor MCP, sincronização GitHub↔Notion e launcher TUI | notion-starter |
+---
 
-### Convenções (valem para todos os módulos)
+## 📖 Documentação
 
-- Código, docstrings e mensagens em **português**.
-- Fronteiras de camada sagradas: bordas (CLI/API/MCP) sem regra de negócio; `services` não conhece HTTP; só `NotionClient` fala com a API do Notion.
-- Tipagem forte (`TypedDict` para payloads, `dataclass` para resultados); exceções derivam de `NotionSyncError`.
-- Histórico de decisões: `IA.md` (leia antes de mudanças estruturais).
-- Conventional Commits: `feat`/`fix`/`docs`/`refactor`/`chore`.
-- Nunca commitar `.env`, tokens, bancos SQLite ou `node_modules`.
+- 🏛️ [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md): as camadas, a direção das dependências e de onde veio cada arquivo.
+- 📦 [`docs/DISTRIBUICAO.md`](docs/DISTRIBUICAO.md): pacotes, binários nativos e a transição para o pacote único.
+- ✅ [`docs/QUALIDADE.md`](docs/QUALIDADE.md): o gate e o critério de pronto.
+- 🔗 [`docs/MCP.md`](docs/MCP.md): ferramentas MCP e integração com clientes.
+- 🧱 [`docs/CONTRATOS.md`](docs/CONTRATOS.md): objetos, rotas REST e erros.
+- 🐙 [`docs/GITHUB-DATABASE.md`](docs/GITHUB-DATABASE.md): manter seus repositórios do GitHub numa database do Notion.
+- 🗂️ [`docs/`](docs/README.md): o índice completo.
+- 🤖 [`AGENTS.md`](AGENTS.md) • [`CLAUDE.md`](CLAUDE.md) • [`IA.md`](IA.md): roteamento, contexto e histórico de decisões.
 
 ---
 
@@ -350,24 +321,12 @@ Este projeto faz parte de um ecossistema maior de desenvolvimento com multiagent
 1. [Felixo-System-Design](https://github.com/Felipe-Alcantara/Felixo-System-Design) — padrão de qualidade e boas práticas de vibe coding
 2. [Felixo-AI-Core](https://github.com/Felipe-Alcantara/Felixo-AI-Core) — orquestrador Electron para spawnar, monitorar e desenvolver com multiagentes
 3. [Openia](https://github.com/Felipe-Alcantara/Openia) — qualquer modelo de IA na interface do Claude Code
-4. **Automações do Notion** — este hub e seus três módulos
+4. **Felixo Notion MCP** — este projeto (antes, "Automações do Notion")
 5. [OpenRouter-Monitorator](https://github.com/Felipe-Alcantara/OpenRouter-Monitorator) — métricas de uso e custo de modelos via OpenRouter
 
 ---
 
-## 📚 Documentação
-
-- **[AGENTS.md](AGENTS.md)** — roteamento uso vs desenvolvimento, fluxo de trabalho, convenções.
-- **[CLAUDE.md](CLAUDE.md)** — contexto automático para Claude Code.
-- **[IA.md](IA.md)** — histórico de decisões de arquitetura.
-- **[docs/DISTRIBUICAO.md](docs/DISTRIBUICAO.md)** — contrato da CLI única, pacotes e release.
-- **[docs/GITHUB-DATABASE.md](docs/GITHUB-DATABASE.md)** — importar e manter seus repositórios do GitHub numa database do Notion.
-- **[docs/QUALIDADE.md](docs/QUALIDADE.md)** — contrato de qualidade do hub e dos módulos.
-- **[docs/](docs/)** — material de arquitetura, contratos, MCP, modularização, escala.
-
----
-
-## 📄 Licença
+## 📝 Licença
 
 Este projeto está sob a licença MIT — veja o arquivo [`LICENSE`](LICENSE).
 
@@ -378,7 +337,9 @@ Este projeto está sob a licença MIT — veja o arquivo [`LICENSE`](LICENSE).
 **Felipe Alcantara**
 
 - GitHub: [@Felipe-Alcantara](https://github.com/Felipe-Alcantara)
-- Módulos: [notion-starter](https://github.com/Felipe-Alcantara/notion-starter) · [notion-tasks-cli](https://github.com/Felipe-Alcantara/notion-tasks-cli) · [notion-workspace-app](https://github.com/Felipe-Alcantara/notion-workspace-app)
+- Repositório: [Felixo-Notion-MCP](https://github.com/Felipe-Alcantara/Felixo-Notion-MCP)
+
+---
 
 ## 🤝 Contribuições
 
@@ -388,8 +349,18 @@ Contribuições são bem-vindas! Sinta-se à vontade para:
 - Sugerir novas automações ou comandos
 - Melhorar a documentação e o roteamento para agentes
 
-Lembre-se: funcionalidade se desenvolve **nos módulos**, não neste hub (ver [AGENTS.md](AGENTS.md)).
+Veja o [`CONTRIBUTING.md`](CONTRIBUTING.md) para o ambiente, os padrões e o fluxo de PR.
+
+### 💡 Ideias para quem quiser contribuir
+
+O projeto ainda pode crescer em várias direções, e qualquer uma delas é um bom ponto de partida:
+
+- **Um registro único de operações**, do qual o servidor MCP, a CLI e a API REST sejam geradas, com paridade entre elas.
+- **Um modo hospedado** do servidor MCP, com contas, OAuth do Notion e chaves pessoais, para usar de qualquer cliente.
+- **Um teste de arquitetura** que falhe quando uma camada importar o que não deve.
+- **Build e smoke do binário nativo** em Windows e macOS, e a assinatura dos executáveis.
+- **Upload de arquivo** no modo hospedado, contas de equipe e um redesenho da SPA.
 
 ---
 
-⭐ Se este ecossistema foi útil, considere deixar uma estrela no GitHub!
+⭐ Se este projeto foi útil, considere deixar uma estrela no GitHub!

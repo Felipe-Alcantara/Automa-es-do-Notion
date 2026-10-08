@@ -1,9 +1,11 @@
 # 🏗️ INFRA — Servidor, configuração e deploy
 
-> **Módulo atual:** o servidor está em
-> [`notion-workspace-app`](https://github.com/Felipe-Alcantara/notion-workspace-app).
-> Os caminhos `server/` e `front/` abaixo são relativos a esse repositório, não
-> à raiz do hub. Para uso sem checkout, instale
+> **Onde está o código (etapa 1 do monólito, 2026-10-07):** o servidor vive em
+> `src/felixo_notion_mcp/`: o projeto Django e as rotas REST em `api/http/`, o estado
+> operacional em `repositories/operations/` e a configuração em `core/config.py`. Os
+> caminhos `server/` abaixo são os do antigo `notion-workspace-app`; a correspondência
+> está na tabela origem → destino de [ARQUITETURA.md](ARQUITETURA.md). `front/` fica
+> na raiz do repositório. Para uso sem checkout, instale
 > [`notion-automacoes[app]`](DISTRIBUICAO.md).
 
 > **O que é**: como o servidor deste projeto roda **local** e como é **hospedado**.
@@ -74,28 +76,25 @@ local, ignorado pelo git). Lidas por `core/config.py`:
 Pelo menu (porta de entrada única):
 
 ```bash
-cd modules/notion-workspace-app
 python start_app.py     # → "🚀 Iniciar tudo"
 ```
 
 A opção principal usa `127.0.0.1:8000` para a API Django e `127.0.0.1:5173`
-para a SPA React/Vite. Ela instala o extra de servidor se necessário, valida o
-Node do front (Vite exige Node 20.19+ ou 22.12+), instala `front/node_modules`
-quando faltar, aplica as migrações e abre o navegador no front React
-automaticamente. O menu principal permanece disponível; `Ctrl+C` encerra somente
+para a SPA React/Vite. Ela pergunta antes de instalar o extra `app` (o Django)
+quando falta, e só instala num checkout; valida o Node do front (Vite exige
+Node 20.19+ ou 22.12+), instala `front/node_modules` quando faltar, aplica as
+migrações e abre o navegador no front React automaticamente. O menu principal permanece disponível; `Ctrl+C` encerra somente
 o app no terminal dedicado. A opção “Subir API Django” permanece para quem quiser
 subir só a API ou escolher outro `host:porta`.
 
 Manualmente:
 
 ```bash
-cd modules/notion-workspace-app
-python -m pip install -e ".[dev]"
-cd server
-DJANGO_DEBUG=1 python manage.py migrate
-DJANGO_DEBUG=1 python manage.py runserver 127.0.0.1:8000
+uv sync --locked --all-extras
+DJANGO_DEBUG=1 uv run python -m felixo_notion_mcp.api.http.manage migrate
+DJANGO_DEBUG=1 uv run python -m felixo_notion_mcp.api.http.manage runserver 127.0.0.1:8000
 
-cd ../front
+cd front
 npm ci
 npm run dev -- --host 127.0.0.1 --port 5173
 ```

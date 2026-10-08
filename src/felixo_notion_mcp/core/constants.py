@@ -1,0 +1,63 @@
+"""Constantes compartilhadas do ``felixo_notion_mcp``."""
+
+from __future__ import annotations
+
+NOTION_BASE_URL = "https://api.notion.com/v1"
+NOTION_VERSION = "2022-06-28"
+
+#: Versão da API exigida pelos endpoints de *data sources* (databases com o
+#: modelo novo, multi-fonte, introduzido pelo Notion em 2025). É enviada apenas
+#: nas chamadas de data source, sem alterar a versão padrão das demais rotas.
+NOTION_DATA_SOURCE_VERSION = "2025-09-03"
+
+NOTION_TIMEOUT_SECONDS = 15
+
+#: Variável de ambiente lida por padrão quando nenhum token é passado explicitamente.
+NOTION_TOKEN_ENV = "NOTION_TOKEN"
+
+#: Prefixo com que todo token de integração atual do Notion começa.
+NOTION_TOKEN_PREFIX = "ntn_"
+
+#: Número padrão de retentativas em erros retentáveis (429, 5xx, rede).
+NOTION_MAX_RETRIES = 3
+
+#: Base do backoff exponencial entre retentativas, em segundos.
+NOTION_BACKOFF_BASE = 1.0
+
+#: Teto de uma espera de backoff exponencial, em segundos.
+NOTION_BACKOFF_MAXIMO = 30.0
+
+#: Jitter somado a cada espera, como fração dela (0.25 = até +25%): evita que
+#: vários processos repitam no mesmo instante depois de um 429.
+NOTION_JITTER = 0.25
+
+#: Rate limit e sobrecarga: o Notion confirma que a chamada deve ser repetida.
+NOTION_RATE_LIMIT_STATUS_CODES = frozenset({429, 529})
+
+#: Status que a documentação do Notion orienta tentar novamente.
+NOTION_RETRYABLE_STATUS_CODES = frozenset({409, 429, 500, 502, 503, 504, 529})
+
+#: TTL padrão do cache de schema (get_database), em segundos.
+NOTION_SCHEMA_CACHE_TTL = 300
+
+#: Tamanho máximo (em bytes) aceito pela File Upload API em parte única (20 MB).
+#: Arquivos maiores exigem o modo multi-parte, não coberto por ``enviar_arquivo``.
+NOTION_UPLOAD_MAX_BYTES = 20 * 1024 * 1024
+
+#: Limite do Notion para o conteúdo de cada item de rich_text (título ou texto),
+#: contado em unidades de código UTF-16. Texto maior precisa ser fatiado em vários
+#: itens, que o Notion concatena no mesmo campo.
+MAX_RICH_TEXT = 2000
+
+#: Limites de requisição documentados em
+#: https://developers.notion.com/reference/request-limits — qualquer array de
+#: blocos ou de rich text tem no máximo 100 elementos; URL de link, 2000
+#: caracteres; um payload, até 1000 elementos de bloco e 500 KB no total.
+MAX_ITENS_ARRAY = 100
+MAX_URL_LINK = 2000
+MAX_ELEMENTOS_POR_REQUISICAO = 1000
+MAX_BYTES_POR_REQUISICAO = 500_000
+
+#: Níveis de ``children`` aceitos numa única requisição de append
+#: (https://developers.notion.com/reference/patch-block-children).
+MAX_NIVEIS_ANINHADOS = 2

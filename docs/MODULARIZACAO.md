@@ -1,12 +1,21 @@
 # 🧩 Modularização — Automações do Notion
 
+> **Substituído pela spec do monólito em 07/10/2026.** Este documento descreve a
+> separação em três repositórios (`notion-starter`, `notion-tasks-cli` e
+> `notion-workspace-app`), que foi desfeita: o código voltou a um repositório e a um
+> pacote, `felixo-notion-mcp`. Leia a
+> [spec do monólito](superpowers/specs/2026-10-07-monolito-felixo-notion-mcp-design.md)
+> e a [arquitetura atual](ARQUITETURA.md); a tabela origem → destino de lá diz onde
+> cada arquivo dos módulos foi parar. O texto abaixo fica como **registro histórico** do
+> desenho anterior, com os caminhos e comandos de então (`bootstrap.py`, `modules/`).
+
 > **Estado em 2026-09-04:** a separação do antigo monorepo foi concluída. O hub
 > permanece como documentação e roteamento; o código vive em três repositórios
 > independentes, com releases Python publicados em `0.3.0`.
 
 Este documento substitui a proposta antiga de separar core, servidor, frontend e
 CLI. A proposta continua registrada no histórico do projeto, mas os nomes e
-caminhos abaixo são a referência operacional atual.
+caminhos abaixo eram a referência operacional da época.
 
 ## Arquitetura implementada
 

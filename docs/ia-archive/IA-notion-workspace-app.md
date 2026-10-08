@@ -1,0 +1,191 @@
+# 🤖 IA.md — Contexto operacional do notion-workspace-app
+
+> **O que é**: Memória técnica deste repositório para retomada de contexto por IA ou
+> por um novo mantenedor, sem reler todo o código. Baseado no template de contexto do
+> Felixo System Design.
+>
+> **Histórico anterior**: este módulo nasceu da separação do monorepo
+> [Automações do Notion](https://github.com/Felipe-Alcantara/Automa-es-do-Notion)
+> em 2026-07-02. A linha do tempo anterior (fases do servidor, front, MCP e launcher)
+> permanece no `IA.md` do hub — este arquivo cobre a vida do módulo a partir da
+> separação.
+
+---
+
+## 📊 ESTADO ATUAL (RESUMO VIVO)
+
+Última atualização: [2026-09-04]
+
+- Fase: produto local funcional e publicado como `notion-workspace-app==0.3.0`,
+  além de disponível como extra `app` da CLI única, com launcher, API Django,
+  SPA React empacotada e servidor MCP.
+- Qualidade: 256 testes verdes, 2 skips esperados, `ruff` e `oxlint` limpos e
+  build Vite aprovado; CI cobre Python 3.10–3.13 e o frontend em Node 22.
+- Documentação: README alinhado ao Felixo System Design e contrato de qualidade
+  centralizado em `QUALIDADE.md`.
+- Próximos passos abertos: escrita genérica na exploração e novas visualizações,
+  como contribuições isoladas.
+- Risco conhecido: dependências Python usam limites mínimos e são monitoradas
+  pela matriz de CI; o frontend possui lockfile.
+
+---
+
+## 🎯 OBJETIVO DO PROJETO
+
+[2026-07-02] `notion-workspace-app` é a aplicação completa do ecossistema: API REST
+Django (`server/`), SPA React com grade/lista/kanban e aba Explorar (`front/`),
+servidor MCP com as ferramentas `notion.*` (`server/mcp_server.py`) e o launcher TUI
+`start_app.py` ("Iniciar tudo": migrações, API, front e navegador).
+
+---
+
+## 📐 DECISÕES DE ARQUITETURA
+
+- [2026-07-02] Camadas herdadas do monorepo (registradas no hub): `config/`,
+  `core/`, `integrations/`, `services/`, `api/`, `operations/`. Fronteira sagrada:
+  `api` não tem regra de negócio; `services` não conhece HTTP; só o `NotionClient`
+  fala com a API do Notion. A borda MCP é processo independente e fino sobre os
+  services.
+- [2026-07-02] A regra de negócio compartilhada foi consolidada no
+  `notion-starter`; `integrations/github.py`, `integrations/openrouter.py` e os
+  `services/` comuns aqui são shims de compatibilidade.
+- [2026-07-08] Decisão: Django e React continuam no mesmo repositório de propósito —
+  formam um único produto (app local com launcher); a proposta original de separar
+  frontend e backend em repositórios distintos foi considerada e descartada.
+
+---
+
+## 🛠️ STACK & DEPENDÊNCIAS
+
+- Python 3.10+; `pyproject.toml`: `notion-starter>=0.3.0,<0.4.0`, Django,
+  `questionary`/`rich` (TUI), `mcp>=1.28,<2`; ferramentas de desenvolvimento no
+  extra `dev`.
+- Front: Vite + React 18 + Tailwind; lint com `oxlint`; Node 22+.
+
+---
+
+## 🧪 TESTES & GATE
+
+- Gate Python: `ruff check .` + `python -m pytest` (**256 testes verdes, 2 skips**, sem rede).
+- Gate front: `npm run lint` + `npm run build` em `front/`.
+- CI: GitHub Actions (`.github/workflows/ci.yml`) com jobs Python (3.10–3.13) e front.
+
+---
+
+## 🐛 BUGS & FIXES RELEVANTES
+
+- [2026-07-08] FIX (portabilidade Windows): 3 testes falhavam só no Windows e eram
+  tidos como "pré-existentes conhecidos". Causas: (1) `test_services_ingestao`
+  escrevia arquivo com a codificação padrão da plataforma enquanto a produção lê
+  UTF-8 — o teste passou a escrever com `encoding="utf-8"`; (2–3) `test_start_app`
+  comparava caminhos POSIX literais com a saída de `Path`/`Path.absolute()`, que no
+  Windows usa `\` — os testes passaram a aplicar a mesma normalização da produção.
+  Nenhuma mudança de comportamento em produção.
+
+---
+
+## 🧠 LINHA DO TEMPO
+
+- [2026-07-02] ✅ Módulo extraído do monorepo (server + front + MCP + start_app).
+- [2026-07-08] ✅ Alinhamento ao padrão de qualidade Felixo: `ruff check .` zerado
+  (12 imports reordenados pós-consolidação + 1 linha longa), 3 testes
+  Windows-only corrigidos (suíte 100% verde em Windows e POSIX), adicionados
+  `CONTRIBUTING.md`, `IA.md` e CI GitHub Actions. Validação: 272 testes verdes,
+  ruff limpo, `npm run lint` e `npm run build` verdes.
+- [2026-07-13] ✅ Cinco ferramentas MCP novas, paridade com a CLI:
+  `notion.create_database`, `notion.import_spreadsheet`, `notion.upload_file`,
+  `notion.move_page` e `notion.move_database` — bordas finas sobre o
+  notion-starter. Decisão: paridade só no MCP; a API REST segue servindo apenas
+  o front. Validação: 255 testes verdes (2 skips) e ruff limpo.
+- [2026-07-18] ✅ Documentação alinhada ao Felixo System Design: README passou a
+  ter badges, índice, árvore real, guia de uso e rodapé open source;
+  `QUALIDADE.md` centralizou os gates Python/frontend e registrou a exceção
+  motivada de versões mínimas no backend. Motivo: deixar setup e critério de
+  pronto verificáveis sem alterar contratos ou dependências. Validação pelo
+  orquestrador: 256 testes verdes, 2 skips esperados, `ruff`/`oxlint` limpos e
+  build Vite aprovado; mudanças desta rodada restritas à documentação.
+
+- [2026-08-23] ✅ Três testes vermelhos consertados **na expectativa, não na
+  implementação**: `test_escrever_conteudo_anexa_e_conta_blocos`,
+  `test_escrever_conteudo_fatia_em_lotes_de_100` e
+  `test_append_content_conta_blocos` registravam só o `PATCH` de escrita, mas
+  `escrever_conteudo` faz um `GET /blocks/{id}/children` **antes** — a leitura
+  que recusa escrever texto solto numa página que contém database (o erro caro
+  de quem recebe um link do Notion sem abrir). O mock que faltava foi
+  registrado (`{"results": [], "has_more": False}` = página é documento) e as
+  asserções passaram a filtrar as chamadas por método (`_corpos_enviados`), em
+  vez de indexar `responses.calls[0]` — assim uma leitura a mais não quebra o
+  teste de novo. Motivo de não mexer no código: o `GET` é a proteção, não o
+  defeito. Validação: **256 testes verdes, 2 skips**, `ruff` limpo. Prova de
+  que o teste ainda pega regressão: com `_MAX_BLOCOS_POR_REQUISICAO` alterado
+  de 100 para 60, o teste de lotes **falha**.
+- [2026-08-23] ⚠️ Medido no caminho: **a suíte deste módulo testa, por padrão,
+  a cópia instalada do `notion_starter` em `site-packages`, não o código de
+  `modules/notion-starter/src`**. A mesma mutação (lotes de 60) só derrubou o
+  teste com `PYTHONPATH=../notion-starter/src`; sem isso, passou verde com o
+  código alterado. Ou seja, correção feita no módulo vizinho **não é exercida**
+  por esta suíte. Não alterado aqui — é a tarefa aberta sobre a fonte de
+  verdade do `notion-starter`, que ganha esta evidência.
+
+---
+
+Ideias abertas à contribuição: escrita genérica na aba Explorar, mais
+visualizações no kanban, empacotamento do launcher para distribuição.
+
+## [2026-09-04] App empacotado com SPA e entry points públicos
+
+O `pyproject.toml` passou a ser um pacote Hatchling `0.3.0`, com os módulos
+Django/MCP, `start_app.py` e os entry points `notion-automacoes-app` e
+`notion-automacoes-mcp`. O workflow de release executa `npm ci` e `npm run build`
+na SPA, inclui `server/static/frontend/` no wheel/sdist e valida os artefatos
+antes do smoke multiplataforma.
+
+O launcher detecta quando está instalado no wheel: nessa situação serve o
+`index.html` compilado pela rota Django e não tenta resolver Node/npm; no
+checkout, o fluxo Vite de desenvolvimento permanece intacto. A rota de build
+foi corrigida para gerar referências em `/static/frontend/`, compatíveis com o
+servidor Django.
+
+Também foram ajustados os fixtures dos testes que usam `TaskList`: eles agora
+mockam a leitura de schema introduzida pela criação genérica de linhas, em vez de
+mascarar uma chamada HTTP ausente.
+
+**Validação:** `ruff check .` limpo, **256 testes verdes e 2 skips**, `npm run lint`
+e `npm run build` aprovados, `twine check` aprovado e smoke do wheel limpo
+confirmando `start_app`, a rota `/` com o bundle e os dois entry points. O smoke
+real da matriz Windows/macOS ainda depende da execução do workflow no GitHub;
+publicação e Trusted Publishing não foram executados.
+
+## [2026-09-04] Documentação e estado público atualizados
+
+O README, `AGENTS.md`, `CONTRIBUTING.md`, `QUALIDADE.md` e `front/README.md`
+agora distinguem o checkout de desenvolvimento do wheel distribuído, que já
+contém a SPA compilada. O pacote `notion-workspace-app==0.3.0` e a fachada
+`notion-automacoes[app]` são apontados no PyPI; Node/npm ficam documentados como
+dependência de desenvolvimento. A titularidade legal registrada é `Felipe
+Alcantara` e a publicação deixa de ser descrita como pendência.
+
+## [2026-09-04] Fixture REST alinhado ao contrato do starter 0.3.0
+
+O gate da CI revelou que o teste de criação REST simulava um database sem coluna
+`title`. Como `notion-starter==0.3.0` descobre a coluna de título no schema antes
+de criar uma linha, o fixture foi corrigido para declarar `Tarefa` como título e
+a asserção passou a localizar a chamada `POST` correta, pois a descoberta do
+schema acontece antes da criação.
+Validação: teste reproduzido com o starter local 0.3.0; a matriz da CI será
+reexecutada no novo commit.
+
+O novo commit passou na matriz oficial: **279 testes** em Python 3.10, 3.11,
+3.12 e 3.13, além de lint/build da SPA. O fixture agora cobre o contrato real do
+starter publicado e não depende da ordem incidental das chamadas mockadas.
+
+## [2026-09-26] 0.3.1 aceita o notion-starter 0.4
+
+O notion-starter 0.4.0 foi publicado com correções de perda de dados na manipulação de blocos. A CLI
+`notion-automacoes` 0.5.0 passou a exigir essa versão. O app fixava `notion-starter<0.4.0`, então um
+`pip install "notion-automacoes[app]"` voltava em silêncio para a CLI 0.4.1. A 0.3.1 só amplia a faixa
+para `>=0.3.0,<0.5.0` (pyproject e requirements), sem mudar funcionalidade. A suíte inteira (256 passaram,
+2 ignorados) e o `ruff` passaram contra o código do starter 0.4.0. O extra `app` da CLI 0.5.0
+(`notion-workspace-app>=0.3.0,<0.4.0`) aceita a 0.3.1, então não foi preciso republicar a CLI.
+Pendência conhecida: o MCP (`edit_block`/`append_content` em `server/mcp_server.py`) ainda faz `strip`
+do Markdown, o mesmo defeito que a CLI corrigiu (recuo inicial de bloco de código perdido).

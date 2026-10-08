@@ -2,7 +2,8 @@
 
 > **O que é esta pasta**: a documentação viva de operação, arquitetura, contratos e
 > evolução do projeto. A referência rápida de instalação fica no
-> [`README.md`](../README.md); a implementação vive nos três módulos publicados.
+> [`README.md`](../README.md); a implementação vive em `src/felixo_notion_mcp/`, num
+> pacote único organizado em camadas.
 
 ---
 
@@ -10,8 +11,9 @@
 
 | Documento | Para quê serve |
 |---|---|
-| [📦 DISTRIBUICAO.md](DISTRIBUICAO.md) | Instalação pública, pacotes `0.3.0`, smoke, Trusted Publishing e limites da distribuição. |
-| [✅ QUALIDADE.md](QUALIDADE.md) | Gate executável do hub e dos módulos, checklist de documentação e critério de pronto. |
+| [🏛️ ARQUITETURA.md](ARQUITETURA.md) | As camadas do pacote único, a direção das dependências e a tabela origem → destino dos módulos antigos. |
+| [📦 DISTRIBUICAO.md](DISTRIBUICAO.md) | Instalação pública, pacotes publicados, binários nativos, smoke, Trusted Publishing e a transição para o pacote único. |
+| [✅ QUALIDADE.md](QUALIDADE.md) | Gate executável do repositório, checklist de documentação e critério de pronto. |
 | [🧱 CONTRATOS.md](CONTRATOS.md) | Contrato dos objetos, rotas REST, erros e fronteiras entre módulos. |
 | [🤖 AGENTES.md](AGENTES.md) | Playbook histórico/operacional de orquestração multi-agente. |
 | [🗺️ PLANO.md](PLANO.md) | Visão final, estado entregue e roadmap de contribuição. |
@@ -19,7 +21,7 @@
 | [🔗 MCP.md](MCP.md) | Ferramentas MCP, transportes, confirmação e integração com o Felixo-AI-Core. |
 | [🐙 GITHUB-DATABASE.md](GITHUB-DATABASE.md) | Sincronização idempotente de repositórios do GitHub para o Notion. |
 | [📊 PADRAO-RELATORIOS.md](PADRAO-RELATORIOS.md) | Formato canônico dos relatórios diários e regras de upsert. |
-| [🧩 MODULARIZACAO.md](MODULARIZACAO.md) | Arquitetura multi-repositório implementada e fronteiras de manutenção. |
+| [🧩 MODULARIZACAO.md](MODULARIZACAO.md) | Histórico da arquitetura multi-repositório (substituída pelo monólito em 07/10/2026; veja [ARQUITETURA.md](ARQUITETURA.md)). |
 | [🔌 PORTABILIDADE.md](PORTABILIDADE.md) | Como adaptar para outro domínio, outro provedor ou outra linguagem. Usar como template. |
 | [💼 SAAS.md](SAAS.md) | O que mudaria para virar um produto multiusuário (auth, multi-tenant, cobrança, segurança). |
 | [🏗️ INFRA.md](INFRA.md) | Como o servidor roda local e é hospedado: estrutura de pastas, config por ambiente, SQLite operacional, deploy. |
@@ -43,7 +45,7 @@
 - **Vou implementar uma frente do Ciclo 2 (front React, CLI, API v2)** →
   [CONTRATOS.md](CONTRATOS.md) (o contrato) → [AGENTES.md](AGENTES.md) → [PLANO.md](PLANO.md) (*Ciclo 2*)
 - **Vou validar uma mudança antes de entregar** → [QUALIDADE.md](QUALIDADE.md)
-- **Vou mexer em um módulo** → [`AGENTS.md`](../AGENTS.md) → [MODULARIZACAO.md](MODULARIZACAO.md)
+- **Vou mexer no código** → [`AGENTS.md`](../AGENTS.md) → [ARQUITETURA.md](ARQUITETURA.md)
 - **Quero reaproveitar o projeto** → [PORTABILIDADE.md](PORTABILIDADE.md)
 - **Quero pensar em produto** → [SAAS.md](SAAS.md) → [ESCALA.md](ESCALA.md)
 - **Quero entender a camada de IA** → [IA-CAMADA.md](IA-CAMADA.md)
